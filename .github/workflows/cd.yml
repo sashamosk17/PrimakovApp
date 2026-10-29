@@ -9,7 +9,7 @@ jobs:
   deploy:
     name: Deploy to Production Server
     runs-on: ubuntu-latest
-    # Запускаем только если секреты настроены в репозитории
+    if: ${{ secrets.SERVER_HOST != '' }}
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
