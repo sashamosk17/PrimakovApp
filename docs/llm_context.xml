@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<primakov_app_context version="0.2.0" generated_at="2026-10-28">
+  <project_overview>
+    <name>PrimakovApp</name>
+    <organization>АНОО «Гимназия им. Е.М. Примакова»</organization>
+    <goal>Кроссплатформенная мобильная система для автоматизации учебного процесса, индивидуального расписания, дедлайнов, сторис, рейтинга преподавателей, меню столовой, навигации по кампусу и тикетов техподдержки.</goal>
+    <repo_root>c:/Users/sasha/ВШЭ/3 курс/Digital_PM/Primakov_App</repo_root>
+    <docs_root>c:/Users/sasha/ВШЭ/3 курс/Digital_PM/Primakov_App/docs</docs_root>
+  </project_overview>
+
+  <llm_navigation_instructions>
+    <instruction priority="1">Этот файл (llm_context.xml) — точка первичного входа (System Context / Zero-shot seed) для LLM. Содержит ментальную модель архитектуры, правил и компонентов.</instruction>
+    <instruction priority="2">Для задач по Flutter, экранам, виджетам и Riverpod провайдерам читать: docs/frontend.md.</instruction>
+    <instruction priority="3">Для задач по таблицам, SQL-запросам, типам столбцов, ключам и миграциям читать: docs/database.md.</instruction>
+    <instruction priority="4">Для задач по REST API, контрактам эндпоинтов, DTO и кодам ошибок читать: docs/api_and_interfaces.md.</instruction>
+    <instruction priority="5">Для задач по Clean Architecture, DDD, потокам данных и Mermaid-схемам читать: docs/architecture.md.</instruction>
+    <instruction priority="6">Для поиска конкретного исходного файла и его роли читать: docs/file_catalog.md.</instruction>
+  </llm_navigation_instructions>
+
+  <tech_stack>
+    <backend>
+      <runtime>Node.js 20.x LTS</runtime>
+      <language>TypeScript 5.3.3 (strict mode)</language>
+      <framework>Express.js 4.18.2</framework>
+      <database>PostgreSQL 14+ via node-postgres (pg 8.20.0)</database>
+      <auth>JWT (jsonwebtoken 9.0.2), TTL 7 days; passwords hashed with bcrypt 6.0.0</auth>
+      <validation>Zod 4.4.1</validation>
+      <security>Helmet 8.1.0, CORS, express-rate-limit 8.4.1, input sanitization middleware</security>
+      <testing>Jest 29.7.0, ts-jest, supertest</testing>
+      <containerization>Docker, docker-compose</containerization>
+    </backend>
+    <frontend>
+      <framework>Flutter SDK (Dart 3.x, >=3.0.0 &lt;4.0.0)</framework>
+      <state_management>Riverpod 2.4.0 (flutter_riverpod, StateNotifier, AsyncNotifier)</state_management>
+      <http_client>Dio 5.3.0 with singleton, interceptors (JWT, logging, error handling)</http_client>
+      <storage>shared_preferences 2.2.0</storage>
+      <ui>Material 3, custom design tokens, fonts: Manrope and Inter, flutter_svg, confetti</ui>
+      <platforms>Android 10+, iOS 14+</platforms>
+    </frontend>
+  </tech_stack>
+
+  <project_rules>
+    <code_style>
+      <rule>Clean Architecture / DDD на бэкенде: Domain (Entities, Value Objects, Interfaces) НЕ имеет внешних зависимостей.</rule>
+      <rule>Слои: Presentation -&gt; Application -&gt; Domain &lt;- Infrastructure. Никаких прямых SQL-запросов из контроллеров или юзкейсов.</rule>
+      <rule>Единая ответственность: один Use Case решает строго одну задачу (SRP).</rule>
+      <rule>Не мутировать состояние в Flutter: использовать copyWith и иммутабельные модели в Riverpod.</rule>
+      <rule>Всегда возвращать стандартный envelope из API: { status: 'success', data } или { status: 'error', error: { code, message, details } }.</rule>
+      <rule>Никаких магических констант и хардкода URL: на фронтенде API_BASE_URL через String.fromEnvironment('API_BASE_URL', defaultValue: ...), на бэкенде через .env и validateEnvironment().</rule>
+    </code_style>
+
+    <naming_conventions>
+      <backend_files>CamelCase для классов и Use Cases (например, GetScheduleByUserIdUseCase.ts), camelCase для роутов и утилит (scheduleRoutes.ts).</backend_files>
+      <frontend_files>snake_case для всех файлов и каталогов Dart (например, schedule_screen.dart, api_models.dart).</frontend_files>
+      <database>snake_case для таблиц и столбцов (например, story_views, teacher_id, created_at).</database>
+      <enums>SCREAMING_SNAKE_CASE в TypeScript/Dart (например, UserRole.STUDENT, RequestStatus.IN_PROGRESS).</enums>
+    </naming_conventions>
+
+    <architectural_constraints>
+      <constraint>Расписания индивидуальны для каждого ученика: привязка к user_id с fallback на group_id.</constraint>
+      <constraint>Рейтинг учителей анонимен для преподавателей (studentId не отдается в публичный API). Защита от накрутки через SHA-256(ip_hash) и optimistic locking OCC (столбец version).</constraint>
+      <constraint>Мягкое удаление (Soft Delete): пользователи, сторис и объявления помечаются deleted_at, физическое удаление запрещено для сохранения целостности FK.</constraint>
+      <constraint>Валидация на двух рубежах: Zod-схемы в middleware на бэкенде + клиентская валидация форм во Flutter.</constraint>
+    </architectural_constraints>
+
+    <security_rules>
+      <rule>Срок действия JWT токена — 7 дней. Токен передается в заголовке Authorization: Bearer &lt;token&gt;.</rule>
+      <rule>Пароли пользователей валидируются Value Object Password (минимум 8 знаков, цифра, спецсимвол) и хешируются bcrypt (10 раундов).</rule>
+      <rule>Защита от брутфорса: authRateLimiter (5 попыток в минуту на /api/auth/*).</rule>
+      <rule>Санитайзинг всех входящих строк через sanitizeInput middleware (защита от XSS и инъекций).</rule>
+    </security_rules>
+  </project_rules>
+
+  <directory_map>
+    <path location="backend/src/domain">Ядро бизнес-логики: Entities (User, Schedule, Lesson, Deadline, Rating, Story, Announcement), Value Objects, Repository Interfaces, Domain Services.</path>
+    <path location="backend/src/application">Сценарии использования (Use Cases) для всех 10 bounded contexts.</path>
+    <path location="backend/src/infrastructure">Реализации репозиториев (Postgres, Memory), подключение к БД (database.ts), Zod-валидация окружения (validateEnv.ts), миграции (001-017 SQL).</path>
+    <path location="backend/src/presentation">Контроллеры, Express-роутеры, Middlewares (authMiddleware, rbacMiddleware, sanitizationMiddleware, errorHandlerMiddleware).</path>
+    <path location="flutter/lib/config">Конфигурация ApiConfig (Dio singleton), AppTheme, AppColors, AppTypography, AppSpacing.</path>
+    <path location="flutter/lib/models">api_models.dart — DTO и сериализация/десериализация всех сущностей.</path>
+    <path location="flutter/lib/services/api">Сетевые сервисы на Dio (auth_service.dart, schedule_service.dart, rating_service.dart, etc.).</path>
+    <path location="flutter/lib/providers">Riverpod провайдеры состояния для всех модулей и экранов.</path>
+    <path location="flutter/lib/screens">18 экранов приложения: login, register, home, schedule, deadlines, ratings, canteen_menu, rooms_list, create_request, profile, settings и др.</path>
+    <path location="flutter/lib/widgets">10 кастомных компонентов: GlassmorphicAppBar, LessonCard, DeadlineCard, StoryCard, CustomButton, TodayScheduleWidget и др.</path>
+    <path location="docs">Полная документация: README.md, architecture.md, frontend.md, database.md, api_and_interfaces.md, file_catalog.md, llm_context.xml.</path>
+  </directory_map>
+
+  <core_components>
+    <module name="Auth">
+      <backend_controller>backend/src/presentation/controllers/AuthController.ts</backend_controller>
+      <backend_service>backend/src/domain/services/AuthService.ts</backend_service>
+      <frontend_service>flutter/lib/services/api/auth_service.dart</frontend_service>
+      <frontend_provider>flutter/lib/providers/auth_provider.dart</frontend_provider>
+      <frontend_screens>login_screen.dart, register_screen.dart</frontend_screens>
+      <role>Регистрация, вход, выдача JWT, валидация сессий, смена пароля.</role>
+    </module>
+    <module name="Schedule">
+      <backend_controller>backend/src/presentation/controllers/ScheduleController.ts</backend_controller>
+      <backend_service>backend/src/domain/services/ScheduleService.ts</backend_service>
+      <frontend_service>flutter/lib/services/api/schedule_service.dart</frontend_service>
+      <frontend_provider>flutter/lib/providers/schedule_provider.dart</frontend_provider>
+      <frontend_screens>schedule_screen.dart, lesson_detail_screen.dart</frontend_screens>
+      <frontend_widgets>LessonCard, TodayScheduleWidget</frontend_widgets>
+      <role>Индивидуальное расписание учащегося по датам, данные об аудиториях, учителях и ДЗ.</role>
+    </module>
+    <module name="Deadlines">
+      <backend_controller>backend/src/presentation/controllers/DeadlineController.ts</backend_controller>
+      <backend_service>backend/src/domain/services/DeadlineService.ts</backend_service>
+      <frontend_service>flutter/lib/services/api/deadline_service.dart</frontend_service>
+      <frontend_provider>flutter/lib/providers/deadline_provider.dart</frontend_provider>
+      <frontend_screens>deadline_screen.dart, add_deadline_screen.dart</frontend_screens>
+      <frontend_widgets>DeadlineCard, UpcomingDeadlinesWidget</frontend_widgets>
+      <role>Трекер учебных заданий, статусы (PENDING, COMPLETED, OVERDUE), фильтрация, отметка выполнения с конфетти.</role>
+    </module>
+    <module name="Ratings">
+      <backend_controller>backend/src/presentation/controllers/RatingController.ts</backend_controller>
+      <backend_service>backend/src/domain/services/RatingService.ts</backend_service>
+      <frontend_service>flutter/lib/services/api/rating_service.dart</frontend_service>
+      <frontend_provider>flutter/lib/providers/rating_provider.dart</frontend_provider>
+      <frontend_screens>teacher_ratings_screen.dart</frontend_screens>
+      <role>Анонимное оценивание преподавателей по шкале 1-5 с текстовыми комментариями, OCC и защитой от флуда.</role>
+    </module>
+    <module name="Stories">
+      <backend_controller>backend/src/presentation/controllers/StoryController.ts</backend_controller>
+      <frontend_service>flutter/lib/services/api/story_service.dart</frontend_service>
+      <frontend_provider>flutter/lib/providers/story_provider.dart</frontend_provider>
+      <frontend_screens>story_viewer_screen.dart, home_screen.dart</frontend_screens>
+      <frontend_widgets>StoryCard</frontend_widgets>
+      <role>Отображение фото/видео историй гимназии, внешние ссылки, фиксация просмотров (story_views).</role>
+    </module>
+    <module name="Canteen">
+      <backend_controller>backend/src/presentation/controllers/CanteenController.ts</backend_controller>
+      <frontend_service>flutter/lib/services/api/canteen_service.dart</frontend_service>
+      <frontend_provider>flutter/lib/providers/canteen_provider.dart</frontend_provider>
+      <frontend_screens>canteen_menu_screen.dart</frontend_screens>
+      <role>Школьное меню на даты и приемы пищи, детальная информация о калориях, КБЖУ, аллергенах и ценах.</role>
+    </module>
+    <module name="CampusRooms">
+      <backend_controller>backend/src/presentation/controllers/RoomController.ts</backend_controller>
+      <frontend_service>flutter/lib/services/api/room_service.dart</frontend_service>
+      <frontend_provider>flutter/lib/providers/room_provider.dart</frontend_provider>
+      <frontend_screens>rooms_list_screen.dart</frontend_screens>
+      <role>Поиск аудиторий по номерам, корпусам, этажам и координатам навигации.</role>
+    </module>
+    <module name="SupportRequests">
+      <backend_controller>backend/src/presentation/controllers/RequestController.ts</backend_controller>
+      <frontend_service>flutter/lib/services/api/request_service.dart</frontend_service>
+      <frontend_provider>flutter/lib/providers/request_provider.dart</frontend_provider>
+      <frontend_screens>create_request_screen.dart</frontend_screens>
+      <frontend_widgets>PriorityToggle, CustomDropdown</frontend_widgets>
+      <role>Создание и отслеживание тикетов на IT-поддержку, ремонт и клининг.</role>
+    </module>
+  </core_components>
+
+  <database_schema doc_ref="docs/database.md">
+    <table name="users">
+      <columns>id (UUID PK), email (VARCHAR UK), password_hash, first_name, last_name, role (user_role ENUM), group_name, is_active, vk_id, created_at, updated_at, deleted_at</columns>
+    </table>
+    <table name="schedules">
+      <columns>id (UUID PK), user_id (UUID FK -&gt; users), group_id (VARCHAR), date (DATE), created_at, updated_at</columns>
+    </table>
+    <table name="lessons">
+      <columns>id (UUID PK), schedule_id (UUID FK -&gt; schedules), subject, teacher_id (UUID FK -&gt; users), start_time (TIME), end_time (TIME), room_id (UUID FK -&gt; rooms), has_homework (BOOLEAN), homework_description (TEXT), created_at</columns>
+    </table>
+    <table name="deadlines">
+      <columns>id (UUID PK), user_id (UUID FK -&gt; users), title, description, subject, due_date (TIMESTAMPTZ), status (deadline_status ENUM), completed_at, created_at, updated_at</columns>
+    </table>
+    <table name="ratings">
+      <columns>id (UUID PK), teacher_id (UUID FK -&gt; users), user_id (UUID FK -&gt; users, nullable), value (INTEGER 1..5), comment (TEXT), version (INTEGER OCC), ip_hash (VARCHAR), created_at, updated_at</columns>
+    </table>
+    <table name="stories">
+      <columns>id (UUID PK), title, description, image_url, video_url, link_url, link_text, author_id (UUID FK -&gt; users), created_at, expires_at, deleted_at</columns>
+    </table>
+    <table name="story_views">
+      <columns>id (UUID PK), story_id (UUID FK -&gt; stories), user_id (UUID FK -&gt; users), viewed_at (TIMESTAMPTZ)</columns>
+    </table>
+    <table name="announcements">
+      <columns>id (UUID PK), title, description, content, image_url, date (DATE), category (announcement_category ENUM), author_id (UUID FK -&gt; users), created_at, deleted_at</columns>
+    </table>
+    <table name="rooms">
+      <columns>id (UUID PK), number (VARCHAR UK), name, building, floor, capacity, latitude, longitude, description, is_active, created_at, updated_at</columns>
+    </table>
+    <table name="requests">
+      <columns>id (UUID PK), type (request_type ENUM), title, description, status (request_status ENUM), priority (request_priority ENUM), creator_id (UUID FK -&gt; users), assignee_id (UUID FK -&gt; users), room_id (UUID FK -&gt; rooms), notes, created_at, updated_at, completed_at</columns>
+    </table>
+    <table name="canteen_menu">
+      <columns>id (UUID PK), date (DATE), meal_type (meal_type ENUM), created_at</columns>
+    </table>
+    <table name="menu_items">
+      <columns>id (UUID PK), menu_id (UUID FK -&gt; canteen_menu), name, description, category, calories, protein, carbs, fat, weight, image_url, allergens (TEXT[]), is_vegetarian, is_vegan, price, display_order</columns>
+    </table>
+  </database_schema>
+
+  <api_contracts_summary doc_ref="docs/api_and_interfaces.md">
+    <endpoint method="POST" path="/api/auth/login" auth="false" role="all">Вход в систему</endpoint>
+    <endpoint method="POST" path="/api/auth/register" auth="false" role="all">Регистрация</endpoint>
+    <endpoint method="GET" path="/api/users/me" auth="true" role="all">Получить текущий профиль</endpoint>
+    <endpoint method="PUT" path="/api/users/me" auth="true" role="all">Обновить профиль</endpoint>
+    <endpoint method="PUT" path="/api/users/me/password" auth="true" role="all">Сменить пароль</endpoint>
+    <endpoint method="GET" path="/api/users/teachers" auth="false" role="all">Список преподавателей</endpoint>
+    <endpoint method="GET" path="/api/schedule/user/:userId/:date" auth="true" role="all">Индивидуальное расписание</endpoint>
+    <endpoint method="GET" path="/api/schedule/:groupId/:date" auth="false" role="all">Расписание класса</endpoint>
+    <endpoint method="GET" path="/api/deadlines" auth="false" role="all">Получить дедлайны</endpoint>
+    <endpoint method="POST" path="/api/deadlines" auth="true" role="STUDENT,ADMIN">Создать дедлайн</endpoint>
+    <endpoint method="PATCH" path="/api/deadlines/:deadlineId/complete" auth="true" role="STUDENT,ADMIN">Отметить выполненным</endpoint>
+    <endpoint method="GET" path="/api/ratings" auth="true" role="all">Получить рейтинги учителей</endpoint>
+    <endpoint method="POST" path="/api/ratings" auth="true" role="STUDENT">Оценить учителя</endpoint>
+    <endpoint method="GET" path="/api/stories" auth="false" role="all">Список активных историй</endpoint>
+    <endpoint method="POST" path="/api/stories/:storyId/view" auth="false" role="all">Отметить просмотр истории</endpoint>
+    <endpoint method="GET" path="/api/announcements" auth="false" role="all">Список объявлений</endpoint>
+    <endpoint method="GET" path="/api/rooms" auth="false" role="all">Список аудиторий</endpoint>
+    <endpoint method="POST" path="/api/requests" auth="true" role="all">Создать заявку</endpoint>
+    <endpoint method="GET" path="/api/requests" auth="true" role="all">Мои заявки</endpoint>
+    <endpoint method="GET" path="/api/canteen/menu/today" auth="false" role="all">Меню столовой на сегодня</endpoint>
+    <endpoint method="GET" path="/api/canteen/menu/:date" auth="false" role="all">Меню столовой на дату</endpoint>
+  </api_contracts_summary>
+
+  <current_state>
+    <working_features>
+      <feature>Полный цикл аутентификации JWT с валидацией паролей и ролями (STUDENT, TEACHER, ADMIN).</feature>
+      <feature>Автоматический запуск 17 SQL-миграций при старте сервера в migrationRunner.ts.</feature>
+      <feature>Индивидуальное расписание уроков с отображением аудиторий, корпусов, этажей и описаний ДЗ.</feature>
+      <feature>Управление дедлайнами: создание, валидация сроков, отметка выполнения с анимацией конфетти.</feature>
+      <feature>Анонимное оценивание преподавателей с вычислением ip_hash и optimistic locking (версионирование).</feature>
+      <feature>Интерактивный просмотр Stories с поддержкой медиа-файлов, внешних гиперссылок и фиксацией просмотров.</feature>
+      <feature>Меню столовой с расчетом КБЖУ, маркировкой аллергенов и вегетарианских блюд.</feature>
+      <feature>Реестр аудиторий кампуса с группировкой по корпусам и этажам.</feature>
+      <feature>Внутренняя система сервисных заявок со сменой статусов (PENDING, IN_PROGRESS, COMPLETED).</feature>
+      <feature>Клиентский дизайн-код: кастомные темы, шрифты Manrope и Inter, GlassmorphicAppBar.</feature>
+    </working_features>
+
+    <known_debts_and_edge_cases>
+      <item>Необходимость постоянного интернет-соединения: оффлайн-кэш для расписания на SQLite/Hive на стороне клиента пока не реализован.</item>
+      <item>Отсутствие фоновых push-уведомлений о дедлайнах через Firebase Cloud Messaging (FCM) — в pubspec подключены заготовки NotificationSettings, но FCM сервис в проде требует настройки ключей APNs / google-services.json.</item>
+      <item>Интерактивная карта кампуса отображается в виде структурированного списка аудиторий с координатами, полноценный рендер 2D/3D карты этажей планируется в следующем релизе.</item>
+    </known_debts_and_edge_cases>
+
+    <next_steps>
+      <step>Внедрение локального кэша Hive/Isar во Flutter для оффлайн-доступа к расписанию и меню.</step>
+      <step>Подключение Firebase Cloud Messaging (FCM) для отправки push-уведомлений о приближающихся дедлайнах и срочных объявлениях.</step>
+      <step>Разработка административной веб-панели для публикации меню столовой и сторис без ручных SQL-сидов.</step>
+    </next_steps>
+  </current_state>
+</primakov_app_context>

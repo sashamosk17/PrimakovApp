@@ -1,0 +1,16 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: primakovapp-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    network_mode: host
+    depends_on: []
+
+# docker-compose.dev.yml используется для локальной разработки с PostgreSQL в контейнере
