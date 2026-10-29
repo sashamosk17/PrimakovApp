@@ -1,0 +1,93 @@
+name: CI Test & Lint
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  backend-test:
+    name: Backend (Node.js 20 & Jest)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: primakovapp
+          POSTGRES_USER: primakov
+          POSTGRES_PASSWORD: primakov_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Backend Dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Typecheck & Build Backend
+        working-directory: backend
+        run: npm run build
+
+      - name: Run Backend Tests
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          PORT: 3000
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: primakov
+          DB_PASSWORD: primakov_test_password
+          DB_NAME: primakovapp
+          JWT_SECRET: test_jwt_secret_key_must_be_at_least_32_characters_long
+        run: npm test
+
+  flutter-test:
+    name: Frontend (Flutter 3.x & Tests)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter Dependencies
+        working-directory: flutter
+        run: flutter pub get
+
+      - name: Flutter Static Analysis
+        working-directory: flutter
+        run: flutter analyze
+
+      - name: Run Flutter Tests
+        working-directory: flutter
+        run: flutter test
+

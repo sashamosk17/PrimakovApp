@@ -1,0 +1,90 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: primakov-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-primakovapp}
+      POSTGRES_USER: ${DB_USER:-primakov}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-primakov_secure_password_change_me}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      # Проброс на 127.0.0.1 для локального подключения разработчика по SSH-туннелю
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-primakov} -d ${DB_NAME:-primakovapp}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - primakov_net
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: primakov-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - primakov_net
+
+  nginx:
+    image: nginx:alpine
+    container_name: primakov-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - certbot_conf:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - primakov_net
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: primakov-certbot
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - primakov_net
+
+volumes:
+  postgres_data:
+    name: primakov_postgres_data
+  certbot_conf:
+    name: primakov_certbot_conf
+  certbot_www:
+    name: primakov_certbot_www
+
+networks:
+  primakov_net:
+    name: primakov_network
+    driver: bridge
+

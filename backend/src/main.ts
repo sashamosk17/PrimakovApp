@@ -88,6 +88,29 @@ async function startServer() {
       next();
     });
 
+    // Health check endpoint
+    const healthHandler = async (_req: express.Request, res: express.Response) => {
+      try {
+        await pool.query('SELECT 1');
+        res.status(200).json({
+          status: 'ok',
+          uptime: process.uptime(),
+          database: 'connected',
+          timestamp: new Date().toISOString(),
+          version: '0.2.0',
+        });
+      } catch (err: any) {
+        res.status(503).json({
+          status: 'degraded',
+          database: 'disconnected',
+          error: err.message,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    };
+    app.get('/health', healthHandler);
+    app.get('/api/health', healthHandler);
+
     // Routes - using PostgreSQL repositories
     app.use("/api/auth", authRoutes(userRepository));
     app.use("/api/users", userRoutes(userRepository));
