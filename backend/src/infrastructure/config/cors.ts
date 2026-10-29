@@ -42,8 +42,8 @@ export const corsConfig: CorsOptions = {
       return callback(null, true);
     }
 
-    // Check if origin is explicitly allowed
-    if (allowedStrings.includes(origin)) {
+    // Check if wildcard or explicitly allowed
+    if (allowedStrings.includes('*') || allowedStrings.includes(origin)) {
       return callback(null, true);
     }
 
