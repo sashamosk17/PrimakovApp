@@ -29,9 +29,7 @@ docker compose -f $COMPOSE_FILE ps
 # 5. Проверяем healthcheck
 echo "--> 5. Проверка ответа бэкенда..."
 sleep 5
-if command -v curl &> /dev/null; then
-    curl -I -s http://localhost:3000/health | head -n 1
-fi
+docker compose -f $COMPOSE_FILE exec -T backend wget -qO- http://127.0.0.1:3000/health || echo "Ожидание старта сервиса..."
 
 echo "=== Развертывание успешно завершено! ==="
 

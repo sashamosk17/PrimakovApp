@@ -37,7 +37,7 @@ docker compose -f $COMPOSE_FILE run --rm --entrypoint "\
     -subj \"/CN=localhost\"'" certbot
 
 echo "2. Запускаем Nginx с временным сертификатом..."
-docker compose -f $COMPOSE_FILE up -d nginx
+docker compose -f $COMPOSE_FILE up -d --no-deps nginx
 
 echo "3. Удаляем временный сертификат перед запросом настоящего..."
 docker compose -f $COMPOSE_FILE run --rm --entrypoint "\
@@ -57,6 +57,9 @@ docker compose -f $COMPOSE_FILE run --rm --entrypoint "\
 
 echo "5. Перезагружаем Nginx с новым сертификатом..."
 docker compose -f $COMPOSE_FILE exec nginx nginx -s reload
+
+echo "6. Запускаем полный стек сервисов (Postgres, Backend, Certbot)..."
+docker compose -f $COMPOSE_FILE up -d
 
 echo "=== SSL успешно настроен! Сервер доступен по https://$DOMAIN ==="
 

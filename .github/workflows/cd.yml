@@ -54,5 +54,5 @@ jobs:
             
             echo "--> Проверка Healthcheck:"
             sleep 5
-            curl -f http://127.0.0.1:3000/health || echo "Предупреждение: healthcheck не ответил сразу, проверьте логи: docker compose logs backend"
+            docker compose -f docker-compose.prod.yml exec -T backend wget -qO- http://127.0.0.1:3000/health || echo "Ожидание запуска..."
 
