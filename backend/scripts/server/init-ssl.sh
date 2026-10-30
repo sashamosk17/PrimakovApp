@@ -7,26 +7,26 @@ set -e
 # ==============================================================================
 
 DOMAIN="primakov.ddns.net"
-EMAIL="admin@primakov.ddns.net" # Замените на ваш email при желании
+EMAIL="admin@primakov.ddns.net"
 RSA_KEY_SIZE=4096
-DATA_PATH="./certbot_data"
+COMPOSE_FILE="docker-compose.prod.yml"
 
-echo "=== Инициализация SSL для $DOMAIN ==="
+echo "=== Инициализация домена и SSL для $DOMAIN ==="
 
-# Проверка наличия docker compose
 if ! command -v docker &> /dev/null; then
     echo "Ошибка: Docker не установлен."
     exit 1
 fi
 
-COMPOSE_FILE="docker-compose.prod.yml"
-
-echo "1. Проверяем наличие существующих сертификатов..."
-docker compose -f $COMPOSE_FILE run --rm --entrypoint "\
-  sh -c 'test -d /etc/letsencrypt/live/$DOMAIN'" certbot && {
-    echo "Сертификат для $DOMAIN уже существует. Пропускаем первичный выпуск."
+echo "1. Проверяем наличие сертификатов..."
+if docker compose -f $COMPOSE_FILE run --rm --entrypoint "sh -c 'test -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem'" certbot 2>/dev/null; then
+    echo "Сертификат для $DOMAIN уже существует. Запускаем Nginx..."
+    docker compose -f $COMPOSE_FILE up -d nginx certbot
+    echo "=== Nginx запущен и обслуживает $DOMAIN ==="
     exit 0
-} || echo "Сертификат не найден. Создаем временный для запуска Nginx..."
+fi
+
+echo "Сертификат не найден. Создаем временный для первого запуска Nginx..."
 
 # Создаем директорию и временный самоподписанный сертификат
 docker compose -f $COMPOSE_FILE run --rm --entrypoint "\
@@ -36,16 +36,10 @@ docker compose -f $COMPOSE_FILE run --rm --entrypoint "\
     -out /etc/letsencrypt/live/$DOMAIN/fullchain.pem \
     -subj \"/CN=localhost\"'" certbot
 
-echo "2. Запускаем Nginx с временным сертификатом..."
+echo "2. Запускаем Nginx на портах 80 и 443..."
 docker compose -f $COMPOSE_FILE up -d --no-deps nginx
 
-echo "3. Удаляем временный сертификат перед запросом настоящего..."
-docker compose -f $COMPOSE_FILE run --rm --entrypoint "\
-  rm -Rf /etc/letsencrypt/live/$DOMAIN && \
-  rm -Rf /etc/letsencrypt/archive/$DOMAIN && \
-  rm -Rf /etc/letsencrypt/renewal/$DOMAIN.conf" certbot
-
-echo "4. Запрашиваем официальный сертификат Let's Encrypt..."
+echo "3. Запрашиваем официальный доверенный сертификат Let's Encrypt..."
 docker compose -f $COMPOSE_FILE run --rm --entrypoint "\
   certbot certonly --webroot -w /var/www/certbot \
     --email $EMAIL \
@@ -55,11 +49,13 @@ docker compose -f $COMPOSE_FILE run --rm --entrypoint "\
     --force-renewal \
     --non-interactive" certbot
 
-echo "5. Перезагружаем Nginx с новым сертификатом..."
+echo "4. Перезагружаем Nginx с официальным сертификатом..."
 docker compose -f $COMPOSE_FILE exec nginx nginx -s reload
 
-echo "6. Запускаем полный стек сервисов (Postgres, Backend, Certbot)..."
-docker compose -f $COMPOSE_FILE up -d
+echo "5. Запускаем фоновый демон авто-продления сертификатов (Certbot)..."
+docker compose -f $COMPOSE_FILE up -d certbot
 
-echo "=== SSL успешно настроен! Сервер доступен по https://$DOMAIN ==="
-
+echo "=== Домен $DOMAIN успешно подключен! ==="
+echo "Доступ по HTTP:  http://$DOMAIN/api"
+echo "Доступ по HTTPS: https://$DOMAIN/api"
+echo "Прямой порт:     http://$DOMAIN:3000/api"

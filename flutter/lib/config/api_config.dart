@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 class ApiConfig {
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://185.221.198.242:3000/api',
+    defaultValue: 'http://primakov.ddns.net:3000/api',
   );
 
   /// Callback executed when backend returns 401 Unauthorized (e.g. token expired)
