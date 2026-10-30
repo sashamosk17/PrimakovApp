@@ -1,194 +1,177 @@
-# 🚀 Руководство по развертыванию PrimakovApp на сервере и настройке CI/CD
+# 🚀 Руководство по развертыванию PrimakovApp на сервере и управлению проектом
 
-В этом документе содержится пошаговая инструкция по:
-1. Подготовке сервера (очистка старых служб, запуск Docker Compose).
-2. Выпуску бесплатного SSL-сертификата Let's Encrypt для домена `primakov.ddns.net`.
-3. Настройке авто-деплоя (CI/CD) через GitHub Actions.
-4. Автоматической облачной сборке Flutter APK.
+В данном руководстве зафиксированы результаты работы по настройке и развертыванию серверной части **PrimakovApp**, переносу базы данных в Docker, настройке мониторинга здоровья сервиса и организации удобного рабочего процесса разработки без сложных CI/CD конвейеров.
 
 ---
 
-## 📋 Предварительные требования
+## 📋 Параметры сервера и сетевая конфигурация
 
-- **Сервер**: IP `185.221.198.242` (Ubuntu / Debian).
-- **Домен**: `primakov.ddns.net` (привязан в панели No-IP к IP `185.221.198.242`).
-- **Порты**: `80` (HTTP), `443` (HTTPS) и `22` (SSH) должны быть открыты во внешнем фаерволе хостинга/провайдера.
+- **IP-адрес сервера**: `185.221.198.242`
+- **ОС**: Ubuntu 22.04 LTS (Jammy)
+- **Порт Backend API**: `3000` (напрямую доступен из интернета)
+- **Базовый URL для клиентов (Flutter Web / Android / iOS)**: `http://185.221.198.242:3000/api`
+- **Эндпоинт проверки здоровья (Healthcheck)**: `http://185.221.198.242:3000/health`
+- **СУБД**: PostgreSQL 15 (в изолированном Docker-контейнере с постоянным volume `primakov_postgres_data`)
+
+> [!NOTE]
+> **Особенности портов 80 и 443**: Порт 443 на данном VPS фильтруется внешней защитой хостинга (Akamai EdgeSuite / Cloudflare proxy), возвращая ошибку `Invalid URL` для незарегистрированных доменов. Поэтому прямое подключение на порт `3000` является наиболее надежным, стабильным и быстрым решением без посредников.
 
 ---
 
-## ШАГ 1. Подготовка сервера и очистка старых служб
+## 🏗️ Архитектура развертывания (Docker Compose)
 
-Подключитесь к вашему серверу по SSH:
+Файл конфигурации: [`backend/docker-compose.prod.yml`](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/docker-compose.prod.yml)
+
+```mermaid
+flowchart TD
+    subgraph Client["Клиентские приложения"]
+        WEB["Flutter Web (Chrome / Edge)"]
+        MOBILE["Flutter Mobile (Android APK / iOS)"]
+    end
+
+    subgraph Host["Сервер (185.221.198.242)"]
+        PORT["Порт 3000 (Внешний)"]
+        
+        subgraph DockerNet["Docker Network: primakov_network"]
+            BACKEND["primakov-backend (Node.js 20 Express, dist/main.js)"]
+            POSTGRES[("primakov-postgres (PostgreSQL 15 Alpine)")]
+        end
+        
+        VOLUME[("Volume: primakov_postgres_data")]
+    end
+
+    WEB -->|HTTP REST / CORS| PORT
+    MOBILE -->|HTTP REST| PORT
+    PORT --> BACKEND
+    BACKEND -->|TCP 5432 (Internal)| POSTGRES
+    POSTGRES --- VOLUME
+```
+
+### Сервисы в Docker:
+1. **`primakov-postgres`**:
+   - Образ `postgres:15-alpine`.
+   - Данные сохраняются в постоянном томе `primakov_postgres_data` (не удаляются при перезапусках контейнеров).
+   - Встроенный Healthcheck (`pg_isready -U primakov -d primakovapp`).
+   - Доступен локально на сервере (`127.0.0.1:5432`) и внутри сети `primakov_network`.
+2. **`primakov-backend`**:
+   - Сборка из `backend/Dockerfile` (Node.js 20 multi-stage build).
+   - Подключается к `postgres` по внутреннему имени хоста.
+   - Запускается только после успешного прохождения проверки здоровья базы данных (`condition: service_healthy`).
+   - Наружу проброшен порт `3000:3000`.
+
+---
+
+## 🔄 Рабочий процесс обновления (Deploy Workflow)
+
+Вместо медленных и падающих внешних CI/CD пайплайнов настроен простой и надежный процесс «Git Push -> Server Pull»:
+
+### 1. На локальном компьютере:
+Пишите код, проверяйте тесты и отправляйте в репозиторий:
+```bash
+git add .
+git commit -m "feat: ваша новая фича"
+git push origin main
+```
+
+### 2. На сервере (обновление в 1 команду):
+Подключитесь по SSH и запустите готовый скрипт:
 ```bash
 ssh root@185.221.198.242
+cd ~/Primakov_App/backend
+./scripts/server/deploy.sh
 ```
 
-### 1.1. Остановка старых процессов и освобождение портов
-Если на сервере запущена старая версия приложения или нативный PostgreSQL/Nginx, их нужно остановить, чтобы они не занимали порты `80`, `443` или `5432`:
+Что делает скрипт [`deploy.sh`](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/scripts/server/deploy.sh):
+1. Выполняет `git pull origin main`.
+2. Пересобирает Docker-образ бэкенда (`docker compose build backend`).
+3. Бесшовно перезапускает контейнер (`docker compose up -d`).
+4. Очищает временные висячие слои (`docker image prune -f`).
+5. Проверяет ответ эндпоинта здоровья `/health`.
 
-```bash
-# Проверяем, какие порты сейчас заняты
-sudo ss -tulpn | grep -E ':(80|443|3000|5432)\b'
+---
 
-# Если запущен нативный PostgreSQL:
-sudo systemctl stop postgresql
-sudo systemctl disable postgresql
+## 💻 Локальный запуск Flutter с подключением к серверу
 
-# Если запущен системный Nginx или Apache:
-sudo systemctl stop nginx apache2 2>/dev/null || true
-sudo systemctl disable nginx apache2 2>/dev/null || true
+В коде `flutter/lib/config/api_config.dart` по умолчанию настроен URL сервера: `http://185.221.198.242:3000/api`.
 
-# Если запущены старые Docker-контейнеры:
-docker ps
-# При необходимости остановить старые контейнеры:
-# docker stop $(docker ps -q)
+### Запуск в браузере Chrome:
+```powershell
+cd flutter
+flutter run -d chrome
 ```
 
-### 1.2. Проверка наличия Docker и Docker Compose
-```bash
-docker --version
-docker compose version
+### Запуск как приложение Windows:
+```powershell
+cd flutter
+flutter run -d windows
 ```
-*(Если Docker еще не установлен, установите официальным скриптом в 1 команду)*:
-```bash
-curl -fsSL https://get.docker.com | sh
+
+### Запуск на подключенном смартфоне Android:
+```powershell
+cd flutter
+flutter run
 ```
 
 ---
 
-## ШАГ 2. Клонирование репозитория и настройка .env
+## 🔑 Учетные записи для тестирования
 
-### 2.1. Клонирование репозитория на сервер
-Рекомендуется клонировать в домашнюю директорию или в `/opt`:
-```bash
-cd ~
-git clone https://github.com/sashamosk17/PrimakovApp.git Primakov_App
-cd Primakov_App/backend
-```
+База данных полностью заполнена реальными данными и тестовыми аккаунтами.
 
-### 2.2. Создание файла переменных окружения (.env)
-Скопируйте шаблон:
-```bash
-cp .env.server.example .env
-nano .env
-```
-Убедитесь, что параметры заполнены:
-```ini
-NODE_ENV=production
-PORT=3000
+| Email | Роль | Пароль | Описание |
+| :--- | :---: | :---: | :--- |
+| `ivan.petrov@primakov.school` | `STUDENT` | `password123` | Ученик Иван Петров (активное расписание, оценки) |
+| `maria.sokolova@primakov.school` | `STUDENT` | `password123` | Ученица Мария Соколова |
+| `aleksei.smirnov@primakov.school` | `STUDENT` | `password123` | Ученик Алексей Смирнов |
+| `teacher.ivanov@primakov.school` | `TEACHER` | `password123` | Преподаватель Иван Иванов |
+| `teacher.sidorov@primakov.school` | `TEACHER` | `password123` | Преподаватель Виктор Сидоров |
+| `admin@primakov.school` | `ADMIN` | `password123` | Администратор комплекса |
 
-# Сгенерируйте случайный 32-байтный ключ: openssl rand -hex 32
-JWT_SECRET=ВАШ_СЛУЧАЙНЫЙ_СЕКРЕТНЫЙ_КЛЮЧ_32_СИМВОЛА
-JWT_EXPIRES_IN=7d
-JWT_REFRESH_EXPIRES_IN=30d
-
-ALLOWED_ORIGINS=https://primakov.ddns.net,http://primakov.ddns.net,http://localhost:3000,*
-
-# База данных в Docker (имя хоста: postgres)
-DB_HOST=postgres
-DB_PORT=5432
-DB_NAME=primakovapp
-DB_USER=primakov
-DB_PASSWORD=ПридумайтеНадежныйПарольБД
-POSTGRES_PASSWORD=ПридумайтеНадежныйПарольБД
-```
-Сохраните файл (`Ctrl + O`, `Enter`, `Ctrl + X`).
+> [!TIP]
+> **Как сменить пароль любого пользователя через Docker в 1 команду:**
+> ```bash
+> # Хэш bcrypt для пароля 'password123':
+> # $2b$10$rvXonxDqxcanLBEwpqO.5eXnFBIYk1Ur80gN64.ScRwYu8Ecab0Mq
+> 
+> cat << 'EOF' | docker exec -i primakov-postgres psql -U primakov -d primakovapp
+> UPDATE users SET password_hash = '$2b$10$rvXonxDqxcanLBEwpqO.5eXnFBIYk1Ur80gN64.ScRwYu8Ecab0Mq' WHERE email = 'нужный_email';
+> EOF
+> ```
 
 ---
 
-## ШАГ 3. Выпуск SSL-сертификата Let's Encrypt для primakov.ddns.net
+## 💾 Резервное копирование и сохранность данных (Бэкапы)
 
-В репозитории уже подготовлен скрипт `init-ssl.sh`. Дайте ему права на исполнение и запустите:
+В репозитории подготовлен скрипт горячего резервного копирования [`backend/scripts/server/backup-db.sh`](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/scripts/server/backup-db.sh).
+
+### Ручной запуск бэкапа:
 ```bash
-chmod +x scripts/server/*.sh
-./scripts/server/init-ssl.sh
+/root/Primakov_App/backend/scripts/server/backup-db.sh
 ```
-Что сделает скрипт:
-1. Создаст временный сертификат, чтобы Nginx успешно стартовал.
-2. Поднимет Nginx и Certbot.
-3. Запросит официальный доверенный SSL-сертификат от Let's Encrypt для `primakov.ddns.net`.
-4. Перезагрузит Nginx с реальным сертификатом.
+- Дамп базы выполняется через `pg_dump` внутри контейнера.
+- Сжимается алгоритмом gzip (`.sql.gz`).
+- Сохраняется в директорию `~/backups/primakov_db/`.
+- Автоматически удаляются бэкапы старше 14 дней.
 
-> 💡 **Авто-продление**: Контейнер `certbot` в `docker-compose.prod.yml` автоматически проверяет и продлевает сертификат каждые 12 часов!
-
----
-
-## ШАГ 4. Запуск всех сервисов (Backend + PostgreSQL + Nginx)
-
-Запустите прод-стек:
+### Настройка автоматического бэкапа каждую ночь:
+Выполните на сервере:
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
-```
-
-### Проверка работоспособности:
-```bash
-# Просмотр статуса контейнеров:
-docker compose -f docker-compose.prod.yml ps
-
-# Просмотр логов бэкенда:
-docker compose -f docker-compose.prod.yml logs -f backend
-
-# Проверка эндпоинта здоровья:
-curl -i https://primakov.ddns.net/health
-```
-Вы должны получить ответ:
-```json
-HTTP/2 200
-{"status":"ok","uptime":15.4,"database":"connected","version":"0.2.0"}
-```
-
----
-
-## ШАГ 5. Настройка авто-деплоя (CI/CD) через GitHub Actions
-
-Каждый раз при `git push origin main` GitHub Actions сам проверит тесты и обновит приложение на вашем сервере без ручного входа.
-
-### 5.1. Создание SSH ключа для деплоя
-На сервере (или на вашем ПК) создайте отдельную пару ключей:
-```bash
-ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/github_deploy -N ""
-```
-Добавьте публичный ключ в список разрешенных на сервере:
-```bash
-cat ~/.ssh/github_deploy.pub >> ~/.ssh/authorized_keys
-chmod 600 ~/.ssh/authorized_keys
-```
-Выведите **приватный** ключ на экран:
-```bash
-cat ~/.ssh/github_deploy
-```
-*(Скопируйте весь вывод от `-----BEGIN OPENSSH PRIVATE KEY-----` до `-----END OPENSSH PRIVATE KEY-----`)*
-
-### 5.2. Добавление секретов в GitHub
-1. Перейдите в ваш репозиторий на GitHub: `https://github.com/sashamosk17/PrimakovApp`
-2. Откройте **Settings** → **Secrets and variables** → **Actions** → **New repository secret**.
-3. Создайте 4 секрета:
-   - `SERVER_HOST`: `185.221.198.242`
-   - `SERVER_USER`: `root` (или имя пользователя с доступом к docker)
-   - `SERVER_SSH_KEY`: Вставьте скопированный приватный ключ
-   - `SERVER_PORT`: `22` (если стандартный)
-
-Готово! Теперь любой пуш в `main` автоматически деплоится на сервер.
-
----
-
-## ШАГ 6. Облачная сборка Flutter APK в 1 клик
-
-Больше не нужно мучаться с локальной сборкой на компьютере.
-1. В GitHub перейдите во вкладку **Actions**.
-2. В левой колонке выберите **Build Flutter APK**.
-3. Нажмите кнопку **Run workflow**.
-4. Через 2-3 минуты в деталях запуска внизу страницы появится готовый для скачивания файл `PrimakovApp-release.zip` с `app-release.apk` внутри!
-5. Приложение уже преднастроено для работы с вашим API по безопасному HTTPS: `https://primakov.ddns.net/api`.
-
----
-
-## 💾 Резервное копирование базы данных (Бэкапы)
-
-Для настройки ежедневного автоматического бэкапа базы данных выполните на сервере:
-```bash
-# Добавление задания в cron (каждую ночь в 03:00):
 (crontab -l 2>/dev/null; echo "0 3 * * * /root/Primakov_App/backend/scripts/server/backup-db.sh > /dev/null 2>&1") | crontab -
 ```
-Скрипт сохраняет сжатые архивы в `~/backups/primakov_db/` и автоматически удаляет дампы старше 14 дней.
 
+---
+
+## 🛠️ Решенные технические инциденты и исправления
+
+В процессе настройки были устранены следующие проблемы:
+1. **Конфликт занятых портов**: Порт 3000 и 5432 на хосте освобождены от нативных служб; база данных полностью изолирована внутри Docker.
+2. **Перенос данных из нативного PostgreSQL 14 в Docker PostgreSQL 15**:
+   - Выполнен чистый экспорт всех таблиц (пользователи, расписания, уроки, рейтинги, столовая, заявки).
+   - База восстановлена в Docker Volume `primakov_postgres_data`.
+3. **Отсутствующие колонки схемы `users` (Ошибка 401)**:
+   - В код модели `PostgresUserRepository` требовались поля `avatar_url` и `two_factor_enabled`.
+   - Создана миграция `018_AddAvatarAndTwoFactorToUsers.sql`, колонки успешно добавлены в базу.
+4. **CORS и веб-клиент**:
+   - В `backend/src/infrastructure/config/cors.ts` добавлена поддержка wildcard `*` в `ALLOWED_ORIGINS` для работы Flutter Web при локальной разработке.
+5. **Healthcheck мониторинг**:
+   - Добавлены эндпоинты `/health` и `/api/health`, возвращающие статус подключения к базе данных и uptime.

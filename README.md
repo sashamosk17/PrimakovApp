@@ -67,14 +67,17 @@
   4. Загрузите необходимые зависимости:
   flutter pub get
   5. Выполните сборку APK-файла, указав адрес сервера гимназии:
-  flutter build apk --dart-define=API_BASE_URL=https://primakov.ddns.net/api
+  flutter build apk --dart-define=API_BASE_URL=http://185.221.198.242:3000/api
   6. Готовый установочный файл будет создан по пути:
   build/app/outputs/flutter-apk/app-release.apk
   7. Скопируйте файл app-release.apk на мобильное устройство (через USB, облачное хранилище или мессенджер)
   8. Установите APK на устройство, следуя инструкциям выше (шаги 2–5)
 
-  ## 🌐 Сервер и CI/CD
-  Подробная инструкция по развертыванию бэкенда в Docker, получению SSL для домена `primakov.ddns.net` и настройке GitHub Actions находится в файле [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md).
+  ## 🌐 Сервер и развертывание
+  Серверная часть приложения развернута в Docker на VPS:
+  - **Адрес API**: `http://185.221.198.242:3000/api`
+  - **Healthcheck**: `http://185.221.198.242:3000/health`
+  - **Подробное руководство по развертыванию, управлению базой данных и бэкапам**: см. [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md).
 
   Примечание: При самостоятельной сборке убедитесь, что путь к проекту не содержит символов кириллицы и пробелов.
 

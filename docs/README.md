@@ -96,11 +96,21 @@
    npm start
    ```
 
-#### 3.1.2. Запуск через Docker Compose
+#### 3.1.2. Запуск через Docker Compose (Production на сервере)
+Сервер развернут на VPS по адресу `185.221.198.242` с использованием Docker Compose:
 ```bash
 cd backend
-docker-compose up -d --build
+docker compose -f docker-compose.prod.yml up -d --build
 ```
+Для быстрого обновления бэкенда на сервере используется готовый скрипт:
+```bash
+./scripts/server/deploy.sh
+```
+Подробная инструкция, параметры окружения и регламент бэкапов описаны в [docs/DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md).
+
+#### 3.1.3. Проверка работоспособности (Healthcheck)
+- Эндпоинт проверки здоровья: `http://185.221.198.242:3000/health` (или локально `http://localhost:3000/health`).
+- Возвращает JSON: `{ "status": "ok", "uptime": 120, "database": "connected", "version": "0.2.0" }`.
 
 ---
 

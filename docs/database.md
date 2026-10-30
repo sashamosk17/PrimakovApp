@@ -19,7 +19,7 @@
 
 ### 2.1. Таблица `users` (Пользователи)
 Основная таблица учетных записей учащихся, преподавателей и администраторов гимназии.
-Миграции: `001_CreateUsersTable.sql`, `001a_AddGroupNameToUsers.sql`, `008_AddDeletedAtToUsers.sql`.
+Миграции: `001_CreateUsersTable.sql`, `001a_AddGroupNameToUsers.sql`, `008_AddDeletedAtToUsers.sql`, `018_AddAvatarAndTwoFactorToUsers.sql`.
 
 | Столбец | Тип данных | Nullable | Ограничения / Default | Описание |
 | :--- | :--- | :---: | :--- | :--- |
@@ -32,6 +32,8 @@
 | `group_name` | `VARCHAR(50)` | Да | `NULL` | Название учебного класса (например, `10A`), только для учеников |
 | `is_active` | `BOOLEAN` | Нет | `DEFAULT true` | Флаг активности учетной записи |
 | `vk_id` | `VARCHAR(100)` | Да | `NULL` | Идентификатор профиля VK для будущей интеграции |
+| `avatar_url` | `TEXT` | Да | `NULL` | URL или путь к загруженному аватару профиля |
+| `two_factor_enabled` | `BOOLEAN` | Нет | `DEFAULT false` | Флаг двухфакторной аутентификации |
 | `created_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Дата и время регистрации |
 | `updated_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Дата и время последнего обновления профиля |
 | `deleted_at` | `TIMESTAMPTZ` | Да | `NULL` | Метка мягкого удаления |
@@ -268,3 +270,4 @@
 | `015` | `015_AddHomeworkDescriptionToLessons.sql`| Расширение таблицы `lessons` текстовым полем `homework_description`. |
 | `016` | `016_AddLinkFieldsToStories.sql` | Добавление столбцов `link_url` и `link_text` для кликабельных кнопок в сторис. |
 | `017` | `017_SeedNewStoriesFixed.sql` | Обновление демонстрационного пула историй актуальными событиями. |
+| `018` | `018_AddAvatarAndTwoFactorToUsers.sql` | Добавление полей `avatar_url` и `two_factor_enabled` в таблицу `users` для поддержки расширенного профиля и 2FA. |
