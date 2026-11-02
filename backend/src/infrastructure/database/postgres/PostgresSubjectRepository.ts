@@ -126,6 +126,11 @@ export class PostgresSubjectRepository implements ISubjectRepository {
 
   async getTeacherSubjects(teacherId: string): Promise<Result<Subject[]>> {
     try {
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(teacherId);
+      if (!isUUID) {
+        return Result.ok([]);
+      }
+
       const query = `
         SELECT s.id, s.name, s.description, s.created_at, s.updated_at
         FROM subjects s
@@ -153,6 +158,11 @@ export class PostgresSubjectRepository implements ISubjectRepository {
 
   async assignTeacherSubject(teacherId: string, subjectId: string): Promise<Result<void>> {
     try {
+      const isUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (!isUUID(teacherId) || !isUUID(subjectId)) {
+        return Result.fail("Invalid UUID format for teacher or subject ID");
+      }
+
       const query = `
         INSERT INTO teacher_subjects (teacher_id, subject_id, created_at)
         VALUES ($1, $2, NOW())
@@ -168,6 +178,11 @@ export class PostgresSubjectRepository implements ISubjectRepository {
 
   async removeTeacherSubject(teacherId: string, subjectId: string): Promise<Result<void>> {
     try {
+      const isUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (!isUUID(teacherId) || !isUUID(subjectId)) {
+        return Result.ok();
+      }
+
       const query = `
         DELETE FROM teacher_subjects
         WHERE teacher_id = $1 AND subject_id = $2

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import type { Schedule, Lesson, Subject, User, TeacherAssignment, LessonType } from "../types";
 
 export interface ScheduleViewProps {
@@ -123,12 +123,13 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   // Filter stage: ALL, PRIMARY, MIDDLE, HIGH
   const [stageFilter, setStageFilter] = useState<"ALL" | "PRIMARY" | "MIDDLE" | "HIGH">("ALL");
 
-  // Selected Class
+  // Selected Class (can be a specific class e.g. "10-А" or "ALL" for all classes in student mode)
   const [selectedClassId, setSelectedClassId] = useState<string>("10-А");
 
   // Selected Student for IUP Mode
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
   const [studentSearchQuery, setStudentSearchQuery] = useState("");
+  const [expandedStudentIds, setExpandedStudentIds] = useState<Set<string>>(new Set());
 
   // Selected Teacher for Teacher View Mode
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>(teachers[0]?.id || "");
@@ -180,18 +181,124 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     return t ? `${t.lastName} ${t.firstName}` : teacherId;
   };
 
-  // Helper: List of students for the selected class
-  const classStudents = useMemo(() => {
+  // Helper: List of students matching the search and/or class filter
+  const matchingStudents = useMemo(() => {
     if (!allUsers) return [];
+    const query = studentSearchQuery.trim().toLowerCase();
+
+    // 1. If user typed a search query, search across ALL students in the whole gymnasium
+    if (query) {
+      return allUsers.filter(
+        (u) =>
+          u.role === "STUDENT" &&
+          (`${u.lastName} ${u.firstName}`.toLowerCase().includes(query) ||
+            u.email.toLowerCase().includes(query) ||
+            (u.groupName && u.groupName.toLowerCase().includes(query)))
+      );
+    }
+
+    // 2. If no search query, filter by selected class
+    if (selectedClassId === "ALL") {
+      return allUsers.filter((u) => u.role === "STUDENT");
+    }
+
     return allUsers.filter(
       (u) =>
         u.role === "STUDENT" &&
         (u.groupName === selectedClassId ||
-          formatClassName(u.groupName || "", allUsers) === formatClassName(selectedClassId, allUsers)) &&
-        (!studentSearchQuery.trim() ||
-          `${u.lastName} ${u.firstName} ${u.email}`.toLowerCase().includes(studentSearchQuery.toLowerCase()))
+          formatClassName(u.groupName || "", allUsers) === formatClassName(selectedClassId, allUsers))
     );
   }, [allUsers, selectedClassId, studentSearchQuery]);
+
+  // Backward compatibility alias for single select
+  const classStudents = matchingStudents;
+
+  // Toggle single student expansion
+  const toggleStudentExpand = (studentId: string) => {
+    setExpandedStudentIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(studentId)) {
+        next.delete(studentId);
+      } else {
+        next.add(studentId);
+      }
+      return next;
+    });
+  };
+
+  // Check if all matching students are currently expanded
+  const isAllStudentsExpanded = useMemo(() => {
+    if (matchingStudents.length === 0) return false;
+    return matchingStudents.every((st) => expandedStudentIds.has(st.id));
+  }, [matchingStudents, expandedStudentIds]);
+
+  // Toggle expand / collapse all matching students
+  const toggleExpandAllStudents = () => {
+    if (isAllStudentsExpanded) {
+      setExpandedStudentIds(new Set());
+    } else {
+      setExpandedStudentIds(new Set(matchingStudents.map((st) => st.id)));
+    }
+  };
+
+  // Helper: Get full daily schedule for a specific student on a given date
+  const getStudentLessons = useCallback(
+    (student: User, date: string): (Lesson & { scheduleId: string })[] => {
+      const studentClass = student.groupName || "";
+      const results: (Lesson & { scheduleId: string })[] = [];
+
+      const schedulesOnDate = schedules.filter((s) => s.date === date);
+
+      for (const sch of schedulesOnDate) {
+        const isStudentClass =
+          studentClass &&
+          (sch.groupId === studentClass ||
+            formatClassName(sch.groupId, allUsers) === formatClassName(studentClass, allUsers));
+
+        for (const l of sch.lessons) {
+          // Explicitly assigned to this student
+          if (l.studentId === student.id) {
+            results.push({ ...l, scheduleId: sch.id });
+            continue;
+          }
+          // General class lesson from student's own class
+          if (isStudentClass && (!l.studentId || l.studentId === "") && l.lessonType !== "INDIVIDUAL") {
+            results.push({ ...l, scheduleId: sch.id });
+          }
+        }
+      }
+
+      // Sort chronologically by startTime
+      return results.sort((a, b) => a.startTime.localeCompare(b.startTime));
+    },
+    [schedules, allUsers]
+  );
+
+  // Pre-fill and open modal to add an individual lesson for a specific student
+  const handleOpenAddLessonForStudent = (student: User) => {
+    const studentClass = student.groupName || (selectedClassId === "ALL" ? "10-А" : selectedClassId);
+    const sched = schedules.find(
+      (s) =>
+        (s.groupId === studentClass ||
+          formatClassName(s.groupId, allUsers) === formatClassName(studentClass, allUsers)) &&
+        s.date === selectedDate
+    );
+    if (sched) {
+      setTargetScheduleId(sched.id);
+    }
+    setNewLessonSubject(subjects[0]?.name || "Математика");
+    setNewLessonTeacherId(teachers[0]?.id || "");
+    setNewLessonStart("08:30");
+    setNewLessonEnd("09:15");
+    setNewLessonRoom("301");
+    setNewLessonFloor(3);
+    setNewLessonType("INDIVIDUAL");
+    setNewLessonSubgroup("ИУП");
+    setNewLessonStudentId(student.id);
+    setNewLessonHw("");
+    setIsAddLessonOpen(true);
+    setActionError(null);
+  };
 
   // Filtered classes according to stage filter
   const displayedClasses = useMemo(() => {
@@ -201,6 +308,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
   // Current Schedule for selected Class & Date
   const currentClassSchedule = useMemo(() => {
+    if (selectedClassId === "ALL") return undefined;
     return schedules.find(
       (s) =>
         (s.groupId === selectedClassId ||
@@ -687,6 +795,21 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             {viewMode !== "TEACHERS" && (
               <div className="flex flex-wrap items-center gap-1.5 pt-2">
                 <span className="text-xs font-bold text-slate-400 mr-2">Класс:</span>
+                {viewMode === "STUDENTS" && (
+                  <button
+                    onClick={() => {
+                      setSelectedClassId("ALL");
+                      setSelectedStudentId("");
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer relative ${
+                      selectedClassId === "ALL" && !studentSearchQuery
+                        ? "bg-primary text-white shadow-sm"
+                        : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
+                    }`}
+                  >
+                    Все классы
+                  </button>
+                )}
                 {displayedClasses.map((cls) => {
                   const isSelected = selectedClassId === cls.id;
                   const hasScheduleOnDate = schedules.some(
@@ -727,45 +850,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               </div>
             )}
 
-            {/* Mode-Specific Subselectors: Student for IUP or Teacher */}
-            {viewMode === "STUDENTS" && (
-              <div className="pt-3 border-t border-slate-100 flex flex-col md:flex-row items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-amber-600 text-sm">person_search</span>
-                  <span className="text-xs font-bold text-slate-700">Ученик (ИУП {selectedClassId}):</span>
-                </div>
-                <div className="flex-1 flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
-                  <div className="relative w-full sm:w-48">
-                    <input
-                      type="text"
-                      placeholder="Поиск по имени/почте..."
-                      value={studentSearchQuery}
-                      onChange={(e) => setStudentSearchQuery(e.target.value)}
-                      className="w-full pl-7 pr-2 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-primary bg-white shadow-sm"
-                    />
-                    <span className="material-symbols-outlined absolute left-2 top-2 text-slate-400 text-xs">
-                      search
-                    </span>
-                  </div>
-                  <select
-                    value={selectedStudentId}
-                    onChange={(e) => setSelectedStudentId(e.target.value)}
-                    className="flex-1 px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-primary bg-white shadow-sm"
-                  >
-                    <option value="">Все ученики класса {selectedClassId} (Общий план)</option>
-                    {classStudents.map((st) => (
-                      <option key={st.id} value={st.id}>
-                        {st.lastName} {st.firstName} ({st.email})
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-xs text-slate-400 font-medium whitespace-nowrap">
-                    Учеников в классе: {classStudents.length}
-                  </span>
-                </div>
-              </div>
-            )}
-
+            {/* Teacher View Subselector */}
             {viewMode === "TEACHERS" && (
               <div className="pt-3 border-t border-slate-100 flex flex-col md:flex-row items-center gap-3">
                 <div className="flex items-center gap-2">
@@ -790,23 +875,246 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             )}
           </div>
 
-          {/* Schedule Body */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-primary font-black text-sm">
-                  {viewMode === "TEACHERS" ? (
-                    <span className="material-symbols-outlined text-primary">badge</span>
-                  ) : (
-                    selectedClassId
-                  )}
+          {/* Schedule Body: Mode-Specific Rendering */}
+          {viewMode === "STUDENTS" ? (
+            /* ============================================================== */
+            /* VIEW MODE: STUDENTS (IUP ACCORDION VIEW)                       */
+            /* ============================================================== */
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4">
+              {/* Header with Title and "Раскрыть для всех" button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-700 font-black text-sm">
+                    <span className="material-symbols-outlined text-amber-600">school</span>
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-800">
+                      Индивидуальные учебные планы (ИУП)
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      {studentSearchQuery
+                        ? `Поиск по всей гимназии: "${studentSearchQuery}" • Найдено: ${matchingStudents.length} учеников`
+                        : selectedClassId === "ALL"
+                        ? `Все параллели • Всего учеников: ${matchingStudents.length}`
+                        : `Класс ${selectedClassId} • Учеников в классе: ${matchingStudents.length}`}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={toggleExpandAllStudents}
+                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
+                  >
+                    <span className="material-symbols-outlined text-sm">
+                      {isAllStudentsExpanded ? "unfold_less" : "unfold_more"}
+                    </span>
+                    {isAllStudentsExpanded ? "Свернуть все" : "Раскрыть для всех"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Live Search Input for ANY Student in Gymnasium */}
+              <div className="relative w-full">
+                <span className="material-symbols-outlined absolute left-3.5 top-2.5 text-slate-400 text-base">
+                  person_search
+                </span>
+                <input
+                  type="text"
+                  placeholder="Введите фамилию или имя любого ученика гимназии (например: Морозов, Попов, Анна)..."
+                  value={studentSearchQuery}
+                  onChange={(e) => setStudentSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-primary bg-white shadow-xs"
+                />
+                {studentSearchQuery && (
+                  <button
+                    onClick={() => setStudentSearchQuery("")}
+                    className="absolute right-3.5 top-2 text-slate-400 hover:text-slate-600 text-xs font-bold w-6 h-6 flex items-center justify-center cursor-pointer rounded-full hover:bg-slate-100"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Empty State if no students match */}
+              {matchingStudents.length === 0 ? (
+                <div className="py-16 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400">
+                    <span className="material-symbols-outlined text-3xl">person_off</span>
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-700 mb-1">Ученики не найдены</h3>
+                  <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                    {studentSearchQuery
+                      ? `По запросу "${studentSearchQuery}" не найдено учеников. Проверьте правильность написания фамилии.`
+                      : `В выбранном классе ${selectedClassId} пока нет зарегистрированных учеников.`}
+                  </p>
+                </div>
+              ) : (
+                /* Student Accordion Cards */
+                <div className="space-y-3 pt-2">
+                  {matchingStudents.map((st) => {
+                    const isExpanded = isAllStudentsExpanded || expandedStudentIds.has(st.id);
+                    const stLessons = getStudentLessons(st, selectedDate);
+                    const stClass = st.groupName || selectedClassId;
+
+                    return (
+                      <div
+                        key={st.id}
+                        className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden transition-all hover:border-slate-300"
+                      >
+                        {/* Clickable Card Header */}
+                        <div
+                          onClick={() => toggleStudentExpand(st.id)}
+                          className="p-4 flex items-center justify-between cursor-pointer bg-slate-50/60 hover:bg-slate-100/60 transition-colors select-none"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 text-white font-black text-xs flex items-center justify-center shadow-xs">
+                              {st.lastName?.[0] || ""}{st.firstName?.[0] || ""}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-slate-900">
+                                  {st.lastName} {st.firstName}
+                                </span>
+                                <span className="px-2 py-0.5 bg-amber-50 text-amber-900 border border-amber-200/80 rounded-md text-[10.5px] font-bold">
+                                  {stClass}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-400">{st.email}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={`px-3 py-1 rounded-xl text-xs font-bold border ${
+                                stLessons.length > 0
+                                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                  : "bg-slate-100 text-slate-500 border-slate-200"
+                              }`}
+                            >
+                              {stLessons.length} {stLessons.length === 1 ? "урок" : stLessons.length >= 2 && stLessons.length <= 4 ? "урока" : "уроков"} на {selectedDate}
+                            </span>
+
+                            <span className="material-symbols-outlined text-slate-400 text-lg transition-transform duration-200">
+                              {isExpanded ? "expand_less" : "expand_more"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Expanded Schedule Content */}
+                        {isExpanded && (
+                          <div className="p-4 border-t border-slate-100 bg-white space-y-3">
+                            {stLessons.length === 0 ? (
+                              <div className="py-6 text-center bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                                <p className="text-xs text-slate-500 mb-3">
+                                  На выбранную дату ({selectedDate}) уроков для данного ученика нет.
+                                </p>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenAddLessonForStudent(st);
+                                  }}
+                                  className="px-3 py-1.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary-hover transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
+                                >
+                                  <span className="material-symbols-outlined text-sm">add</span>
+                                  Добавить урок в ИУП ученика
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                {stLessons.map((lesson, lIdx) => (
+                                  <div
+                                    key={lesson.id || lIdx}
+                                    className="p-3 rounded-xl border border-slate-100 bg-slate-50/40 hover:bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-20 text-center py-1.5 px-2 bg-white border border-slate-200 rounded-lg shadow-xs">
+                                        <span className="text-xs font-black text-slate-800">{lesson.startTime}</span>
+                                        <div className="text-[10px] text-slate-400 font-semibold">{lesson.endTime}</div>
+                                      </div>
+
+                                      <div className="space-y-0.5">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-xs font-bold text-slate-800">{lesson.subject}</span>
+                                          {lesson.studentId === st.id ? (
+                                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded text-[10px] font-bold">
+                                              ИУП / Персональный
+                                            </span>
+                                          ) : (
+                                            renderLessonTypeBadge(lesson.lessonType, lesson.subgroupName, lesson.studentId)
+                                          )}
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-3 text-[11.5px] text-slate-500">
+                                          <span className="flex items-center gap-1 font-semibold text-slate-700">
+                                            <span className="material-symbols-outlined text-xs text-slate-400">person</span>
+                                            {lesson.teacherName || getTeacherName(lesson.teacherId)}
+                                          </span>
+                                          <span className="flex items-center gap-1">
+                                            <span className="material-symbols-outlined text-xs text-slate-400">meeting_room</span>
+                                            Каб. {lesson.room} (эт. {lesson.floor || 1})
+                                          </span>
+                                          {lesson.homeworkDescription && (
+                                            <span className="text-slate-400 italic">ДЗ: {lesson.homeworkDescription}</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 self-end sm:self-center">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleOpenSubstituteModal(lesson.scheduleId, lesson);
+                                        }}
+                                        className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                                      >
+                                        <span className="material-symbols-outlined text-xs text-amber-600">published_with_changes</span>
+                                        Замена
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+
+                                <div className="pt-2 flex justify-end">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenAddLessonForStudent(st);
+                                    }}
+                                    className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                                  >
+                                    <span className="material-symbols-outlined text-xs">add</span>
+                                    Добавить урок ученику
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* ============================================================== */
+            /* VIEW MODE: CLASSES & TEACHERS (TIMETABLE VIEW)                */
+            /* ============================================================== */
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-primary font-black text-sm">
+                    {viewMode === "TEACHERS" ? (
+                      <span className="material-symbols-outlined text-primary">badge</span>
+                    ) : (
+                      selectedClassId
+                    )}
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-slate-800">
                     {viewMode === "TEACHERS"
                       ? `Расписание преподавателя: ${getTeacherName(selectedTeacherId)}`
-                      : viewMode === "STUDENTS" && selectedStudentId
-                      ? `Индивидуальный план (ИУП): ${getTeacherName(selectedStudentId)}`
                       : `Расписание класса ${selectedClassId}`}
                   </h2>
                   <p className="text-xs text-slate-500">
@@ -933,7 +1241,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               </div>
             )}
           </div>
-        </div>
+        )}
+      </div>
       )}
 
       {/* TAB 2: SUBJECTS DIRECTORY */}

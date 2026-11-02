@@ -39,3 +39,4 @@ export class CreateScheduleUseCase {
     return Result.ok(schedule);
   }
 }
+
