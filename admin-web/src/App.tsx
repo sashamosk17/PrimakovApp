@@ -74,6 +74,8 @@ export function App() {
   const [schedules, setSchedules] = useState<Schedule[]>(MOCK_SCHEDULES as Schedule[]);
   const [subjects, setSubjects] = useState<Subject[]>(MOCK_SUBJECTS as Subject[]);
   const [assignments, setAssignments] = useState<TeacherAssignment[]>([]);
+  const [scheduleTeachers, setScheduleTeachers] = useState<User[]>([]);
+  const [allGymnasiumUsers, setAllGymnasiumUsers] = useState<User[]>([]);
 
   // Modals
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
@@ -251,13 +253,17 @@ export function App() {
     if (isDemoMode) {
       setSchedules(MOCK_SCHEDULES as Schedule[]);
       setSubjects(MOCK_SUBJECTS as Subject[]);
+      setScheduleTeachers(MOCK_USERS.filter((u) => u.role === "TEACHER"));
+      setAllGymnasiumUsers(MOCK_USERS);
       return;
     }
     try {
-      const [schedRes, subjRes, assignRes] = await Promise.allSettled([
+      const [schedRes, subjRes, assignRes, teachersRes, allUsersRes] = await Promise.allSettled([
         apiClient.get("/admin/schedules"),
         apiClient.get("/admin/subjects"),
         apiClient.get("/admin/teacher-assignments"),
+        apiClient.get("/admin/users", { params: { role: "TEACHER", limit: 100 } }),
+        apiClient.get("/admin/users", { params: { limit: 500 } }),
       ]);
       if (schedRes.status === "fulfilled" && schedRes.value.data.data) {
         setSchedules(schedRes.value.data.data);
@@ -267,6 +273,12 @@ export function App() {
       }
       if (assignRes.status === "fulfilled" && assignRes.value.data.data) {
         setAssignments(assignRes.value.data.data);
+      }
+      if (teachersRes.status === "fulfilled" && teachersRes.value.data.data?.users) {
+        setScheduleTeachers(teachersRes.value.data.data.users);
+      }
+      if (allUsersRes.status === "fulfilled" && allUsersRes.value.data.data?.users) {
+        setAllGymnasiumUsers(allUsersRes.value.data.data.users);
       }
     } catch (err) {
       console.warn("Failed to load schedule data from API, using mock fallback", err);
@@ -450,6 +462,24 @@ export function App() {
     await loadScheduleData();
   };
 
+  const handleCreateSchedule = async (groupId: string, date: string) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      const newSchedule: Schedule = {
+        id: `sch-${Date.now()}`,
+        groupId,
+        date,
+        lessons: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setSchedules((prev) => [...prev, newSchedule]);
+      return newSchedule;
+    }
+    const res = await apiClient.post("/admin/schedules", { groupId, date });
+    await loadScheduleData();
+    return res.data?.data;
+  };
+
   const handleCreateSubject = async (name: string, description?: string) => {
     if (isDemoMode || serverUnavailableWarning) {
       const newSub: Subject = {
@@ -619,11 +649,12 @@ export function App() {
               <ScheduleView
                 schedules={schedules}
                 subjects={subjects}
-                teachers={users.filter((u) => u.role === "TEACHER")}
-                allUsers={users}
+                teachers={scheduleTeachers.length > 0 ? scheduleTeachers : users.filter((u) => u.role === "TEACHER")}
+                allUsers={allGymnasiumUsers.length > 0 ? allGymnasiumUsers : users}
                 assignments={assignments}
                 onSubstituteTeacher={handleSubstituteTeacher}
                 onAddLesson={handleAddLesson}
+                onCreateSchedule={handleCreateSchedule}
                 onCreateSubject={handleCreateSubject}
                 onDeleteSubject={handleDeleteSubject}
                 onAssignTeacher={handleAssignTeacher}

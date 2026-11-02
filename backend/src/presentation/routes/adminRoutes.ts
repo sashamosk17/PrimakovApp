@@ -47,6 +47,11 @@ const SubstituteTeacherSchema = z.object({
   scheduleId: z.string().optional(),
 });
 
+const CreateScheduleSchema = z.object({
+  groupId: z.string().min(1),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
 const AddLessonSchema = z.object({
   scheduleId: z.string().min(1),
   subject: z.string().min(1),
@@ -165,6 +170,7 @@ export function adminRoutes(deps: AdminRoutesDependencies): Router {
 
   // Schedules & Substitutions Management (Sprint 1 - Feature 3)
   router.get("/schedules", controller.getSchedules);
+  router.post("/schedules", validate(CreateScheduleSchema), controller.createSchedule);
   router.patch(
     "/schedules/lessons/:id/substitute",
     validate(SubstituteTeacherSchema),

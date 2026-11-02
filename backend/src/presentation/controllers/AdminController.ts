@@ -13,6 +13,7 @@ import { AssignTeacherSubjectUseCase } from "../../application/admin/AssignTeach
 import { RemoveTeacherSubjectUseCase } from "../../application/admin/RemoveTeacherSubjectUseCase";
 import { GetTeacherSubjectsUseCase } from "../../application/admin/GetTeacherSubjectsUseCase";
 import { GetAllSchedulesAdminUseCase } from "../../application/admin/GetAllSchedulesAdminUseCase";
+import { CreateScheduleUseCase } from "../../application/admin/CreateScheduleUseCase";
 import { SubstituteTeacherUseCase } from "../../application/admin/SubstituteTeacherUseCase";
 import { AddLessonToScheduleUseCase } from "../../application/admin/AddLessonToScheduleUseCase";
 import { IRequestRepository, RequestStatus, RequestPriority } from "../../domain/repositories/IRequestRepository";
@@ -48,6 +49,7 @@ export class AdminController {
   private removeTeacherSubjectUseCase: RemoveTeacherSubjectUseCase;
   private getTeacherSubjectsUseCase: GetTeacherSubjectsUseCase;
   private getAllSchedulesUseCase: GetAllSchedulesAdminUseCase;
+  private createScheduleUseCase: CreateScheduleUseCase;
   private substituteTeacherUseCase: SubstituteTeacherUseCase;
   private addLessonToScheduleUseCase: AddLessonToScheduleUseCase;
 
@@ -94,6 +96,7 @@ export class AdminController {
     this.removeTeacherSubjectUseCase = new RemoveTeacherSubjectUseCase(this.subjectRepo);
     this.getTeacherSubjectsUseCase = new GetTeacherSubjectsUseCase(this.subjectRepo);
     this.getAllSchedulesUseCase = new GetAllSchedulesAdminUseCase(this.scheduleRepo);
+    this.createScheduleUseCase = new CreateScheduleUseCase(this.scheduleRepo);
     this.substituteTeacherUseCase = new SubstituteTeacherUseCase(this.scheduleRepo);
     this.addLessonToScheduleUseCase = new AddLessonToScheduleUseCase(this.scheduleRepo);
 
@@ -439,6 +442,19 @@ export class AdminController {
         updatedAt: s.updatedAt.toISOString(),
       }));
       return res.status(200).json({ status: "success", data });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  createSchedule = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { groupId, date } = req.body;
+      const result = await this.createScheduleUseCase.execute({ groupId, date });
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+      return res.status(201).json({ status: "success", data: result.value });
     } catch (error) {
       next(error);
     }

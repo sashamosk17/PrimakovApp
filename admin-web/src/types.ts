@@ -76,6 +76,8 @@ export interface TeacherAssignment {
   subjectName?: string;
 }
 
+export type LessonType = "CLASS" | "SUBGROUP" | "PROFILE" | "INDIVIDUAL";
+
 export interface Lesson {
   id: string;
   subject: string;
@@ -85,8 +87,13 @@ export interface Lesson {
   endTime: string;
   room: string;
   floor?: number;
+  building?: string;
   hasHomework?: boolean;
   homeworkDescription?: string;
+  lessonType?: LessonType;
+  subgroupName?: string;
+  studentId?: string;
+  studentName?: string;
 }
 
 export interface Schedule {
