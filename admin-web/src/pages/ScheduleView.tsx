@@ -21,6 +21,7 @@ export interface ScheduleViewProps {
     subgroupName?: string;
     studentId?: string;
   }) => Promise<void>;
+  onDeleteLesson?: (scheduleId: string, lessonId: string) => Promise<void>;
   onCreateSchedule?: (groupId: string, date: string) => Promise<any>;
   onCreateSubject: (name: string, description?: string) => Promise<void>;
   onDeleteSubject: (id: string) => Promise<void>;
@@ -107,6 +108,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   assignments,
   onSubstituteTeacher,
   onAddLesson,
+  onDeleteLesson,
   onCreateSchedule,
   onCreateSubject,
   onDeleteSubject,
@@ -117,8 +119,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   // Main Navigation Tabs
   const [activeTab, setActiveTab] = useState<"schedules" | "subjects" | "assignments">("schedules");
 
-  // Schedule View Mode: по классам, по ученикам (ИУП), по преподавателям
-  const [viewMode, setViewMode] = useState<"CLASSES" | "STUDENTS" | "TEACHERS">("CLASSES");
+  // Schedule View Mode: по классам, по ученикам (ИУП), по преподавателям, матрица дня
+  const [viewMode, setViewMode] = useState<"CLASSES" | "STUDENTS" | "TEACHERS" | "MATRIX">("CLASSES");
 
   // Filter stage: ALL, PRIMARY, MIDDLE, HIGH
   const [stageFilter, setStageFilter] = useState<"ALL" | "PRIMARY" | "MIDDLE" | "HIGH">("ALL");
@@ -452,6 +454,16 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     }
   };
 
+  const handleDeleteLesson = async (scheduleId: string, lessonId: string) => {
+    if (onDeleteLesson) {
+      try {
+        await onDeleteLesson(scheduleId, lessonId);
+      } catch (err: any) {
+        setActionError(err.message || "Ошибка при отмене урока");
+      }
+    }
+  };
+
   const handleCreateSubjectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSubjName.trim()) return;
@@ -737,6 +749,18 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                   <span className="material-symbols-outlined text-[14px]">badge</span>
                   По преподавателям
                 </button>
+
+                <button
+                  onClick={() => setViewMode("MATRIX")}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    viewMode === "MATRIX"
+                      ? "bg-primary text-white shadow-sm"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[14px]">grid_view</span>
+                  Шахматка дня (Matrix)
+                </button>
               </div>
 
               {/* Date Controls */}
@@ -876,7 +900,130 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
           </div>
 
           {/* Schedule Body: Mode-Specific Rendering */}
-          {viewMode === "STUDENTS" ? (
+          {viewMode === "MATRIX" ? (
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 overflow-x-auto">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-100">
+                <div>
+                  <h2 className="text-base font-bold text-slate-800">
+                    Интерактивная шахматка параллелей на {selectedDate}
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Сетка звонков 1–8 гимназии по классам • Проверка коллизий и покрытие уроками
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ступень:</span>
+                  {(["ALL", "HIGH", "MIDDLE", "PRIMARY"] as const).map((st) => (
+                    <button
+                      key={st}
+                      onClick={() => setStageFilter(st)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition-all ${
+                        stageFilter === st
+                          ? "bg-primary text-white shadow-xs"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      }`}
+                    >
+                      {st === "ALL" ? "Все классы" : st === "HIGH" ? "10–11 (Старшая)" : st === "MIDDLE" ? "5–9 (Основная)" : "1–4 (Начальная)"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left min-w-[900px]">
+                  <thead>
+                    <tr>
+                      <th className="p-2.5 border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase w-32 text-center">
+                        Звонки
+                      </th>
+                      {displayedClasses.map((c) => (
+                        <th key={c.id} className="p-2 border border-slate-200 bg-slate-50 text-center min-w-[130px]">
+                          <div className="font-bold text-xs text-on-surface">{c.name}</div>
+                          {c.specialization && (
+                            <div className="text-[9px] text-slate-400 truncate max-w-[120px]">{c.specialization}</div>
+                          )}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {GYMNASIUM_BELL_SLOTS.map((slot) => (
+                      <tr key={slot.label} className="hover:bg-slate-50/50">
+                        <td className="p-2 border border-slate-200 text-center bg-slate-50/70">
+                          <div className="font-bold text-xs text-on-surface">{slot.label}</div>
+                          <div className="text-[10px] text-slate-400 font-mono">{slot.start} – {slot.end}</div>
+                          {slot.note && (
+                            <span className="text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-full mt-0.5 inline-block border border-amber-200">
+                              {slot.note}
+                            </span>
+                          )}
+                        </td>
+                        {displayedClasses.map((c) => {
+                          const sched = schedules.find((s) => s.groupId === c.id && s.date.startsWith(selectedDate));
+                          const lesson = sched?.lessons.find(
+                            (l) => l.startTime === slot.start || (l.startTime <= slot.start && l.endTime >= slot.end)
+                          );
+                          const hasTeacherCollision = lesson ? checkTeacherCollision(lesson.teacherId, slot.start, slot.end, sched?.id || "").hasConflict : false;
+
+                          return (
+                            <td key={c.id} className="p-1.5 border border-slate-200 align-top">
+                              {lesson ? (
+                                <div className={`p-2 rounded-xl border text-xs flex flex-col justify-between min-h-[64px] gap-1 transition-all ${
+                                  hasTeacherCollision
+                                    ? "bg-red-50/90 border-red-300 text-red-950 shadow-xs"
+                                    : "bg-slate-50/90 border-slate-200/80 text-on-surface"
+                                }`}>
+                                  <div className="font-bold text-[11px] leading-tight flex items-start justify-between gap-1">
+                                    <span className="truncate">{lesson.subject}</span>
+                                    {hasTeacherCollision && (
+                                      <span title="Конфликт преподавателя в этот слот" className="material-symbols-outlined text-xs text-red-600 flex-shrink-0">
+                                        warning
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[10px] text-slate-500 leading-tight truncate">
+                                    {lesson.teacherName || getTeacherName(lesson.teacherId)}
+                                  </div>
+                                  <div className="flex items-center justify-between text-[9px] text-slate-400 pt-0.5">
+                                    <span className="font-mono">Каб. {lesson.room}</span>
+                                    {onDeleteLesson && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (confirm(`Отменить урок "${lesson.subject}" для ${c.name}?`)) {
+                                            handleDeleteLesson(sched?.id || "", lesson.id);
+                                          }
+                                        }}
+                                        title="Отменить урок"
+                                        className="text-slate-400 hover:text-red-700 cursor-pointer"
+                                      >
+                                        ✕
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div
+                                  onClick={() => {
+                                    setSelectedClassId(c.id);
+                                    handleOpenAddLessonModal();
+                                  }}
+                                  className="h-16 flex items-center justify-center text-slate-300 hover:text-primary hover:bg-red-50/40 rounded-xl transition-all cursor-pointer border border-transparent hover:border-red-200"
+                                  title={`Назначить урок в ${slot.label} для ${c.name}`}
+                                >
+                                  <span className="text-[11px] font-bold">+</span>
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : viewMode === "STUDENTS" ? (
             /* ============================================================== */
             /* VIEW MODE: STUDENTS (IUP ACCORDION VIEW)                       */
             /* ============================================================== */
@@ -1071,6 +1218,20 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                                         <span className="material-symbols-outlined text-xs text-amber-600">published_with_changes</span>
                                         Замена
                                       </button>
+                                      {onDeleteLesson && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (confirm(`Отменить и удалить урок "${lesson.subject}"?`)) {
+                                              handleDeleteLesson(lesson.scheduleId, lesson.id);
+                                            }
+                                          }}
+                                          title="Отменить урок"
+                                          className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-700 rounded-lg transition-colors cursor-pointer"
+                                        >
+                                          <span className="material-symbols-outlined text-xs">delete</span>
+                                        </button>
+                                      )}
                                     </div>
                                   </div>
                                 ))}
@@ -1235,6 +1396,22 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                         <span className="material-symbols-outlined text-sm text-amber-600">published_with_changes</span>
                         Оформить замену
                       </button>
+                      {onDeleteLesson && (
+                        <button
+                          onClick={() => {
+                            if (confirm(`Отменить и удалить урок "${lesson.subject}"?`)) {
+                              handleDeleteLesson(
+                                (lesson as any).scheduleId || currentClassSchedule?.id || "",
+                                lesson.id
+                              );
+                            }
+                          }}
+                          title="Отменить/удалить урок"
+                          className="p-1.5 hover:bg-red-50 text-slate-400 hover:text-red-700 rounded-xl transition-colors cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-base">delete</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

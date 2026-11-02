@@ -6,4 +6,6 @@ export interface IRatingRepository {
   save(rating: Rating): Promise<Result<void>>;
   update(rating: Rating): Promise<Result<void>>;
   getAll?(): Promise<Result<Rating[]>>;
+  getById?(id: string): Promise<Result<Rating | null>>;
+  delete?(id: string): Promise<Result<void>>;
 }

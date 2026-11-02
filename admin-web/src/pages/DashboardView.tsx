@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import type { DashboardMetrics, ActivityPoint, ServiceRequest, Announcement } from "../types";
+import { useLanguage } from "../context/LanguageContext";
 
 interface DashboardViewProps {
   metrics: DashboardMetrics;
@@ -20,6 +21,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenCreateAnnouncement,
   onNavigateTab,
 }) => {
+  const { t } = useLanguage();
+  const [activityRole, setActivityRole] = useState<"STUDENTS" | "TEACHERS">("STUDENTS");
+
+  const displayedActivity = weeklyActivity.map((p) => ({
+    day: p.day,
+    count: activityRole === "TEACHERS" ? Math.max(8, Math.round(p.count * 0.28)) : p.count,
+  }));
   return (
     <div className="space-y-8 academic-sketch-bg pb-12">
       {/* Hero Header Section */}
@@ -148,21 +156,35 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </p>
               </div>
               <div className="flex gap-2">
-                <button className="px-3 py-1 bg-white rounded-lg text-xs font-bold text-on-surface shadow-sm">
-                  Ученики
+                <button
+                  onClick={() => setActivityRole("STUDENTS")}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    activityRole === "STUDENTS"
+                      ? "bg-white text-on-surface shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  {t("dash.students")}
                 </button>
-                <button className="px-3 py-1 text-xs font-bold text-slate-500 hover:text-slate-700">
-                  Учителя
+                <button
+                  onClick={() => setActivityRole("TEACHERS")}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    activityRole === "TEACHERS"
+                      ? "bg-white text-on-surface shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  {t("dash.teachers")}
                 </button>
               </div>
             </div>
 
             {/* Interactive Visual Bar Chart */}
             <div className="h-56 w-full flex items-end justify-between gap-4 px-2">
-              {weeklyActivity.map((point, index) => {
-                const maxVal = Math.max(...weeklyActivity.map((p) => p.count), 100);
+              {displayedActivity.map((point, index) => {
+                const maxVal = Math.max(...displayedActivity.map((p) => p.count), 100);
                 const heightPct = Math.round((point.count / maxVal) * 100);
-                const isPeak = point.count === Math.max(...weeklyActivity.map((p) => p.count));
+                const isPeak = point.count === Math.max(...displayedActivity.map((p) => p.count));
                 return (
                   <div key={index} className="flex-1 flex flex-col items-center gap-2 group">
                     <span className="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-red-950 transition-opacity bg-white px-1.5 py-0.5 rounded shadow">

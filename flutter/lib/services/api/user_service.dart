@@ -73,6 +73,9 @@ class UserService {
     String? lastName,
     String? avatarUrl,
     bool? twoFactorEnabled,
+    String? birthDate,
+    String? phone,
+    String? telegram,
   }) async {
     try {
       final response = await _dio.put(
@@ -82,6 +85,9 @@ class UserService {
           if (lastName != null) 'lastName': lastName,
           if (avatarUrl != null) 'avatarUrl': avatarUrl,
           if (twoFactorEnabled != null) 'twoFactorEnabled': twoFactorEnabled,
+          if (birthDate != null) 'birthDate': birthDate,
+          if (phone != null) 'phone': phone,
+          if (telegram != null) 'telegram': telegram,
         },
       );
 
@@ -204,6 +210,58 @@ class UserService {
       }
     } on DioException catch (e) {
       throw Exception('Failed to change password: ${e.message}');
+    }
+  }
+
+  // GET /api/users/directory
+  Future<List<User>> searchDirectory({
+    String? query,
+    String? role,
+    String? groupName,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '/users/directory',
+        queryParameters: {
+          if (query != null && query.isNotEmpty) 'query': query,
+          if (role != null && role.isNotEmpty) 'role': role,
+          if (groupName != null && groupName.isNotEmpty) 'groupName': groupName,
+          'limit': 100,
+        },
+      );
+
+      final responseData = response.data as Map<String, dynamic>;
+      if (responseData['status'] == 'success') {
+        final data = responseData['data'] as Map<String, dynamic>;
+        final usersList = data['users'] as List? ?? [];
+        return usersList.map((e) => User.fromJson(e as Map<String, dynamic>)).toList();
+      }
+
+      return [];
+    } on DioException catch (e) {
+      throw Exception('Failed to search directory: ${e.message}');
+    }
+  }
+
+  // GET /api/users/:id/profile
+  Future<UserProfileData> getUserProfile(String userId, {String? date}) async {
+    try {
+      final response = await _dio.get(
+        '/users/$userId/profile',
+        queryParameters: {
+          if (date != null) 'date': date,
+        },
+      );
+
+      final responseData = response.data as Map<String, dynamic>;
+      if (responseData['status'] == 'success') {
+        final data = responseData['data'] as Map<String, dynamic>;
+        return UserProfileData.fromJson(data);
+      }
+
+      throw Exception('Failed to fetch user profile');
+    } on DioException catch (e) {
+      throw Exception('Failed to fetch user profile: ${e.message}');
     }
   }
 }

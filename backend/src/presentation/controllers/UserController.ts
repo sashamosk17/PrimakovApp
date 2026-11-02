@@ -9,6 +9,8 @@ import { RevokeSessionUseCase } from "../../application/user/RevokeSessionUseCas
 import { GetNotificationSettingsUseCase } from "../../application/user/GetNotificationSettingsUseCase";
 import { UpdateNotificationSettingsUseCase } from "../../application/user/UpdateNotificationSettingsUseCase";
 import { GetUserStatsUseCase } from "../../application/user/GetUserStatsUseCase";
+import { GetUserProfileUseCase } from "../../application/user/GetUserProfileUseCase";
+import { SearchUsersDirectoryUseCase } from "../../application/user/SearchUsersDirectoryUseCase";
 
 export class UserController {
   constructor(
@@ -20,7 +22,9 @@ export class UserController {
     private readonly revokeSessionUseCase?: RevokeSessionUseCase,
     private readonly getNotificationSettingsUseCase?: GetNotificationSettingsUseCase,
     private readonly updateNotificationSettingsUseCase?: UpdateNotificationSettingsUseCase,
-    private readonly getUserStatsUseCase?: GetUserStatsUseCase
+    private readonly getUserStatsUseCase?: GetUserStatsUseCase,
+    private readonly getUserProfileUseCase?: GetUserProfileUseCase,
+    private readonly searchUsersDirectoryUseCase?: SearchUsersDirectoryUseCase
   ) {}
 
   public getTeachers = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -70,7 +74,7 @@ export class UserController {
   public updateProfile = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.userId;
-      const { firstName, lastName, avatarUrl, twoFactorEnabled } = req.body;
+      const { firstName, lastName, avatarUrl, twoFactorEnabled, birthDate, phone, telegram } = req.body;
 
       const result = await this.updateProfileUseCase.execute({
         userId,
@@ -78,6 +82,9 @@ export class UserController {
         lastName,
         avatarUrl,
         twoFactorEnabled,
+        birthDate,
+        phone,
+        telegram,
       });
 
       if (result.isFailure) {
@@ -268,6 +275,58 @@ export class UserController {
         status: "success",
         data: result.value?.toJSON()
       });
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  // --- GET /api/users/directory ---
+  public getDirectory = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!this.searchUsersDirectoryUseCase) {
+        return res.status(501).json({ status: "error", error: { message: "Directory search not configured" } });
+      }
+
+      const { query, role, groupName, page, limit } = req.query;
+
+      const result = await this.searchUsersDirectoryUseCase.execute({
+        query: query ? String(query) : undefined,
+        role: role as any,
+        groupName: groupName ? String(groupName) : undefined,
+        page: page ? parseInt(String(page), 10) : undefined,
+        limit: limit ? parseInt(String(limit), 10) : undefined,
+      });
+
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+
+      return res.json({ status: "success", data: result.value });
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  // --- GET /api/users/:id/profile ---
+  public getUserProfile = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!this.getUserProfileUseCase) {
+        return res.status(501).json({ status: "error", error: { message: "User profile service not configured" } });
+      }
+
+      const targetUserId = req.params.id;
+      const { date } = req.query;
+
+      const result = await this.getUserProfileUseCase.execute({
+        targetUserId,
+        date: date ? String(date) : undefined,
+      });
+
+      if (result.isFailure) {
+        return res.status(404).json({ status: "error", error: { message: result.error } });
+      }
+
+      return res.json({ status: "success", data: result.value });
     } catch (error) {
       return next(error);
     }

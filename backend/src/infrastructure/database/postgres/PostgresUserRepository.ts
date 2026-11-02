@@ -20,6 +20,7 @@ export class PostgresUserRepository implements IUserRepository {
     try {
       const query = `
         SELECT id, email, password_hash, first_name, last_name, role, group_name,
+               birth_date, phone, telegram,
                is_active, vk_id, avatar_url, two_factor_enabled, created_at, updated_at
         FROM users
         WHERE id = $1 AND deleted_at IS NULL
@@ -43,6 +44,7 @@ export class PostgresUserRepository implements IUserRepository {
     try {
       const query = `
         SELECT id, email, password_hash, first_name, last_name, role, group_name,
+               birth_date, phone, telegram,
                is_active, vk_id, avatar_url, two_factor_enabled, created_at, updated_at
         FROM users
         WHERE email = $1 AND deleted_at IS NULL
@@ -66,6 +68,7 @@ export class PostgresUserRepository implements IUserRepository {
     try {
       const query = `
         SELECT id, email, password_hash, first_name, last_name, role, group_name,
+               birth_date, phone, telegram,
                is_active, vk_id, avatar_url, two_factor_enabled, created_at, updated_at
         FROM users
         WHERE role = $1 AND is_active = true AND deleted_at IS NULL
@@ -97,10 +100,14 @@ export class PostgresUserRepository implements IUserRepository {
               first_name = $4,
               last_name = $5,
               role = $6,
-              is_active = $7,
-              vk_id = $8,
-              avatar_url = $9,
-              two_factor_enabled = $10,
+              group_name = $7,
+              birth_date = $8,
+              phone = $9,
+              telegram = $10,
+              is_active = $11,
+              vk_id = $12,
+              avatar_url = $13,
+              two_factor_enabled = $14,
               updated_at = NOW()
           WHERE id = $1
         `;
@@ -112,6 +119,10 @@ export class PostgresUserRepository implements IUserRepository {
           user.firstName,
           user.lastName,
           user.role,
+          user.groupName || null,
+          user.birthDate || null,
+          user.phone || null,
+          user.telegram || null,
           user.isActive,
           user.vkId || null,
           user.avatarUrl || null,
@@ -120,8 +131,8 @@ export class PostgresUserRepository implements IUserRepository {
       } else {
         // Insert new user
         const insertQuery = `
-          INSERT INTO users (id, email, password_hash, first_name, last_name, role, is_active, vk_id, avatar_url, two_factor_enabled, created_at, updated_at)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          INSERT INTO users (id, email, password_hash, first_name, last_name, role, group_name, birth_date, phone, telegram, is_active, vk_id, avatar_url, two_factor_enabled, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         `;
 
         await this.pool.query(insertQuery, [
@@ -131,6 +142,10 @@ export class PostgresUserRepository implements IUserRepository {
           user.firstName,
           user.lastName,
           user.role,
+          user.groupName || null,
+          user.birthDate || null,
+          user.phone || null,
+          user.telegram || null,
           user.isActive,
           user.vkId || null,
           user.avatarUrl || null,
@@ -163,6 +178,11 @@ export class PostgresUserRepository implements IUserRepository {
         params.push(filter.isActive);
       }
 
+      if (filter?.groupName) {
+        conditions.push(`group_name = $${paramIndex++}`);
+        params.push(filter.groupName);
+      }
+
       if (filter?.search) {
         conditions.push(`(first_name ILIKE $${paramIndex} OR last_name ILIKE $${paramIndex} OR email ILIKE $${paramIndex})`);
         params.push(`%${filter.search}%`);
@@ -183,6 +203,7 @@ export class PostgresUserRepository implements IUserRepository {
 
       const dataQuery = `
         SELECT id, email, password_hash, first_name, last_name, role, group_name,
+               birth_date, phone, telegram,
                is_active, vk_id, avatar_url, two_factor_enabled, created_at, updated_at
         FROM users
         ${whereClause}
@@ -275,7 +296,10 @@ export class PostgresUserRepository implements IUserRepository {
       row.avatar_url,
       row.two_factor_enabled ?? false,
       row.deleted_at ? new Date(row.deleted_at) : undefined,
-      row.group_name || undefined
+      row.group_name || undefined,
+      row.birth_date ? (typeof row.birth_date === 'string' ? row.birth_date : row.birth_date.toISOString().slice(0, 10)) : undefined,
+      row.phone || undefined,
+      row.telegram || undefined
     );
   }
 }

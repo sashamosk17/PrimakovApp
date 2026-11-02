@@ -13,6 +13,7 @@ import '../../providers/ui_provider.dart';
 import '../../providers/user_provider.dart';
 import 'change_password_screen.dart';
 import 'edit_profile_screen.dart';
+import 'user_profile_detail_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -1049,9 +1050,29 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
               _SettingsGroup(
                 children: [
                   _SettingNavigationRow(
+                    icon: Icons.badge_outlined,
+                    title: 'Мой публичный профиль',
+                    subtitle: 'Контакты, расписание и как вас видят в справочнике',
+                    onTap: () {
+                      final u = ref.read(currentUserProvider) ?? currentUser;
+                      if (u != null) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => UserProfileDetailScreen(initialUser: u),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  Divider(
+                    height: 1,
+                    indent: 66,
+                    color: isDark ? AppColors.darkBorderSecondary : const Color(0xFFEEEEF0),
+                  ),
+                  _SettingNavigationRow(
                     icon: Icons.edit,
                     title: 'Редактировать профиль',
-                    subtitle: 'Изменить имя и фамилию',
+                    subtitle: 'Контакты, дата рождения, личные данные',
                     onTap: () async {
                       await Navigator.of(context).push(
                         MaterialPageRoute(

@@ -1,10 +1,15 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { useLanguage } from "../context/LanguageContext";
+import type { ServiceRequest } from "../types";
 
 interface HeaderProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   adminName?: string;
   adminEmail?: string;
+  urgentRequests?: ServiceRequest[];
+  onSelectRequest?: (req: ServiceRequest) => void;
+  onNavigateTab?: (tab: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -12,14 +17,33 @@ export const Header: React.FC<HeaderProps> = ({
   onSearchChange,
   adminName = "Администратор",
   adminEmail = "admin@primakov.school",
+  urgentRequests = [],
+  onNavigateTab,
 }) => {
+  const { language, setLanguage, t } = useLanguage();
+  const [isAlertsOpen, setIsAlertsOpen] = useState(false);
+  const alertsRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (alertsRef.current && !alertsRef.current.contains(e.target as Node)) {
+        setIsAlertsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const urgentCount = urgentRequests.filter((r) => r.status !== "COMPLETED").length;
+
   return (
-    <header className="flex justify-between items-center w-full px-8 py-4 sticky top-0 bg-white/90 backdrop-blur-lg z-40 border-b border-slate-100">
+    <header className="flex justify-between items-center w-full px-8 py-4 sticky top-0 bg-white/95 backdrop-blur-lg z-40 border-b border-slate-100 shadow-xs">
       <div className="flex items-center gap-4">
         <h2 className="text-base font-extrabold tracking-widest text-red-900 uppercase font-headline">
-          Elite Academy Admin
+          {t("header.title")}
         </h2>
-        <div className="hidden md:flex bg-slate-100/70 rounded-full px-4 py-1.5 items-center gap-2 w-72 ml-4">
+        <div className="hidden md:flex bg-slate-100/70 rounded-full px-4 py-1.5 items-center gap-2 w-80 ml-4 border border-transparent focus-within:border-primary/40 focus-within:bg-white transition-all">
           <span className="material-symbols-outlined text-slate-400 text-sm">
             search
           </span>
@@ -27,21 +51,127 @@ export const Header: React.FC<HeaderProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Поиск записей, учеников, заявок..."
-            className="bg-transparent border-none text-xs focus:ring-0 focus:outline-none w-full placeholder:text-slate-400"
+            placeholder={t("header.searchPlaceholder")}
+            className="bg-transparent border-none text-xs focus:ring-0 focus:outline-none w-full placeholder:text-slate-400 font-body"
           />
+          {searchQuery && (
+            <button
+              onClick={() => onSearchChange("")}
+              className="text-slate-400 hover:text-slate-600 text-xs"
+            >
+              ✕
+            </button>
+          )}
         </div>
       </div>
 
       <div className="flex items-center gap-4">
-        <button
-          title="Уведомления"
-          className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors relative"
-        >
-          <span className="material-symbols-outlined">notifications</span>
-          <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-white"></span>
-        </button>
+        {/* Language Switcher RU / EN */}
+        <div className="flex items-center bg-slate-100 rounded-full p-0.5 border border-slate-200">
+          <button
+            onClick={() => setLanguage("ru")}
+            className={`px-2.5 py-1 text-[11px] font-bold rounded-full transition-all cursor-pointer ${
+              language === "ru"
+                ? "bg-white text-red-900 shadow-xs"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            RU
+          </button>
+          <button
+            onClick={() => setLanguage("en")}
+            className={`px-2.5 py-1 text-[11px] font-bold rounded-full transition-all cursor-pointer ${
+              language === "en"
+                ? "bg-white text-red-900 shadow-xs"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            EN
+          </button>
+        </div>
 
+        {/* Notifications & Urgent Alert Drawer Button */}
+        <div className="relative" ref={alertsRef}>
+          <button
+            onClick={() => setIsAlertsOpen((prev) => !prev)}
+            title={t("header.notifications")}
+            className="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-xl">notifications</span>
+            {urgentCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-pulse">
+                {urgentCount}
+              </span>
+            )}
+          </button>
+
+          {/* Urgent Alerts Popover */}
+          {isAlertsOpen && (
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-3xl shadow-xl border border-slate-100 p-4 z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-red-700 text-lg">
+                    notification_important
+                  </span>
+                  <h4 className="font-bold text-xs text-on-surface font-headline uppercase tracking-wider">
+                    {t("header.notifications")}
+                  </h4>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700">
+                  {urgentCount} активных
+                </span>
+              </div>
+
+              <div className="py-2 space-y-2 max-h-72 overflow-y-auto">
+                {urgentRequests.length === 0 ? (
+                  <div className="text-center py-6 text-slate-400 text-xs">
+                    {t("header.noUrgentAlerts")}
+                  </div>
+                ) : (
+                  urgentRequests.slice(0, 5).map((req) => (
+                    <div
+                      key={req.id}
+                      onClick={() => {
+                        setIsAlertsOpen(false);
+                        if (onNavigateTab) onNavigateTab("requests");
+                      }}
+                      className="p-2.5 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer border border-slate-100 flex flex-col gap-1 text-left"
+                    >
+                      <div className="flex justify-between items-center text-[10px]">
+                        <span className="font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-md">
+                          {req.type} • {req.priority}
+                        </span>
+                        <span className="text-slate-400">
+                          {req.roomId ? `Ауд. ${req.roomId}` : "Кампус"}
+                        </span>
+                      </div>
+                      <p className="font-bold text-xs text-on-surface line-clamp-1">
+                        {req.title}
+                      </p>
+                      <p className="text-[11px] text-slate-500 line-clamp-2">
+                        {req.description}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 text-center">
+                <button
+                  onClick={() => {
+                    setIsAlertsOpen(false);
+                    if (onNavigateTab) onNavigateTab("requests");
+                  }}
+                  className="text-xs font-bold text-primary hover:underline cursor-pointer"
+                >
+                  {t("header.viewAll")} →
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Admin Profile Chip */}
         <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
           <div className="h-9 w-9 rounded-xl overflow-hidden border border-slate-200 bg-red-100 flex items-center justify-center font-headline font-bold text-red-900 text-sm">
             П
@@ -59,4 +189,3 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
-

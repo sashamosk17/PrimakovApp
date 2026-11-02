@@ -28,7 +28,12 @@ export class MockUserRepository implements IUserRepository {
         true,
         undefined,
         "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250",
-        true
+        true,
+        undefined,
+        "10-А",
+        "2010-04-12",
+        "+7 (999) 111-22-33",
+        "@ivan_petrov_gym"
       )
     );
 
@@ -45,7 +50,14 @@ export class MockUserRepository implements IUserRepository {
         new Date("2024-01-01"),
         undefined,
         true,
-        undefined
+        undefined,
+        undefined,
+        false,
+        undefined,
+        "10-А",
+        "2010-07-25",
+        "+7 (999) 222-33-44",
+        "@maria_sokolova_gym"
       )
     );
 
@@ -62,7 +74,14 @@ export class MockUserRepository implements IUserRepository {
         new Date("2024-01-01"),
         undefined,
         true,
-        undefined
+        undefined,
+        undefined,
+        false,
+        undefined,
+        "11-Б",
+        "2009-11-14",
+        "+7 (999) 333-44-55",
+        "@aleksei_smirnov_gym"
       )
     );
 
@@ -80,7 +99,14 @@ export class MockUserRepository implements IUserRepository {
         new Date("2024-01-01"),
         undefined,
         true,
-        undefined
+        undefined,
+        undefined,
+        false,
+        undefined,
+        "Кафедра математики",
+        "1980-05-18",
+        "+7 (916) 123-45-67",
+        "@ivanov_math"
       )
     );
 
@@ -97,7 +123,14 @@ export class MockUserRepository implements IUserRepository {
         new Date("2024-01-01"),
         undefined,
         true,
-        undefined
+        undefined,
+        undefined,
+        false,
+        undefined,
+        "Кафедра словесности",
+        "1976-12-03",
+        "+7 (916) 234-56-78",
+        "@sidorov_lit"
       )
     );
 
@@ -115,7 +148,14 @@ export class MockUserRepository implements IUserRepository {
         new Date("2024-01-01"),
         undefined,
         true,
-        undefined
+        undefined,
+        undefined,
+        false,
+        undefined,
+        "Администрация",
+        "1985-01-01",
+        "+7 (495) 999-00-00",
+        "@admin_primakov"
       )
     );
   }
@@ -154,13 +194,19 @@ export class MockUserRepository implements IUserRepository {
     if (filter?.isActive !== undefined) {
       filtered = filtered.filter((u) => u.isActive === filter.isActive);
     }
+    if (filter?.groupName) {
+      filtered = filtered.filter((u) => u.groupName === filter.groupName);
+    }
     if (filter?.search) {
       const q = filter.search.toLowerCase();
       filtered = filtered.filter(
         (u) =>
           u.firstName.toLowerCase().includes(q) ||
           u.lastName.toLowerCase().includes(q) ||
-          u.email.value.toLowerCase().includes(q)
+          u.email.value.toLowerCase().includes(q) ||
+          (u.groupName && u.groupName.toLowerCase().includes(q)) ||
+          (u.phone && u.phone.includes(q)) ||
+          (u.telegram && u.telegram.toLowerCase().includes(q))
       );
     }
 

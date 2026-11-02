@@ -5,7 +5,7 @@ export interface Announcement {
   content?: string;
   imageUrl?: string;
   date: Date;
-  category: "EVENT" | "NEWS" | "MAINTENANCE" | "IMPORTANT";
+  category: "EVENT" | "NEWS" | "MAINTENANCE" | "IMPORTANT" | string;
   createdAt: Date;
   authorId: string;
 }

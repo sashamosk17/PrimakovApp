@@ -15,6 +15,7 @@ export const announcementRoutes = (announcementRepository: IAnnouncementReposito
   const controller = new AnnouncementController(getAnnouncementsUseCase, getAnnouncementByCategoryUseCase);
 
   router.get("/", controller.getAnnouncements);
+  router.post("/", controller.createAnnouncement);
   router.get("/category/:category", controller.getByCategory);
 
   return router;

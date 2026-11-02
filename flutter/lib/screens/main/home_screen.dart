@@ -8,6 +8,8 @@ import '../../providers/auth_provider.dart';
 import '../../providers/story_provider.dart';
 import '../../providers/deadline_provider.dart';
 import '../../providers/schedule_provider.dart';
+import '../../providers/announcement_provider.dart';
+import '../../providers/canteen_provider.dart';
 import '../../models/api_models.dart';
 import '../../config/app_spacing.dart';
 import '../../config/app_typography.dart';
@@ -23,7 +25,7 @@ final mockNewsListProvider = Provider<List<News>>((ref) {
     News(
       id: '1',
       title: 'Открытие новой лаборатории робототехники в следующую субботу',
-      description: 'Приглашаем родителей на торжественную презентацию новых проектов учащихся ФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФФ',
+      description: 'Приглашаем родителей на торжественную презентацию инновационных проектов учащихся гимназии.',
       imageUrl: null,
       createdAt: DateTime.now().toIso8601String(),
     ),
@@ -109,6 +111,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final today = DateTime.now();
     final dateString = today.toIso8601String().split('T')[0];
     ref.read(scheduleProvider.notifier).fetchSchedule(userId, dateString);
+
+    // Load announcements & canteen menu from API
+    ref.read(announcementProvider.notifier).fetchAnnouncements();
+    ref.read(canteenProvider.notifier).fetchTodayMenu();
   }
 
   @override
@@ -702,7 +708,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildCafeteriaCard() {
-    final cafeteria = ref.watch(mockCafeteriaProvider);
+    final canteenState = ref.watch(canteenProvider);
+    final String todayDish;
+    if (canteenState.todayMenu != null &&
+        canteenState.todayMenu!.isNotEmpty &&
+        canteenState.todayMenu!.first.items.isNotEmpty) {
+      todayDish = canteenState.todayMenu!.first.items.first.name;
+    } else {
+      todayDish = 'Паста Болоньезе с пармезаном';
+    }
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
@@ -759,18 +773,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Баланс: ${cafeteria.balance.toStringAsFixed(0)} ₽',
+                  'Баланс: 1 450 ₽',
                   style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
                 ),
               ],
             ),
             Text(
-              'Обед: ${cafeteria.todayMenu}',
+              'Обед: $todayDish',
               style: TextStyle(
                 fontSize: 12,
                 color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
                 fontWeight: FontWeight.w600,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -888,7 +904,20 @@ class _NewsCarouselState extends ConsumerState<_NewsCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    final newsList = ref.watch(mockNewsListProvider);
+    final announcementState = ref.watch(announcementProvider);
+    final List<News> newsList;
+    if (announcementState.items.isNotEmpty) {
+      newsList = announcementState.items
+          .map((a) => News(
+                id: a.id,
+                title: a.title,
+                description: a.content,
+                createdAt: a.createdAt,
+              ))
+          .toList();
+    } else {
+      newsList = ref.watch(mockNewsListProvider);
+    }
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final safeIndex = newsList.isEmpty ? 0 : _currentPage.clamp(0, newsList.length - 1);
 

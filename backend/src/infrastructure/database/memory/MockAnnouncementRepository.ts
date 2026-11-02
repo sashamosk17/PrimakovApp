@@ -87,4 +87,9 @@ export class MockAnnouncementRepository implements IAnnouncementRepository {
     this.announcements.push(announcement);
     return Result.ok();
   }
+
+  async delete(id: string): Promise<Result<void>> {
+    this.announcements = this.announcements.filter((a) => a.id !== id);
+    return Result.ok();
+  }
 }

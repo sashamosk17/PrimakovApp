@@ -6,4 +6,5 @@ export interface IAnnouncementRepository {
   getById(id: string): Promise<Result<Announcement | null>>;
   getByCategory(category: string): Promise<Result<Announcement[]>>;
   save(announcement: Announcement): Promise<Result<void>>;
+  delete?(id: string): Promise<Result<void>>;
 }

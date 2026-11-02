@@ -32,6 +32,28 @@ const CreateUserSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
+const UpdateUserSchema = z.object({
+  email: z.string().email().optional(),
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  role: z.enum(["STUDENT", "TEACHER", "ADMIN", "SUPERADMIN"]).optional(),
+  groupName: z.string().optional(),
+  isActive: z.boolean().optional(),
+  newPassword: z.string().min(6).optional(),
+});
+
+const ModerateRatingSchema = z.object({
+  status: z.enum(["APPROVED", "HIDDEN", "PENDING"]),
+});
+
+const AdminCreateAnnouncementSchema = z.object({
+  title: z.string().min(1),
+  category: z.string().min(1),
+  content: z.string().min(1),
+  description: z.string().optional(),
+  imageUrl: z.string().optional(),
+});
+
 const CreateSubjectSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
@@ -141,7 +163,10 @@ export function adminRoutes(deps: AdminRoutesDependencies): Router {
 
   // Users Management
   router.get("/users", controller.getUsers);
+  router.get("/users/:id/profile", controller.getUserProfile);
   router.post("/users", validate(CreateUserSchema), controller.createUser);
+  router.put("/users/:id", validate(UpdateUserSchema), controller.updateUser);
+  router.patch("/users/:id", validate(UpdateUserSchema), controller.updateUser);
   router.patch("/users/:id/status", controller.updateUserStatus);
   router.delete("/users/:id", controller.deleteUser);
   router.post("/users/import", controller.importUsers);
@@ -152,6 +177,8 @@ export function adminRoutes(deps: AdminRoutesDependencies): Router {
 
   // Ratings Moderation
   router.get("/ratings", controller.getRatings);
+  router.patch("/ratings/:id/status", validate(ModerateRatingSchema), controller.moderateRating);
+  router.delete("/ratings/:id", controller.deleteRating);
 
   // Subjects Management (Sprint 1 - Feature 3)
   router.get("/subjects", controller.getSubjects);
@@ -177,6 +204,15 @@ export function adminRoutes(deps: AdminRoutesDependencies): Router {
     controller.substituteTeacher
   );
   router.post("/schedules/lessons", validate(AddLessonSchema), controller.addLesson);
+  router.delete("/schedules/:scheduleId/lessons/:lessonId", controller.deleteLesson);
+
+  // Announcements Management
+  router.post(
+    "/announcements",
+    validate(AdminCreateAnnouncementSchema),
+    controller.createAnnouncement
+  );
+  router.delete("/announcements/:id", controller.deleteAnnouncement);
 
   // Canteen Menu Management (Sprint 2 - ADM-01)
   router.get("/canteen/menu/:date", controller.getCanteenMenuByDate);

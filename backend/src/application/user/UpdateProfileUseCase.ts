@@ -8,20 +8,26 @@ export interface UpdateProfileInput {
   lastName?: string;
   avatarUrl?: string;
   twoFactorEnabled?: boolean;
+  birthDate?: string;
+  phone?: string;
+  telegram?: string;
 }
 
 export class UpdateProfileUseCase {
   constructor(private readonly userRepository: IUserRepository) {}
 
   public async execute(input: UpdateProfileInput): Promise<Result<User>> {
-    const { userId, firstName, lastName, avatarUrl, twoFactorEnabled } = input;
+    const { userId, firstName, lastName, avatarUrl, twoFactorEnabled, birthDate, phone, telegram } = input;
 
     // Проверяем что хотя бы одно поле передано
     if (
       firstName === undefined &&
       lastName === undefined &&
       avatarUrl === undefined &&
-      twoFactorEnabled === undefined
+      twoFactorEnabled === undefined &&
+      birthDate === undefined &&
+      phone === undefined &&
+      telegram === undefined
     ) {
       return Result.fail("At least one field to update must be provided");
     }
@@ -66,7 +72,10 @@ export class UpdateProfileUseCase {
       firstName?.trim(),
       lastName?.trim(),
       avatarUrl,
-      twoFactorEnabled
+      twoFactorEnabled,
+      birthDate?.trim(),
+      phone?.trim(),
+      telegram?.trim()
     );
 
     // Сохраняем через существующий upsert-метод

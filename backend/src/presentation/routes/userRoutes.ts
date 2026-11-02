@@ -9,21 +9,27 @@ import { RevokeSessionUseCase } from "../../application/user/RevokeSessionUseCas
 import { GetNotificationSettingsUseCase } from "../../application/user/GetNotificationSettingsUseCase";
 import { UpdateNotificationSettingsUseCase } from "../../application/user/UpdateNotificationSettingsUseCase";
 import { GetUserStatsUseCase } from "../../application/user/GetUserStatsUseCase";
+import { GetUserProfileUseCase } from "../../application/user/GetUserProfileUseCase";
+import { SearchUsersDirectoryUseCase } from "../../application/user/SearchUsersDirectoryUseCase";
 import { authMiddleware } from "../middleware/authMiddleware";
 import type { IUserRepository } from "../../domain/repositories/IUserRepository";
 import type { ISessionRepository } from "../../domain/repositories/ISessionRepository";
 import type { INotificationRepository } from "../../domain/repositories/INotificationRepository";
+import type { IScheduleRepository } from "../../domain/repositories/IScheduleRepository";
 import { MockSessionRepository } from "../../infrastructure/database/memory/MockSessionRepository";
 import { MockNotificationPreferencesRepository } from "../../infrastructure/database/memory/MockNotificationPreferencesRepository";
+import { MockScheduleRepository } from "../../infrastructure/database/memory/MockScheduleRepository";
 
 export const userRoutes = (
   repository: IUserRepository,
   sessionRepository?: ISessionRepository,
-  notificationRepository?: INotificationRepository
+  notificationRepository?: INotificationRepository,
+  scheduleRepository?: IScheduleRepository
 ) => {
   const router = Router();
   const sessionRepo = sessionRepository || new MockSessionRepository();
   const notifRepo = notificationRepository || new MockNotificationPreferencesRepository();
+  const schedRepo = scheduleRepository || new MockScheduleRepository();
 
   const controller = new UserController(
     new GetTeachersUseCase(repository),
@@ -34,7 +40,9 @@ export const userRoutes = (
     new RevokeSessionUseCase(sessionRepo),
     new GetNotificationSettingsUseCase(notifRepo),
     new UpdateNotificationSettingsUseCase(notifRepo),
-    new GetUserStatsUseCase()
+    new GetUserStatsUseCase(),
+    new GetUserProfileUseCase(repository, schedRepo),
+    new SearchUsersDirectoryUseCase(repository)
   );
 
   // Публичный — список учителей для рейтингов
@@ -49,6 +57,10 @@ export const userRoutes = (
   router.get("/me/notifications",            authMiddleware, controller.getNotificationSettings);
   router.put("/me/notifications",            authMiddleware, controller.updateNotificationSettings);
   router.get("/me/stats",                    authMiddleware, controller.getStats);
+
+  // Справочник кампуса и публичный профиль любого пользователя
+  router.get("/directory",                   authMiddleware, controller.getDirectory);
+  router.get("/:id/profile",                 authMiddleware, controller.getUserProfile);
 
   return router;
 };

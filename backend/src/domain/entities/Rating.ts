@@ -1,7 +1,10 @@
 import { Result } from "../../shared/Result";
 
+export type RatingStatus = 'APPROVED' | 'HIDDEN' | 'PENDING';
+
 export class Rating {
   public updatedAt: Date;
+  public status: RatingStatus;
 
   constructor(
     public readonly id: string,
@@ -12,9 +15,11 @@ export class Rating {
     public comment: string = '',
     updatedAt?: Date,
     public version = 0,
-    public ipHash?: string
+    public ipHash?: string,
+    status: RatingStatus = 'APPROVED'
   ) {
     this.updatedAt = updatedAt ?? createdAt;
+    this.status = status;
   }
 
   public canBeUpdated(): boolean {
@@ -31,6 +36,11 @@ export class Rating {
     return Result.ok();
   }
 
+  public moderate(status: RatingStatus): void {
+    this.status = status;
+    this.updatedAt = new Date();
+  }
+
   public isOlderThan(days: number): boolean {
     const diff = new Date().getTime() - this.updatedAt.getTime();
     return diff > days * 24 * 60 * 60 * 1000;
@@ -43,6 +53,7 @@ export class Rating {
       userId: this.userId,
       value: this.value,
       comment: this.comment,
+      status: this.status,
       version: this.version,
       createdAt: this.createdAt.toISOString(),
       updatedAt: this.updatedAt.toISOString(),

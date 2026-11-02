@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/ui_provider.dart';
+import '../../providers/locale_provider.dart';
+import '../../config/app_localizations.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -41,6 +43,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final currentLocale = ref.watch(localeProvider);
+    final isEnglish = currentLocale.languageCode == 'en';
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -52,9 +57,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Настройки',
-          style: TextStyle(
+        title: Text(
+          loc.settings,
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -67,12 +72,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           
 
           // Appearance Section
-          const _SectionHeader(title: 'Внешний вид'),
+          _SectionHeader(title: loc.appearance),
           const SizedBox(height: 12),
           _SettingsTile(
             icon: Icons.dark_mode,
-            title: 'Темная тема',
-            subtitle: 'Использовать темную тему оформления',
+            title: isEnglish ? 'Dark Theme' : 'Темная тема',
+            subtitle: isEnglish ? 'Use dark appearance theme' : 'Использовать темную тему оформления',
             trailing: Switch(
               value: isDarkMode,
               onChanged: (value) {
@@ -81,8 +86,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   SnackBar(
                     content: Text(
                       value
-                          ? 'Темная тема включена'
-                          : 'Светлая тема включена',
+                          ? (isEnglish ? 'Dark theme enabled' : 'Темная тема включена')
+                          : (isEnglish ? 'Light theme enabled' : 'Светлая тема включена'),
                     ),
                   ),
                 );
@@ -93,8 +98,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 8),
           _SettingsTile(
             icon: Icons.language,
-            title: 'Язык',
-            subtitle: _selectedLanguage,
+            title: loc.language,
+            subtitle: isEnglish ? 'English (US)' : 'Русский',
             trailing: Icon(
               Icons.arrow_forward_ios,
               size: 16,
@@ -195,37 +200,45 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _showLanguageDialog() {
+    final currentLocale = ref.read(localeProvider);
+    final isEnglish = currentLocale.languageCode == 'en';
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Выберите язык'),
+        title: Text(isEnglish ? 'Select Language' : 'Выберите язык'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             RadioMenuButton<String>(
-              value: 'Русский',
-              groupValue: _selectedLanguage,
+              value: 'ru',
+              groupValue: currentLocale.languageCode,
               onChanged: (value) {
+                ref.read(localeProvider.notifier).setLocale(const Locale('ru', 'RU'));
                 setState(() {
-                  _selectedLanguage = value!;
-                });
-                Navigator.of(context).pop();
-              },
-              child: const Text('Русский'),
-            ),
-            RadioMenuButton<String>(
-              value: 'English',
-              groupValue: _selectedLanguage,
-              onChanged: (value) {
-                setState(() {
-                  _selectedLanguage = value!;
+                  _selectedLanguage = 'Русский';
                 });
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('English language coming soon')),
+                  const SnackBar(content: Text('Язык приложения: Русский')),
                 );
               },
-              child: const Text('English'),
+              child: const Text('Русский (Russian)'),
+            ),
+            RadioMenuButton<String>(
+              value: 'en',
+              groupValue: currentLocale.languageCode,
+              onChanged: (value) {
+                ref.read(localeProvider.notifier).setLocale(const Locale('en', 'US'));
+                setState(() {
+                  _selectedLanguage = 'English';
+                });
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Application language: English (US)')),
+                );
+              },
+              child: const Text('English (US)'),
             ),
           ],
         ),

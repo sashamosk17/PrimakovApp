@@ -67,4 +67,32 @@ export class AnnouncementController {
       return next(error);
     }
   };
+
+  public createAnnouncement = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { title, category, content, description, imageUrl, authorId } = req.body;
+      if (!title || !category || !content) {
+        return res.status(400).json({
+          status: "error",
+          error: { message: "title, category, and content are required" },
+        });
+      }
+      const authUser = (req as any).user;
+      const effectiveAuthorId = authUser?.id || authorId || "admin";
+      const created = {
+        id: (await import("crypto")).randomUUID(),
+        title,
+        category,
+        content,
+        description: description || content.slice(0, 150),
+        imageUrl,
+        authorId: effectiveAuthorId,
+        date: new Date(),
+        createdAt: new Date(),
+      };
+      return res.status(201).json({ status: "success", data: created });
+    } catch (error) {
+      return next(error);
+    }
+  };
 }

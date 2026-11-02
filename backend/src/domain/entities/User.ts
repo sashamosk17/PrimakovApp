@@ -20,7 +20,10 @@ export class User {
     public avatarUrl?: string,
     public twoFactorEnabled = false,
     public deletedAt?: Date,
-    public groupName?: string
+    public groupName?: string,
+    public birthDate?: string,
+    public phone?: string,
+    public telegram?: string
   ) {
     this.updatedAt = updatedAt ?? createdAt;
   }
@@ -53,12 +56,18 @@ export class User {
     firstName?: string,
     lastName?: string,
     avatarUrl?: string,
-    twoFactorEnabled?: boolean
+    twoFactorEnabled?: boolean,
+    birthDate?: string,
+    phone?: string,
+    telegram?: string
   ): void {
     if (firstName !== undefined) this.firstName = firstName;
     if (lastName !== undefined) this.lastName = lastName;
     if (avatarUrl !== undefined) this.avatarUrl = avatarUrl;
     if (twoFactorEnabled !== undefined) this.twoFactorEnabled = twoFactorEnabled;
+    if (birthDate !== undefined) this.birthDate = birthDate;
+    if (phone !== undefined) this.phone = phone;
+    if (telegram !== undefined) this.telegram = telegram;
     this.updatedAt = new Date();
   }
 
@@ -93,6 +102,9 @@ export class User {
       twoFactorEnabled: this.twoFactorEnabled,
       deletedAt: this.deletedAt ? this.deletedAt.toISOString() : null,
       groupName: this.groupName || null,
+      birthDate: this.birthDate || null,
+      phone: this.phone || null,
+      telegram: this.telegram || null,
     };
   }
 }

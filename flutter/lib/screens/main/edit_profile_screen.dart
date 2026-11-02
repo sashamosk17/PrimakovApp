@@ -14,6 +14,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
+  late TextEditingController _birthDateController;
+  late TextEditingController _phoneController;
+  late TextEditingController _telegramController;
   bool _isChanged = false;
 
   @override
@@ -22,29 +25,77 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final currentUser = ref.read(currentUserProvider);
     _firstNameController = TextEditingController(text: currentUser?.firstName ?? '');
     _lastNameController = TextEditingController(text: currentUser?.lastName ?? '');
+    _birthDateController = TextEditingController(
+      text: currentUser?.birthDate != null ? currentUser!.birthDate!.split('T')[0] : '',
+    );
+    _phoneController = TextEditingController(text: currentUser?.phone ?? '');
+    _telegramController = TextEditingController(text: currentUser?.telegram ?? '');
     
-    // Слушаем изменения в текстовых полях
+    // Listen to changes
     _firstNameController.addListener(_onTextChanged);
     _lastNameController.addListener(_onTextChanged);
+    _birthDateController.addListener(_onTextChanged);
+    _phoneController.addListener(_onTextChanged);
+    _telegramController.addListener(_onTextChanged);
   }
 
   @override
   void dispose() {
     _firstNameController.removeListener(_onTextChanged);
     _lastNameController.removeListener(_onTextChanged);
+    _birthDateController.removeListener(_onTextChanged);
+    _phoneController.removeListener(_onTextChanged);
+    _telegramController.removeListener(_onTextChanged);
+
     _firstNameController.dispose();
     _lastNameController.dispose();
+    _birthDateController.dispose();
+    _phoneController.dispose();
+    _telegramController.dispose();
     super.dispose();
   }
 
   void _onTextChanged() {
     final currentUser = ref.read(currentUserProvider);
-    final firstNameChanged = _firstNameController.text != (currentUser?.firstName ?? '');
-    final lastNameChanged = _lastNameController.text != (currentUser?.lastName ?? '');
+    final curBirthDate = currentUser?.birthDate != null ? currentUser!.birthDate!.split('T')[0] : '';
+    
+    final firstNameChanged = _firstNameController.text.trim() != (currentUser?.firstName ?? '');
+    final lastNameChanged = _lastNameController.text.trim() != (currentUser?.lastName ?? '');
+    final birthDateChanged = _birthDateController.text.trim() != curBirthDate;
+    final phoneChanged = _phoneController.text.trim() != (currentUser?.phone ?? '');
+    final telegramChanged = _telegramController.text.trim() != (currentUser?.telegram ?? '');
     
     setState(() {
-      _isChanged = firstNameChanged || lastNameChanged;
+      _isChanged = firstNameChanged || lastNameChanged || birthDateChanged || phoneChanged || telegramChanged;
     });
+  }
+
+  Future<void> _selectBirthDate() async {
+    DateTime initial = DateTime(2008, 1, 1);
+    if (_birthDateController.text.isNotEmpty) {
+      try {
+        initial = DateTime.parse(_birthDateController.text.trim());
+      } catch (_) {}
+    }
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1940),
+      lastDate: DateTime.now(),
+      helpText: 'Выберите дату рождения',
+      cancelText: 'Отмена',
+      confirmText: 'Выбрать',
+    );
+
+    if (picked != null) {
+      final y = picked.year.toString().padLeft(4, '0');
+      final m = picked.month.toString().padLeft(2, '0');
+      final d = picked.day.toString().padLeft(2, '0');
+      setState(() {
+        _birthDateController.text = '$y-$m-$d';
+      });
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -53,9 +104,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final profileNotifier = ref.read(profileProvider.notifier);
     
     try {
+      var tg = _telegramController.text.trim();
+      if (tg.isNotEmpty && !tg.startsWith('@')) {
+        tg = '@$tg';
+      }
+
       await profileNotifier.updateProfile(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
+        birthDate: _birthDateController.text.trim().isNotEmpty ? _birthDateController.text.trim() : null,
+        phone: _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : null,
+        telegram: tg.isNotEmpty ? tg : null,
       );
 
       if (mounted) {
@@ -106,7 +165,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       ),
       body: currentUser == null
           ? const Center(child: Text('Ошибка загрузки профиля'))
-          : Padding(
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Form(
                 key: _formKey,
@@ -117,14 +176,29 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     TextFormField(
                       initialValue: currentUser.email,
                       decoration: const InputDecoration(
-                        labelText: 'Email',
+                        labelText: 'Email (аккаунт)',
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.email),
+                        prefixIcon: Icon(Icons.email_outlined),
                       ),
                       enabled: false,
                       style: const TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 16),
+
+                    // Класс (если ученик)
+                    if (currentUser.groupName != null) ...[
+                      TextFormField(
+                        initialValue: currentUser.groupName,
+                        decoration: const InputDecoration(
+                          labelText: 'Класс',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.school_outlined),
+                        ),
+                        enabled: false,
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     
                     // Имя
                     TextFormField(
@@ -167,17 +241,47 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    
-                    // Роль (только для чтения)
+
+                    // Дата рождения
                     TextFormField(
-                      initialValue: currentUser.role.name,
-                      decoration: const InputDecoration(
-                        labelText: 'Роль',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.admin_panel_settings),
+                      controller: _birthDateController,
+                      readOnly: true,
+                      onTap: _selectBirthDate,
+                      decoration: InputDecoration(
+                        labelText: 'Дата рождения',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.cake_outlined),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.calendar_month),
+                          onPressed: _selectBirthDate,
+                        ),
+                        hintText: 'ГГГГ-ММ-ДД',
                       ),
-                      enabled: false,
-                      style: const TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Телефон
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Номер телефона',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.phone_outlined),
+                        hintText: '+7 (999) 000-00-00',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Telegram
+                    TextFormField(
+                      controller: _telegramController,
+                      decoration: const InputDecoration(
+                        labelText: 'Telegram никнейм',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.send_rounded),
+                        hintText: '@username',
+                      ),
                     ),
                     const SizedBox(height: 32),
                     

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'config/app_localizations.dart';
+import 'providers/locale_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/main/home_screen.dart';
 import 'screens/main/schedule_screen.dart';
@@ -31,6 +33,7 @@ class PrimakovApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isAuthenticated = ref.watch(isAuthenticatedProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final currentLocale = ref.watch(localeProvider);
 
     return MaterialApp(
       title: 'PrimakovApp',
@@ -39,6 +42,7 @@ class PrimakovApp extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
       localizationsDelegates: const [
+        AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
@@ -47,7 +51,7 @@ class PrimakovApp extends ConsumerWidget {
         Locale('ru', 'RU'),
         Locale('en', 'US'),
       ],
-      locale: const Locale('ru', 'RU'),
+      locale: currentLocale,
       home: isAuthenticated
           ? const MainNavigator()
           : const AuthNavigator(),
@@ -119,6 +123,7 @@ class _MainNavigatorState extends ConsumerState<MainNavigator> with TickerProvid
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(isDarkModeProvider);
     final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context);
 
     return Scaffold(
       body: IndexedStack(
@@ -172,10 +177,10 @@ class _MainNavigatorState extends ConsumerState<MainNavigator> with TickerProvid
             ),
             elevation: 0,
             items: [
-              _buildNavItem(Icons.newspaper, Icons.newspaper_outlined, 'Home', 0),
-              _buildNavItem(Icons.calendar_today, Icons.calendar_today_outlined, 'Schedule', 1),
-              _buildNavItem(Icons.apps, Icons.apps_outlined, 'Services', 2),
-              _buildNavItem(Icons.person, Icons.person_outline, 'Profile', 3),
+              _buildNavItem(Icons.newspaper, Icons.newspaper_outlined, loc.navHome, 0),
+              _buildNavItem(Icons.calendar_today, Icons.calendar_today_outlined, loc.navSchedule, 1),
+              _buildNavItem(Icons.apps, Icons.apps_outlined, loc.navServices, 2),
+              _buildNavItem(Icons.person, Icons.person_outline, loc.navProfile, 3),
             ],
           ),
         ),

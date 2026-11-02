@@ -31,6 +31,13 @@ import { AdminAddMenuItemUseCase } from "../../application/admin/canteen/AdminAd
 import { AdminUpdateMenuItemUseCase } from "../../application/admin/canteen/AdminUpdateMenuItemUseCase";
 import { AdminDeleteMenuItemUseCase } from "../../application/admin/canteen/AdminDeleteMenuItemUseCase";
 import { AdminCopyWeekMenuUseCase } from "../../application/admin/canteen/AdminCopyWeekMenuUseCase";
+import { AdminUpdateUserUseCase } from "../../application/admin/AdminUpdateUserUseCase";
+import { DeleteLessonFromScheduleUseCase } from "../../application/admin/DeleteLessonFromScheduleUseCase";
+import { ModerateRatingUseCase } from "../../application/admin/ModerateRatingUseCase";
+import { DeleteRatingUseCase } from "../../application/admin/DeleteRatingUseCase";
+import { CreateAnnouncementUseCase } from "../../application/announcement/CreateAnnouncementUseCase";
+import { DeleteAnnouncementUseCase } from "../../application/announcement/DeleteAnnouncementUseCase";
+import { GetUserProfileUseCase } from "../../application/user/GetUserProfileUseCase";
 import { Role } from "../../shared/types";
 
 export class AdminController {
@@ -40,6 +47,7 @@ export class AdminController {
   private updateUserStatusUseCase: AdminUpdateUserStatusUseCase;
   private deleteUserUseCase: AdminDeleteUserUseCase;
   private batchImportUsersUseCase: AdminBatchImportUsersUseCase;
+  private getUserProfileUseCase: GetUserProfileUseCase;
 
   // Sprint 1 (v0.4.0) Features
   private getSubjectsUseCase: GetSubjectsUseCase;
@@ -59,6 +67,14 @@ export class AdminController {
   private adminUpdateMenuItemUseCase: AdminUpdateMenuItemUseCase;
   private adminDeleteMenuItemUseCase: AdminDeleteMenuItemUseCase;
   private adminCopyWeekMenuUseCase: AdminCopyWeekMenuUseCase;
+
+  // School Institutional Control Features
+  private updateUserUseCase: AdminUpdateUserUseCase;
+  private deleteLessonUseCase: DeleteLessonFromScheduleUseCase;
+  private moderateRatingUseCase: ModerateRatingUseCase;
+  private deleteRatingUseCase: DeleteRatingUseCase;
+  private createAnnouncementUseCase?: CreateAnnouncementUseCase;
+  private deleteAnnouncementUseCase?: DeleteAnnouncementUseCase;
 
   private subjectRepo: ISubjectRepository;
   private scheduleRepo: IScheduleRepository;
@@ -105,6 +121,16 @@ export class AdminController {
     this.adminUpdateMenuItemUseCase = new AdminUpdateMenuItemUseCase(this.canteenMenuRepo);
     this.adminDeleteMenuItemUseCase = new AdminDeleteMenuItemUseCase(this.canteenMenuRepo);
     this.adminCopyWeekMenuUseCase = new AdminCopyWeekMenuUseCase(this.canteenMenuRepo);
+
+    this.updateUserUseCase = new AdminUpdateUserUseCase(this.userRepo);
+    this.deleteLessonUseCase = new DeleteLessonFromScheduleUseCase(this.scheduleRepo);
+    this.moderateRatingUseCase = new ModerateRatingUseCase(this.ratingRepo);
+    this.deleteRatingUseCase = new DeleteRatingUseCase(this.ratingRepo);
+    this.getUserProfileUseCase = new GetUserProfileUseCase(this.userRepo, this.scheduleRepo);
+    if (this.announcementRepo) {
+      this.createAnnouncementUseCase = new CreateAnnouncementUseCase(this.announcementRepo);
+      this.deleteAnnouncementUseCase = new DeleteAnnouncementUseCase(this.announcementRepo);
+    }
   }
 
   getDashboard = async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -195,6 +221,72 @@ export class AdminController {
         status: "success",
         message: "User deleted successfully",
       });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateUser = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { firstName, lastName, email, role, groupName, isActive, newPassword, birthDate, phone, telegram } = req.body;
+
+      const result = await this.updateUserUseCase.execute({
+        userId: id,
+        firstName,
+        lastName,
+        email,
+        role,
+        groupName,
+        isActive,
+        newPassword,
+        birthDate,
+        phone,
+        telegram,
+      });
+
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+
+      const u = result.value;
+      return res.status(200).json({
+        status: "success",
+        data: {
+          id: u.id,
+          email: u.email.value,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          role: u.role,
+          groupName: u.groupName,
+          isActive: u.isActive,
+          birthDate: u.birthDate,
+          phone: u.phone,
+          telegram: u.telegram,
+          createdAt: u.createdAt.toISOString(),
+          updatedAt: u.updatedAt.toISOString(),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getUserProfile = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const targetUserId = req.params.id;
+      const { date } = req.query;
+
+      const result = await this.getUserProfileUseCase.execute({
+        targetUserId,
+        date: date ? String(date) : undefined,
+      });
+
+      if (result.isFailure) {
+        return res.status(404).json({ status: "error", error: { message: result.error } });
+      }
+
+      return res.status(200).json({ status: "success", data: result.value });
     } catch (error) {
       next(error);
     }
@@ -295,6 +387,42 @@ export class AdminController {
       return res.status(200).json({
         status: "success",
         data: ratings,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  moderateRating = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const result = await this.moderateRatingUseCase.execute({
+        ratingId: id,
+        status,
+      });
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+      return res.status(200).json({
+        status: "success",
+        data: result.value.toJSON(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  deleteRating = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const result = await this.deleteRatingUseCase.execute(id);
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+      return res.status(200).json({
+        status: "success",
+        message: "Rating deleted successfully",
       });
     } catch (error) {
       next(error);
@@ -522,6 +650,25 @@ export class AdminController {
     }
   };
 
+  deleteLesson = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { scheduleId, lessonId } = req.params;
+      const result = await this.deleteLessonUseCase.execute({
+        scheduleId,
+        lessonId,
+      });
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+      return res.status(200).json({
+        status: "success",
+        message: "Lesson removed from schedule successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   // --- Canteen Management (Sprint 2 - ADM-01) ---
 
   getCanteenMenuByDate = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -620,6 +767,46 @@ export class AdminController {
         return res.status(400).json({ status: "error", error: { message: result.error } });
       }
       return res.status(200).json({ status: "success", data: result.value });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  createAnnouncement = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!this.createAnnouncementUseCase) {
+        return res.status(500).json({ status: "error", error: { message: "Announcement repository not initialized" } });
+      }
+      const { title, category, content, description, imageUrl } = req.body;
+      const authorId = req.user?.userId || "admin";
+      const result = await this.createAnnouncementUseCase.execute({
+        title,
+        category,
+        content,
+        description,
+        imageUrl,
+        authorId,
+      });
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+      return res.status(201).json({ status: "success", data: result.value });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  deleteAnnouncement = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!this.deleteAnnouncementUseCase) {
+        return res.status(500).json({ status: "error", error: { message: "Announcement repository not initialized" } });
+      }
+      const { id } = req.params;
+      const result = await this.deleteAnnouncementUseCase.execute(id);
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+      return res.status(200).json({ status: "success", message: "Announcement deleted successfully" });
     } catch (error) {
       next(error);
     }

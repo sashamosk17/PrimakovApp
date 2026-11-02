@@ -28,7 +28,8 @@ class _TodayScheduleWidgetState extends ConsumerState<TodayScheduleWidget> {
   }
 
   Future<void> _loadTodaySchedule() async {
-    final userId = ref.read(authProvider).userId ?? 'user-1';
+    final userId = ref.read(authProvider).userId;
+    if (userId == null || userId.isEmpty) return;
     final today = DateTime.now();
     final dateString = today.toIso8601String().split('T')[0];
     await ref.read(scheduleProvider.notifier).fetchSchedule(userId, dateString);

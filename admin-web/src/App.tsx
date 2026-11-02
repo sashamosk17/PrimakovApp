@@ -350,6 +350,18 @@ export function App() {
     loadUsersData(currentPage, selectedRole, searchQuery);
   };
 
+  const handleUpdateUser = async (id: string, updatedData: any) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === id ? { ...u, ...updatedData, updatedAt: new Date().toISOString() } : u))
+      );
+      return;
+    }
+    await apiClient.patch(`/admin/users/${id}`, updatedData);
+    loadUsersData(currentPage, selectedRole, searchQuery);
+    loadDashboardData();
+  };
+
   const handleDeleteUser = async (id: string) => {
     if (isDemoMode || serverUnavailableWarning) {
       setUsers((prev) => prev.filter((u) => u.id !== id));
@@ -361,21 +373,40 @@ export function App() {
     loadDashboardData();
   };
 
-  const handleUpdateRequest = async (id: string, status: string, notes?: string) => {
+  const handleUpdateRequest = async (
+    id: string,
+    status: string,
+    notes?: string,
+    assigneeId?: string
+  ) => {
     if (isDemoMode || serverUnavailableWarning) {
       setAllRequests((prev) =>
         prev.map((r) =>
-          r.id === id ? { ...r, status: status as any, notes: notes || r.notes } : r
+          r.id === id
+            ? {
+                ...r,
+                status: status as any,
+                notes: notes !== undefined ? notes : r.notes,
+                assigneeId: assigneeId !== undefined ? assigneeId : r.assigneeId,
+              }
+            : r
         )
       );
       setRecentRequests((prev) =>
         prev.map((r) =>
-          r.id === id ? { ...r, status: status as any, notes: notes || r.notes } : r
+          r.id === id
+            ? {
+                ...r,
+                status: status as any,
+                notes: notes !== undefined ? notes : r.notes,
+                assigneeId: assigneeId !== undefined ? assigneeId : r.assigneeId,
+              }
+            : r
         )
       );
       return;
     }
-    await apiClient.patch(`/admin/requests/${id}`, { status, notes });
+    await apiClient.patch(`/admin/requests/${id}`, { status, notes, assigneeId });
     loadRequestsData();
     loadDashboardData();
   };
@@ -399,6 +430,35 @@ export function App() {
       publishedAt: new Date().toISOString(),
     });
     loadDashboardData();
+  };
+
+  const handleDeleteAnnouncement = async (id: string) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+      return;
+    }
+    await apiClient.delete(`/admin/announcements/${id}`);
+    loadDashboardData();
+  };
+
+  const handleModerateRating = async (id: string, status: "APPROVED" | "HIDDEN") => {
+    if (isDemoMode || serverUnavailableWarning) {
+      setRatings((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, status } : r))
+      );
+      return;
+    }
+    await apiClient.patch(`/admin/ratings/${id}/status`, { status });
+    await loadRatingsData();
+  };
+
+  const handleDeleteRating = async (id: string) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      setRatings((prev) => prev.filter((r) => r.id !== id));
+      return;
+    }
+    await apiClient.delete(`/admin/ratings/${id}`);
+    await loadRatingsData();
   };
 
   // Feature 3: Schedule & Substitution Handlers
@@ -459,6 +519,21 @@ export function App() {
       return;
     }
     await apiClient.post("/admin/schedules/lessons", lessonData);
+    await loadScheduleData();
+  };
+
+  const handleDeleteLesson = async (scheduleId: string, lessonId: string) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      setSchedules((prev) =>
+        prev.map((s) =>
+          s.id === scheduleId
+            ? { ...s, lessons: s.lessons.filter((l) => l.id !== lessonId) }
+            : s
+        )
+      );
+      return;
+    }
+    await apiClient.delete(`/admin/schedules/${scheduleId}/lessons/${lessonId}`);
     await loadScheduleData();
   };
 
@@ -579,6 +654,10 @@ export function App() {
           }}
           adminName={currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "Администратор"}
           adminEmail={currentUser?.email}
+          urgentRequests={allRequests.filter(
+            (r) => (r.priority === "URGENT" || r.priority === "HIGH") && r.status !== "COMPLETED"
+          )}
+          onNavigateTab={(tab) => setCurrentTab(tab)}
         />
 
         {/* Informational Banner if in Demo or Fallback mode */}
@@ -640,6 +719,7 @@ export function App() {
                 onPageChange={(p) => loadUsersData(p, selectedRole, searchQuery)}
                 onToggleStatus={handleToggleUserStatus}
                 onDeleteUser={handleDeleteUser}
+                onUpdateUser={handleUpdateUser}
                 onOpenAddModal={() => setIsAddUserOpen(true)}
                 onOpenImportModal={() => setIsImportOpen(true)}
               />
@@ -654,6 +734,7 @@ export function App() {
                 assignments={assignments}
                 onSubstituteTeacher={handleSubstituteTeacher}
                 onAddLesson={handleAddLesson}
+                onDeleteLesson={handleDeleteLesson}
                 onCreateSchedule={handleCreateSchedule}
                 onCreateSubject={handleCreateSubject}
                 onDeleteSubject={handleDeleteSubject}
@@ -677,6 +758,10 @@ export function App() {
             {currentTab === "ratings" && (
               <RatingsView
                 ratings={ratings}
+                teachers={scheduleTeachers.length > 0 ? scheduleTeachers : users.filter((u) => u.role === "TEACHER")}
+                allUsers={allGymnasiumUsers.length > 0 ? allGymnasiumUsers : users}
+                onModerateRating={handleModerateRating}
+                onDeleteRating={handleDeleteRating}
               />
             )}
 
@@ -684,6 +769,7 @@ export function App() {
               <AnnouncementsView
                 announcements={announcements}
                 onCreateAnnouncement={handleCreateAnnouncement}
+                onDeleteAnnouncement={handleDeleteAnnouncement}
               />
             )}
           </ErrorBoundary>

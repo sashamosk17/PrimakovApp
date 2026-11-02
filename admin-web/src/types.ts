@@ -9,8 +9,43 @@ export interface User {
   isActive: boolean;
   avatarUrl?: string;
   groupName?: string;
+  birthDate?: string;
+  phone?: string;
+  telegram?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface LessonProfileDTO {
+  id: string;
+  subject: string;
+  teacherId: string;
+  teacherName?: string;
+  startTime: string;
+  endTime: string;
+  room: string;
+  floor: number;
+  hasHomework: boolean;
+  homeworkDescription?: string;
+}
+
+export interface UserProfileDTO {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  role: Role;
+  isActive: boolean;
+  avatarUrl?: string;
+  groupName?: string;
+  birthDate?: string;
+  phone?: string;
+  telegram?: string;
+  vkId?: string;
+  createdAt: string;
+  updatedAt: string;
+  todayLessons: LessonProfileDTO[];
 }
 
 export interface DashboardMetrics {
@@ -45,9 +80,12 @@ export interface ServiceRequest {
 export interface TeacherRating {
   id: string;
   teacherId: string;
+  teacherName?: string;
   userId: string;
+  userName?: string;
   value: number;
   comment: string;
+  status?: "APPROVED" | "HIDDEN" | "PENDING";
   createdAt: string;
 }
 

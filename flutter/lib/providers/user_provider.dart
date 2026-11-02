@@ -70,6 +70,9 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     String? lastName,
     String? avatarUrl,
     bool? twoFactorEnabled,
+    String? birthDate,
+    String? phone,
+    String? telegram,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
@@ -78,6 +81,9 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
         lastName: lastName,
         avatarUrl: avatarUrl,
         twoFactorEnabled: twoFactorEnabled,
+        birthDate: birthDate,
+        phone: phone,
+        telegram: telegram,
       );
       
       state = state.copyWith(
@@ -178,4 +184,43 @@ final sessionsProvider = StateNotifierProvider<SessionsNotifier, AsyncValue<List
 final userStatsProvider = FutureProvider<UserStats>((ref) async {
   final userService = ref.watch(userServiceProvider);
   return userService.getStats();
+});
+
+/// Directory search parameter class
+class DirectorySearchParams {
+  final String? query;
+  final String? role;
+  final String? groupName;
+
+  const DirectorySearchParams({
+    this.query,
+    this.role,
+    this.groupName,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DirectorySearchParams &&
+          runtimeType == other.runtimeType &&
+          query == other.query &&
+          role == other.role &&
+          groupName == other.groupName;
+
+  @override
+  int get hashCode => query.hashCode ^ role.hashCode ^ groupName.hashCode;
+}
+
+final directorySearchProvider = FutureProvider.family<List<User>, DirectorySearchParams>((ref, params) async {
+  final userService = ref.watch(userServiceProvider);
+  return userService.searchDirectory(
+    query: params.query,
+    role: params.role,
+    groupName: params.groupName,
+  );
+});
+
+final userProfileProvider = FutureProvider.family<UserProfileData, String>((ref, userId) async {
+  final userService = ref.watch(userServiceProvider);
+  return userService.getUserProfile(userId);
 });

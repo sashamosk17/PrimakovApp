@@ -8,6 +8,7 @@ export interface UserFilter {
   search?: string;
   role?: Role;
   isActive?: boolean;
+  groupName?: string;
 }
 
 export interface PaginatedUsers {

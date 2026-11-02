@@ -10,6 +10,8 @@ import '../create_request_screen.dart';
 import '../announcements_screen.dart';
 import '../teacher_ratings_screen.dart';
 import 'schedule_screen.dart';
+import 'people_directory_screen.dart';
+import 'user_profile_detail_screen.dart';
 import '../../providers/user_provider.dart';
 import '../../services/api/user_service.dart';
 import '../../models/api_models.dart';
@@ -157,7 +159,16 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                                 onTap: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (context) => const TeacherRatingsScreen(),
+                                      builder: (context) => UserProfileDetailScreen(
+                                        initialUser: User(
+                                          id: teacher.id,
+                                          email: '${teacher.firstName.toLowerCase()}.${teacher.lastName.toLowerCase()}@primakov.school',
+                                          firstName: teacher.firstName,
+                                          lastName: teacher.lastName,
+                                          role: UserRole.TEACHER,
+                                          isActive: true,
+                                        ),
+                                      ),
                                     ),
                                   );
                                 },
@@ -247,6 +258,17 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => const TeacherRatingsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _ServiceCard(
+                        icon: Icons.people_alt_outlined,
+                        title: 'Люди гимназии',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const PeopleDirectoryScreen(),
                             ),
                           );
                         },

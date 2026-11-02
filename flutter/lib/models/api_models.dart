@@ -11,6 +11,11 @@ class User {
   final String? vkId;
   final String? avatarUrl;
   final bool twoFactorEnabled;
+  final String? groupName;
+  final String? birthDate;
+  final String? phone;
+  final String? telegram;
+  final bool isBirthdayToday;
 
   User({
     required this.id,
@@ -22,19 +27,37 @@ class User {
     this.vkId,
     this.avatarUrl,
     this.twoFactorEnabled = false,
+    this.groupName,
+    this.birthDate,
+    this.phone,
+    this.telegram,
+    this.isBirthdayToday = false,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    UserRole roleVal = UserRole.STUDENT;
+    final roleStr = json['role'] as String? ?? 'STUDENT';
+    if (roleStr == 'TEACHER') {
+      roleVal = UserRole.TEACHER;
+    } else if (roleStr == 'ADMIN' || roleStr == 'SUPERADMIN') {
+      roleVal = UserRole.ADMIN;
+    }
+
     return User(
       id: json['id'] as String,
       email: json['email'] as String,
       firstName: json['firstName'] as String? ?? '',
       lastName: json['lastName'] as String? ?? '',
-      role: UserRole.values.byName(json['role'] as String? ?? 'STUDENT'),
+      role: roleVal,
       isActive: json['isActive'] as bool? ?? true,
       vkId: json['vkId'] as String?,
       avatarUrl: json['avatarUrl'] as String?,
       twoFactorEnabled: json['twoFactorEnabled'] as bool? ?? false,
+      groupName: json['groupName'] as String?,
+      birthDate: json['birthDate'] as String?,
+      phone: json['phone'] as String?,
+      telegram: json['telegram'] as String?,
+      isBirthdayToday: json['isBirthdayToday'] as bool? ?? false,
     );
   }
 
@@ -48,6 +71,11 @@ class User {
     'vkId': vkId,
     'avatarUrl': avatarUrl,
     'twoFactorEnabled': twoFactorEnabled,
+    'groupName': groupName,
+    'birthDate': birthDate,
+    'phone': phone,
+    'telegram': telegram,
+    'isBirthdayToday': isBirthdayToday,
   };
 
   User copyWith({
@@ -60,6 +88,11 @@ class User {
     String? vkId,
     String? avatarUrl,
     bool? twoFactorEnabled,
+    String? groupName,
+    String? birthDate,
+    String? phone,
+    String? telegram,
+    bool? isBirthdayToday,
   }) {
     return User(
       id: id ?? this.id,
@@ -71,6 +104,11 @@ class User {
       vkId: vkId ?? this.vkId,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       twoFactorEnabled: twoFactorEnabled ?? this.twoFactorEnabled,
+      groupName: groupName ?? this.groupName,
+      birthDate: birthDate ?? this.birthDate,
+      phone: phone ?? this.phone,
+      telegram: telegram ?? this.telegram,
+      isBirthdayToday: isBirthdayToday ?? this.isBirthdayToday,
     );
   }
 
@@ -78,6 +116,25 @@ class User {
 }
 
 enum UserRole { STUDENT, TEACHER, ADMIN }
+
+class UserProfileData {
+  final User user;
+  final List<Lesson> todayLessons;
+
+  UserProfileData({
+    required this.user,
+    required this.todayLessons,
+  });
+
+  factory UserProfileData.fromJson(Map<String, dynamic> json) {
+    final user = User.fromJson(json);
+    final lessonsJson = json['todayLessons'] as List<dynamic>? ?? [];
+    final lessons = lessonsJson
+        .map((l) => Lesson.fromJson(l as Map<String, dynamic>))
+        .toList();
+    return UserProfileData(user: user, todayLessons: lessons);
+  }
+}
 
 class Lesson {
   final String id;

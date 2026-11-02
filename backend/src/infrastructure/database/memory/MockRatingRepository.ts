@@ -39,4 +39,14 @@ export class MockRatingRepository implements IRatingRepository {
     }
     return Result.ok();
   }
+
+  async getById(id: string): Promise<Result<Rating | null>> {
+    const r = this.ratings.find((item) => item.id === id);
+    return Result.ok(r || null);
+  }
+
+  async delete(id: string): Promise<Result<void>> {
+    this.ratings = this.ratings.filter((item) => item.id !== id);
+    return Result.ok();
+  }
 }
