@@ -243,11 +243,83 @@
 
 ---
 
+### 2.11. Таблица `audit_logs` (Журнал аудита действий администрации)
+Миграции: `019_CreateAuditLogsTable.sql`.
+
+| Столбец | Тип данных | Nullable | Ограничения / Default | Описание |
+| :--- | :--- | :---: | :--- | :--- |
+| `id` | `UUID` | Нет | `PRIMARY KEY DEFAULT gen_random_uuid()` | Идентификатор записи аудита |
+| `user_id` | `UUID` | Да | `REFERENCES users(id) ON DELETE SET NULL` | Администратор, выполнивший действие |
+| `action` | `VARCHAR(100)`| Нет | — | Тип операции (`CREATE_USER`, `DELETE_USER`, `SUBSTITUTE_TEACHER`...) |
+| `entity` | `VARCHAR(50)` | Нет | — | Затронутая сущность (`USER`, `SCHEDULE`, `SUBJECT`, `CANTEEN`...) |
+| `entity_id` | `VARCHAR(100)`| Да | — | ID затронутой сущности |
+| `details` | `JSONB` | Да | — | Дополнительный контекст операции в формате JSON |
+| `ip_address` | `VARCHAR(45)` | Да | — | IP-адрес инициатора запроса |
+| `created_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Время фиксации действия в аудит-логе |
+
+*Индексы*: `idx_audit_logs_created_at`, `idx_audit_logs_user_id`, `idx_audit_logs_action`, `idx_audit_logs_entity`.
+
+---
+
+### 2.12. Таблицы `subjects` и `teacher_subjects` (Справочник дисциплин и аккредитация)
+Миграции: `020_CreateSubjectsAndTeacherSubjectsTable.sql`, `024_SeedStandardSubjects.sql`.
+
+#### Таблица `subjects` (Дисциплины)
+| Столбец | Тип данных | Nullable | Ограничения / Default | Описание |
+| :--- | :--- | :---: | :--- | :--- |
+| `id` | `UUID` | Нет | `PRIMARY KEY DEFAULT gen_random_uuid()` | Идентификатор дисциплины |
+| `name` | `VARCHAR(150)`| Нет | `UNIQUE` | Название предмета (например, `Алгебра и начала анализа`) |
+| `description` | `TEXT` | Да | — | Описание кафедры / направленности дисциплины |
+| `created_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Дата добавления дисциплины |
+| `updated_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Дата изменения параметров |
+
+#### Таблица `teacher_subjects` (Матрица закрепления преподавателей)
+Связывает преподавателей со списком предметов, которые они имеют право вести в гимназии.
+
+| Столбец | Тип данных | Nullable | Ограничения / Default | Описание |
+| :--- | :--- | :---: | :--- | :--- |
+| `teacher_id` | `UUID` | Нет | `REFERENCES users(id) ON DELETE CASCADE` | Идентификатор преподавателя |
+| `subject_id` | `UUID` | Нет | `REFERENCES subjects(id) ON DELETE CASCADE` | Идентификатор учебного предмета |
+| `created_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Дата и время закрепления |
+
+*Первичный ключ*: Составной `PRIMARY KEY (teacher_id, subject_id)`.  
+*Индексы*: `idx_teacher_subjects_teacher`, `idx_teacher_subjects_subject`.
+
+---
+
+### 2.13. Таблица `system_settings` (Системные настройки)
+Миграции: `021_CreateSystemSettingsTable.sql`.
+
+| Столбец | Тип данных | Nullable | Ограничения / Default | Описание |
+| :--- | :--- | :---: | :--- | :--- |
+| `key` | `VARCHAR(100)`| Нет | `PRIMARY KEY` | Ключ параметра (например, `canteen_ordering_enabled`) |
+| `value` | `JSONB` | Нет | — | Значение настройки в JSON-формате |
+| `description` | `TEXT` | Да | — | Описание назначения конфигурационного параметра |
+| `updated_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Время обновления настройки |
+| `updated_by` | `UUID` | Да | `REFERENCES users(id) ON DELETE SET NULL` | Пользователь, изменивший настройку |
+
+---
+
+### 2.14. Таблица `deadline_notifications` (Логирование отправки push-уведомлений)
+Миграции: `022_CreateDeadlineNotificationsTable.sql`.
+
+| Столбец | Тип данных | Nullable | Ограничения / Default | Описание |
+| :--- | :--- | :---: | :--- | :--- |
+| `id` | `UUID` | Нет | `PRIMARY KEY DEFAULT gen_random_uuid()` | Идентификатор отправленного алерта |
+| `deadline_id` | `UUID` | Нет | `REFERENCES deadlines(id) ON DELETE CASCADE` | Задача, по которой отправлен пуш |
+| `notification_type`| `VARCHAR(50)`| Нет | `CHECK in ('24h', '2h')` | Горизонт срабатывания алерта |
+| `sent_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Момент фактической отправки уведомления |
+
+*Ограничение уникальности*: `CONSTRAINT uq_deadline_notification_type UNIQUE (deadline_id, notification_type)`.  
+*Индексы*: `idx_deadline_notifications_lookup ON (deadline_id, notification_type)`.
+
+---
+
 ## 3. Реестр миграций базы данных
 
 Расположение: [backend/src/infrastructure/database/migrations/](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/infrastructure/database/migrations)
 
-Миграции выполняются автоматически при старте сервера модулем [migrationRunner.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/infrastructure/database/migrations/migrationRunner.ts) с контролем выполнения через таблицу служебных записей `migrations`.
+Миграции выполняются автоматически при старте сервера модулем [migrationRunner.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/infrastructure/database/migrations/migrationRunner.ts) с контролем выполнения через таблицу служебных записей `migrations`. При сборке Docker-контейнера скрипт `scripts/copy-migrations.js` гарантированно копирует все `.sql` файлы в директорию `dist/`.
 
 | № | Файл миграции | Назначение и SQL-изменения |
 | :---: | :--- | :--- |
@@ -271,3 +343,9 @@
 | `016` | `016_AddLinkFieldsToStories.sql` | Добавление столбцов `link_url` и `link_text` для кликабельных кнопок в сторис. |
 | `017` | `017_SeedNewStoriesFixed.sql` | Обновление демонстрационного пула историй актуальными событиями. |
 | `018` | `018_AddAvatarAndTwoFactorToUsers.sql` | Добавление полей `avatar_url` и `two_factor_enabled` в таблицу `users` для поддержки расширенного профиля и 2FA. |
+| `019` | `019_CreateAuditLogsTable.sql` | Создание таблицы `audit_logs` для системного аудита действий администраторов. |
+| `020` | `020_CreateSubjectsAndTeacherSubjectsTable.sql` | Создание справочника `subjects` и матрицы закрепления `teacher_subjects`. |
+| `021` | `021_CreateSystemSettingsTable.sql` | Создание таблицы `system_settings` для хранения динамических конфигураций. |
+| `022` | `022_CreateDeadlineNotificationsTable.sql` | Создание таблицы `deadline_notifications` для дедупликации пуш-алертов за 24ч и 2ч. |
+| `023` | `023_SeedLargeScaleUsersAndClasses.sql` | Масштабное сидирование 110+ учащихся и 27 педагогов по всем 24 классам гимназии с нормализацией классов через дефис (`10-А`, `11-А`). |
+| `024` | `024_SeedStandardSubjects.sql` | Первоначальное наполнение справочника 25 ключевыми гимназическими дисциплинами по 5 кафедрам. |

@@ -83,10 +83,37 @@ cd ~/Primakov_App/backend
 
 Что делает скрипт [`deploy.sh`](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/scripts/server/deploy.sh):
 1. Выполняет `git pull origin main`.
-2. Пересобирает Docker-образ бэкенда (`docker compose build backend`).
+2. Пересобирает Docker-образ бэкенда (`docker compose build backend`). Скрипт сборки `scripts/copy-migrations.js` автоматически переносит все `.sql` файлы миграций в директорию `dist/`, поэтому контейнер гарантированно накатывает актуальные схемы БД.
 3. Бесшовно перезапускает контейнер (`docker compose up -d`).
 4. Очищает временные висячие слои (`docker image prune -f`).
 5. Проверяет ответ эндпоинта здоровья `/health`.
+
+> [!IMPORTANT]
+> **Рабочий каталог для Docker Compose**: Файл `docker-compose.prod.yml` расположен строго в подкаталоге `backend/`. Все команды управления контейнерами (`build`, `up`, `logs`, `ps`) необходимо выполнять из каталога `~/Primakov_App/backend`.
+
+---
+
+## 🖥️ Веб-панель администратора (Admin Web)
+
+Административная веб-панель (`admin-web`) спроектирована для максимального удобства разработки:
+
+### Локальный запуск (Рекомендуемый для разработки):
+Вам **не требуется** собирать статику на сервере. Запустите админку локально:
+```powershell
+cd admin-web
+npm install
+npm run dev
+```
+Панель откроется на `http://localhost:5173` и будет напрямую работать с живой базой данных и API на сервере `http://185.221.198.242:3000`.
+
+### Развертывание статики на сервере (Production Web):
+Если требуется открывать админ-панель прямо по веб-адресу без локального Node.js:
+```bash
+cd ~/Primakov_App/admin-web
+npm install
+npm run build
+```
+Бэкенд на Express (`backend/src/main.ts`) автоматически раздает собранную папку `admin-web/dist` в качестве статических файлов.
 
 ---
 

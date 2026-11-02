@@ -191,7 +191,7 @@ Primakov_App/
     ├── features.md                       # Матрица фич (готовые, backlog, MoSCoW, RICE, дорожная карта)
     ├── architecture.md                   # Системный дизайн, DDD, C4 и UML диаграммы
     ├── frontend.md                       # Детальная архитектура Flutter, экранов, провайдеров и виджетов
-    ├── database.md                       # Полная спецификация БД PostgreSQL, схемы таблиц и 21 миграции
+    ├── database.md                       # Полная спецификация БД PostgreSQL, схемы таблиц и 26 миграций
     ├── api_and_interfaces.md             # Спецификация REST API (11 модулей, включая /api/admin)
     ├── file_catalog.md                   # Пофайловый реестр всех модулей проекта с описанием их роли
     └── llm_context.xml                   # Высокоплотный XML-манифест для контекста нейросетей
@@ -207,7 +207,7 @@ Primakov_App/
 | [docs/features.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/features.md) | Полный реестр готовых и планируемых фич, матрицы MoSCoW и RICE, релизная дорожная карта | Product Managers, Заказчик, LLM |
 | [docs/architecture.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/architecture.md) | Чистая архитектура (DDD), схемы взаимодействия, Mermaid C4/Sequence диаграммы, ERD базы данных, алгоритмические решения | Архитекторы, Senior Devs, LLM |
 | [docs/frontend.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/frontend.md) | Полная декомпозиция Flutter: 18 экранов, 11 Riverpod-провайдеров, 10 кастомных виджетов, дизайн-система | Flutter Developers, UI/UX, LLM |
-| [docs/database.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/database.md) | Спецификация PostgreSQL: 15 таблиц, типы столбцов, ключи, индексы, мягкое удаление, OCC, реестр 21 миграции | Backend Devs, DBA, LLM |
+| [docs/database.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/database.md) | Спецификация PostgreSQL: 19 таблиц, типы столбцов, ключи, индексы, мягкое удаление, OCC, реестр 26 миграций | Backend Devs, DBA, LLM |
 | [docs/api_and_interfaces.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/api_and_interfaces.md) | Контракты REST API (все 11 модулей, включая `/api/admin`), DTO, валидация Zod, коды ошибок | Frontend/Backend Devs, QA, LLM |
 | [docs/file_catalog.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/file_catalog.md) | Реестр абсолютно каждого исходного файла проекта с его ролью, экспортами и зависимостями | Code Reviewers, LLM |
 | [docs/llm_context.xml](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/llm_context.xml) | Высокоплотный структурированный XML-манифест проекта со всеми правилами, сущностями и актуальным статусом | LLM (Claude, Gemini, GPT) |

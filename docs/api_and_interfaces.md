@@ -329,6 +329,24 @@
 | `GET` | `/api/admin/requests` | Да (Admin) | Реестр всех сервисных заявок гимназии с данными заявителей |
 | `PATCH`| `/api/admin/requests/:id` | Да (Admin) | Модерация заявки (смена статуса, назначение исполнителя, заметки) |
 | `GET` | `/api/admin/ratings` | Да (Admin) | Модерация отзывов учеников о преподавателях (с раскрытием ID авторов для администрации) |
+| `GET` | `/api/admin/schedules` | Да (Admin) | Получение всех расписаний параллелей и классов гимназии |
+| `POST` | `/api/admin/schedules` | Да (Admin) | Инициализация дня расписания для класса (`groupId`, `date`) |
+| `POST` | `/api/admin/schedules/lessons` | Да (Admin) | Добавление урока (предмет, учитель, время, кабинет, тип урока, подгруппа/ИУП) |
+| `PATCH`| `/api/admin/schedules/lessons/:id/substitute` | Да (Admin) | Оформление быстрой замены учителя на уроке (`newTeacherId`, `comment`) |
+| `GET` | `/api/admin/subjects` | Да (Admin) | Справочник учебных дисциплин гимназии с кафедрами |
+| `POST` | `/api/admin/subjects` | Да (Admin) | Добавление новой дисциплины в общешкольный реестр |
+| `DELETE`| `/api/admin/subjects/:id` | Да (Admin) | Удаление дисциплины из справочника |
+| `GET` | `/api/admin/teachers/:teacherId/subjects` | Да (Admin) | Список закрепленных предметов конкретного преподавателя |
+| `POST` | `/api/admin/teachers/:teacherId/subjects` | Да (Admin) | Закрепление дисциплины за педагогом (аккредитация) |
+| `DELETE`| `/api/admin/teachers/:teacherId/subjects/:subjectId` | Да (Admin) | Снятие закрепления дисциплины с педагога |
+| `GET` | `/api/admin/teacher-assignments` | Да (Admin) | Полная сводная матрица закрепления преподавателей по предметам |
+| `GET` | `/api/admin/canteen/menu/:date` | Да (Admin) | Детальное меню столовой на дату со всеми приемами пищи и блюдами |
+| `POST` | `/api/admin/canteen/menu` | Да (Admin) | Создание или активация меню столовой на день |
+| `POST` | `/api/admin/canteen/items` | Да (Admin) | Добавление блюда (КБЖУ, граммовка, аллергены, фото, цена) |
+| `PUT` | `/api/admin/canteen/items/:id` | Да (Admin) | Обновление параметров блюда |
+| `DELETE`| `/api/admin/canteen/items/:id` | Да (Admin) | Удаление блюда из меню |
+| `POST` | `/api/admin/canteen/copy-week` | Да (Admin) | Копирование меню целой учебной недели (`fromWeekStart`, `toWeekStart`) |
+| `POST` | `/api/deadlines/check-alerts` | Да (Admin/Worker) | Принудительный триггер воркера проверки дедлайнов (пуши за 24ч и 2ч) |
 
 #### Пример ответа `/api/admin/dashboard`:
 ```json

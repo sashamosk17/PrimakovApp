@@ -75,6 +75,19 @@
 | `application/admin/AdminUpdateUserStatusUseCase.ts` | Сценарий активации/деактивации учетной записи пользователя. | `class AdminUpdateUserStatusUseCase` |
 | `application/admin/AdminDeleteUserUseCase.ts` | Сценарий мягкого удаления пользователя (`softDelete`). | `class AdminDeleteUserUseCase` |
 | `application/admin/AdminBatchImportUsersUseCase.ts` | Сценарий пакетного создания пользователей из CSV/Excel. | `class AdminBatchImportUsersUseCase` |
+| `application/admin/CreateScheduleUseCase.ts` | Сценарий инициализации дня расписания для класса гимназии. | `class CreateScheduleUseCase` |
+| `application/admin/GetSubjectsUseCase.ts` | Сценарий получения справочника всех учебных дисциплин. | `class GetSubjectsUseCase` |
+| `application/admin/CreateSubjectUseCase.ts` | Сценарий создания новой учебной дисциплины. | `class CreateSubjectUseCase` |
+| `application/admin/DeleteSubjectUseCase.ts` | Сценарий удаления дисциплины из общешкольного реестра. | `class DeleteSubjectUseCase` |
+| `application/admin/AssignTeacherSubjectUseCase.ts` | Сценарий закрепления дисциплины за педагогом (аккредитация). | `class AssignTeacherSubjectUseCase` |
+| `application/admin/RemoveTeacherSubjectUseCase.ts` | Сценарий отзыва закрепления дисциплины у педагога. | `class RemoveTeacherSubjectUseCase` |
+| `application/admin/GetTeacherSubjectsUseCase.ts` | Сценарий выборки дисциплин конкретного преподавателя. | `class GetTeacherSubjectsUseCase` |
+| `application/admin/canteen/AdminCreateOrUpdateMenuUseCase.ts` | Сценарий создания или обновления меню столовой на день. | `class AdminCreateOrUpdateMenuUseCase` |
+| `application/admin/canteen/AdminAddMenuItemUseCase.ts` | Сценарий добавления блюда в меню с расчетом КБЖУ и аллергенов. | `class AdminAddMenuItemUseCase` |
+| `application/admin/canteen/AdminUpdateMenuItemUseCase.ts` | Сценарий изменения параметров блюда столовой. | `class AdminUpdateMenuItemUseCase` |
+| `application/admin/canteen/AdminDeleteMenuItemUseCase.ts` | Сценарий удаления позиции блюда из меню. | `class AdminDeleteMenuItemUseCase` |
+| `application/admin/canteen/AdminCopyWeekMenuUseCase.ts` | Сценарий копирования недельного рациона питания. | `class AdminCopyWeekMenuUseCase` |
+| `scripts/copy-migrations.js` | Скрипт копирования всех SQL-файлов миграций в директорию `dist/` для продакшн сборки Docker. | Node.js script |
 
 ### 1.4. Слой представления (Presentation Layer: Routes, Controllers, Middleware)
 Каталог: [backend/src/presentation/](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/presentation)
@@ -197,6 +210,7 @@
 | `main/edit_profile_screen.dart` | Форма изменения имени и фамилии. |
 | `main/change_password_screen.dart`| Форма безопасной смены пароля. |
 | `main/settings_screen.dart` | Экран управления темой (светлая/темная) и триггерами уведомлений. |
+| `main/notification_center_screen.dart` | Экран In-App Центра уведомлений с фильтрацией (срочные, дедлайны 24ч, расписание) и статусами прочтения. |
 | `canteen_menu_screen.dart` | Меню столовой: Завтрак/Обед/Полдник, расчет калорий, КБЖУ, бейджи аллергенов. |
 | `teacher_ratings_screen.dart` | Экран со списком учителей, средними оценками и диалогом анонимного отзыва. |
 | `rooms_list_screen.dart` | Навигационный справочник аудиторий кампуса с фильтрами по этажам и корпусам. |
@@ -214,6 +228,8 @@
 | `story_card.dart` | Круглая ячейка истории с градиентной окантовкой статуса просмотра. |
 | `today_schedule_widget.dart` | Компактный виджет текущего/ближайшего урока для главной страницы. |
 | `upcoming_deadlines_widget.dart` | Виджет горящих дедлайнов с таймером оставшегося времени. |
+| `notification_bell_icon.dart` | Иконка колокольчика с динамическим счетчиком непрочитанных пушей. |
+| `soft_offline_badge.dart` | Бейдж мягкого офлайн-режима со статусом синхронизации и временем кэша. |
 | `custom_button.dart` | Фирменная кнопка гимназии с анимацией клика и индикатором загрузки. |
 | `custom_text_field.dart` | Стилизованное поле ввода с валидацией и переключателем видимости пароля. |
 | `custom_dropdown.dart` | Выпадающее меню выбора категорий и аудиторий. |
@@ -230,15 +246,20 @@
 | `src/main.tsx` | Точка входа React-приложения. | `createRoot` |
 | `src/App.tsx` | Главный компонент: роутинг табов, сессии, связывание состояний и fallback при недоступности API. | `App` |
 | `src/api/client.ts` | Axios-инстанс с инъекцией JWT Bearer, сохранением токена и селектором `localhost / VPS`. | `apiClient`, `getApiBaseUrl` |
-| `src/types.ts` | TypeScript интерфейсы сущностей: `User`, `DashboardMetrics`, `ServiceRequest`, `TeacherRating`. | `Role`, `User`, `ServiceRequest` |
-| `src/data/mockData.ts` | Реалистичный датасет гимназии для автономного Demo-режима. | `MOCK_METRICS`, `MOCK_USERS` |
+| `src/types.ts` | TypeScript интерфейсы сущностей: `User`, `DashboardMetrics`, `ServiceRequest`, `TeacherRating`, `LessonType`, `Subject`, `Schedule`. | `Role`, `User`, `ServiceRequest`, `LessonType` |
+| `src/data/mockData.ts` | Реалистичный датасет гимназии для автономного Demo-режима (110+ учеников, 27 учителей, 24 класса). | `MOCK_METRICS`, `MOCK_USERS` |
+| `src/context/ToastContext.tsx` | Контекст глобальных Toast-уведомлений об успехе, предупреждениях и ошибках API. | `ToastProvider`, `useToast` |
 | `src/components/Sidebar.tsx` | Боковая навигация в стиле Stitch Design System. | `Sidebar` |
 | `src/components/Header.tsx` | Верхняя панель с поисковой строкой, аватаром и информацией о текущем администраторе. | `Header` |
+| `src/components/EmptyState.tsx` | Переиспользуемый компонент аккуратного пустого состояния для всех разделов. | `EmptyState` |
+| `src/components/ErrorBoundary.tsx` | Предохранитель падений React-компонентов с возможностью перезагрузки упавшего экрана. | `ErrorBoundary` |
 | `src/components/LoginModal.tsx` | Окно входа: форма логина, селектор адреса API, кнопка мгновенного входа в демо-режим. | `LoginModal` |
 | `src/components/AddUserModal.tsx` | Модальное окно создания нового пользователя с валидацией. | `AddUserModal` |
 | `src/components/ImportCsvModal.tsx` | Модальное окно пакетного парсинга и загрузки CSV/Excel списка пользователей. | `ImportCsvModal` |
 | `src/pages/DashboardView.tsx` | Главный экран: бенто-сетка метрик, график недельной активности, заявки и анонсы. | `DashboardView` |
 | `src/pages/UsersView.tsx` | Управление пользователями: фильтры ролей, таблица, переключатели активности, пагинация. | `UsersView` |
+| `src/pages/ScheduleView.tsx` | Расписание всех 24 параллелей гимназии (1–11), поддержка ИУП, поиск любого ученика по фамилии, карточки-аккордеоны, «Раскрыть для всех», замена учителей, справочник предметов и матрица закрепления. | `ScheduleView` |
+| `src/pages/CanteenView.tsx` | Управление столовой: меню дней, рационы (Завтрак/Обед/Полдник/Ужин), КБЖУ, аллергены, копирование недель. | `CanteenView` |
 | `src/pages/RequestsView.tsx` | Служба заявок (Helpdesk): канбан/реестр тикетов, смена статусов и добавление заметок. | `RequestsView` |
 | `src/pages/RatingsView.tsx` | Модерация рейтингов учителей с просмотром авторов отзывов для администрации. | `RatingsView` |
 | `src/pages/AnnouncementsView.tsx`| Публикация и управление общешкольными объявлениями. | `AnnouncementsView` |
