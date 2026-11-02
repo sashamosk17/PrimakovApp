@@ -32,6 +32,24 @@ export class PostgresRatingRepository implements IRatingRepository {
     }
   }
 
+  async getAll(): Promise<Result<Rating[]>> {
+    try {
+      const query = `
+        SELECT id, teacher_id, user_id, value, comment, version, ip_hash, created_at, updated_at
+        FROM ratings
+        ORDER BY created_at DESC
+      `;
+
+      const result = await this.pool.query(query);
+      const ratings = result.rows.map((row) => this.mapRowToRating(row));
+
+      return Result.ok(ratings);
+    } catch (error) {
+      console.error("Error getting all ratings:", error);
+      return Result.fail("Failed to get all ratings");
+    }
+  }
+
   async save(rating: Rating): Promise<Result<void>> {
     try {
       const query = `

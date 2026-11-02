@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #6c0c08;
+  --color-primary-container: #8c251c;
+  --color-primary-light: #ffdad5;
+  --color-on-primary: #ffffff;
+  --color-surface: #f9f9fb;
+  --color-surface-container: #eeeef0;
+  --color-surface-container-low: #f3f3f5;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-high: #e8e8ea;
+  --color-surface-container-highest: #e2e2e4;
+  --color-on-surface: #1a1c1d;
+  --color-on-surface-variant: #57423e;
+  --color-secondary: #5f5e5e;
+  --color-outline: #8b716d;
+  --color-outline-variant: #dec0bb;
+
+  --font-headline: "Manrope", sans-serif;
+  --font-display: "Manrope", sans-serif;
+  --font-body: "Inter", sans-serif;
+
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+  --radius-4xl: 32px;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #f9f9fb;
+  color: #1a1c1d;
+}
+
+.academic-sketch-bg {
+  background-image: linear-gradient(to bottom, rgba(249, 249, 251, 0.95), #f9f9fb);
+}

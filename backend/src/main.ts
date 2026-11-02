@@ -1,6 +1,7 @@
 // Load environment variables FIRST, before any other imports
 import dotenv from "dotenv";
 import path from "path";
+import fs from "fs";
 
 // Load .env from the project root (dist/main.js runs from backend/ directory)
 const envPath = path.join(__dirname, '..', '.env');
@@ -19,6 +20,7 @@ import { roomRoutes } from "./presentation/routes/roomRoutes";
 import { requestRoutes } from "./presentation/routes/requestRoutes";
 import { canteenRoutes } from "./presentation/routes/canteenRoutes";
 import { userRoutes } from "./presentation/routes/userRoutes";
+import { adminRoutes } from "./presentation/routes/adminRoutes";
 import { errorHandlerMiddleware } from "./presentation/middleware/errorHandlerMiddleware";
 import { sanitizeInput } from "./presentation/middleware/sanitizationMiddleware";
 import { createDatabasePool, closeDatabasePool } from "./infrastructure/config/database";
@@ -122,6 +124,28 @@ async function startServer() {
     app.use("/api/rooms", roomRoutes(roomRepository));
     app.use("/api/requests", requestRoutes(requestRepository));
     app.use("/api/canteen", canteenRoutes(canteenMenuRepository));
+    app.use(
+      "/api/admin",
+      adminRoutes({
+        userRepository,
+        requestRepository,
+        ratingRepository,
+        announcementRepository,
+      })
+    );
+
+    // Serve static files from admin-web/dist if built
+    const adminDistPath = path.join(__dirname, "..", "..", "admin-web", "dist");
+    if (fs.existsSync(adminDistPath)) {
+      console.log(`Serving Admin Web UI from ${adminDistPath}`);
+      app.use(express.static(adminDistPath));
+      app.get("*", (req, res, next) => {
+        if (req.path.startsWith("/api") || req.path.startsWith("/health")) {
+          return next();
+        }
+        res.sendFile(path.join(adminDistPath, "index.html"));
+      });
+    }
 
     app.use(errorHandlerMiddleware);
 

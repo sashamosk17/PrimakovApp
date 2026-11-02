@@ -1,5 +1,5 @@
 import { User } from "../../../domain/entities/User";
-import { IUserRepository } from "../../../domain/repositories/IUserRepository";
+import { IUserRepository, UserFilter, PaginatedUsers } from "../../../domain/repositories/IUserRepository";
 import { Result } from "../../../shared/Result";
 import { Email } from "../../../domain/value-objects/Email";
 import { Password } from "../../../domain/value-objects/Password";
@@ -121,17 +121,17 @@ export class MockUserRepository implements IUserRepository {
   }
 
   async findById(id: string): Promise<Result<User | null>> {
-    const user = this.users.find((u) => u.id === id) || null;
+    const user = this.users.find((u) => u.id === id && !u.deletedAt) || null;
     return Result.ok(user);
   }
 
   async findByEmail(email: string): Promise<Result<User | null>> {
-    const user = this.users.find((u) => u.email.value === email.toLowerCase()) || null;
+    const user = this.users.find((u) => u.email.value === email.toLowerCase() && !u.deletedAt) || null;
     return Result.ok(user);
   }
 
   async findByRole(role: Role): Promise<Result<User[]>> {
-    const users = this.users.filter((u) => u.role === role && u.isActive);
+    const users = this.users.filter((u) => u.role === role && u.isActive && !u.deletedAt);
     return Result.ok(users);
   }
 
@@ -143,5 +143,63 @@ export class MockUserRepository implements IUserRepository {
       this.users.push(user);
     }
     return Result.ok();
+  }
+
+  async findAll(filter?: UserFilter): Promise<Result<PaginatedUsers>> {
+    let filtered = this.users.filter((u) => !u.deletedAt);
+
+    if (filter?.role) {
+      filtered = filtered.filter((u) => u.role === filter.role);
+    }
+    if (filter?.isActive !== undefined) {
+      filtered = filtered.filter((u) => u.isActive === filter.isActive);
+    }
+    if (filter?.search) {
+      const q = filter.search.toLowerCase();
+      filtered = filtered.filter(
+        (u) =>
+          u.firstName.toLowerCase().includes(q) ||
+          u.lastName.toLowerCase().includes(q) ||
+          u.email.value.toLowerCase().includes(q)
+      );
+    }
+
+    const total = filtered.length;
+    const page = Math.max(1, filter?.page || 1);
+    const limit = Math.max(1, filter?.limit || 20);
+    const totalPages = Math.ceil(total / limit) || 1;
+    const offset = (page - 1) * limit;
+    const users = filtered.slice(offset, offset + limit);
+
+    return Result.ok({
+      users,
+      total,
+      page,
+      limit,
+      totalPages,
+    });
+  }
+
+  async delete(id: string): Promise<Result<void>> {
+    const user = this.users.find((u) => u.id === id);
+    if (user) {
+      user.softDelete();
+    }
+    return Result.ok();
+  }
+
+  async countByRole(): Promise<Result<Record<Role, number>>> {
+    const counts: Record<Role, number> = {
+      STUDENT: 0,
+      TEACHER: 0,
+      ADMIN: 0,
+      SUPERADMIN: 0,
+    };
+    for (const u of this.users) {
+      if (!u.deletedAt && u.isActive) {
+        counts[u.role] = (counts[u.role] || 0) + 1;
+      }
+    }
+    return Result.ok(counts);
   }
 }

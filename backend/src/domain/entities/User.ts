@@ -18,7 +18,8 @@ export class User {
     public isActive = true,
     public vkId?: string,
     public avatarUrl?: string,
-    public twoFactorEnabled = false
+    public twoFactorEnabled = false,
+    public deletedAt?: Date
   ) {
     this.updatedAt = updatedAt ?? createdAt;
   }
@@ -36,7 +37,7 @@ export class User {
   }
 
   public hasPermission(permission: string): boolean {
-    return ROLE_PERMISSIONS[this.role].includes(permission as never);
+    return ROLE_PERMISSIONS[this.role]?.includes(permission as never) ?? false;
   }
 
   public verify(password: string): boolean {
@@ -47,10 +48,6 @@ export class User {
     this.updatedAt = new Date();
   }
 
-  /**
-   * Updates user profile fields.
-   * Only updates provided fields (partial update).
-   */
   public updateProfile(
     firstName?: string,
     lastName?: string,
@@ -64,12 +61,19 @@ export class User {
     this.updatedAt = new Date();
   }
 
-  /**
-   * Replaces current password with a new one.
-   * Caller is responsible for verifying old password before calling this.
-   */
   public changePassword(newPassword: Password): void {
     this.password = newPassword;
+    this.updatedAt = new Date();
+  }
+
+  public softDelete(): void {
+    this.deletedAt = new Date();
+    this.isActive = false;
+    this.updatedAt = new Date();
+  }
+
+  public toggleActive(active?: boolean): void {
+    this.isActive = active !== undefined ? active : !this.isActive;
     this.updatedAt = new Date();
   }
 
@@ -86,6 +90,7 @@ export class User {
       vkId: this.vkId,
       avatarUrl: this.avatarUrl,
       twoFactorEnabled: this.twoFactorEnabled,
+      deletedAt: this.deletedAt ? this.deletedAt.toISOString() : null,
     };
   }
 }

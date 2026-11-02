@@ -7,7 +7,7 @@
 
 import { Pool } from "pg";
 import { User } from "../../../domain/entities/User";
-import { IUserRepository } from "../../../domain/repositories/IUserRepository";
+import { IUserRepository, UserFilter, PaginatedUsers } from "../../../domain/repositories/IUserRepository";
 import { Result } from "../../../shared/Result";
 import { Email } from "../../../domain/value-objects/Email";
 import { Password } from "../../../domain/value-objects/Password";
@@ -144,6 +144,108 @@ export class PostgresUserRepository implements IUserRepository {
     } catch (error) {
       console.error("Error saving user:", error);
       return Result.fail("Failed to save user");
+    }
+  }
+
+  async findAll(filter?: UserFilter): Promise<Result<PaginatedUsers>> {
+    try {
+      const conditions: string[] = ["deleted_at IS NULL"];
+      const params: any[] = [];
+      let paramIndex = 1;
+
+      if (filter?.role) {
+        conditions.push(`role = $${paramIndex++}`);
+        params.push(filter.role);
+      }
+
+      if (filter?.isActive !== undefined) {
+        conditions.push(`is_active = $${paramIndex++}`);
+        params.push(filter.isActive);
+      }
+
+      if (filter?.search) {
+        conditions.push(`(first_name ILIKE $${paramIndex} OR last_name ILIKE $${paramIndex} OR email ILIKE $${paramIndex})`);
+        params.push(`%${filter.search}%`);
+        paramIndex++;
+      }
+
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+      // Count total
+      const countQuery = `SELECT COUNT(*) as count FROM users ${whereClause}`;
+      const countResult = await this.pool.query(countQuery, params);
+      const total = parseInt(countResult.rows[0].count, 10);
+
+      const page = Math.max(1, filter?.page || 1);
+      const limit = Math.max(1, filter?.limit || 20);
+      const totalPages = Math.ceil(total / limit) || 1;
+      const offset = (page - 1) * limit;
+
+      const dataQuery = `
+        SELECT id, email, password_hash, first_name, last_name, role,
+               is_active, vk_id, avatar_url, two_factor_enabled, created_at, updated_at
+        FROM users
+        ${whereClause}
+        ORDER BY created_at DESC
+        LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+      `;
+      params.push(limit, offset);
+
+      const dataResult = await this.pool.query(dataQuery, params);
+      const users = dataResult.rows.map((row) => this.mapRowToUser(row));
+
+      return Result.ok({
+        users,
+        total,
+        page,
+        limit,
+        totalPages,
+      });
+    } catch (error) {
+      console.error("Error finding all users:", error);
+      return Result.fail("Failed to find users");
+    }
+  }
+
+  async delete(id: string): Promise<Result<void>> {
+    try {
+      const query = `
+        UPDATE users
+        SET deleted_at = NOW(), is_active = false, updated_at = NOW()
+        WHERE id = $1
+      `;
+      await this.pool.query(query, [id]);
+      return Result.ok();
+    } catch (error) {
+      console.error("Error soft-deleting user:", error);
+      return Result.fail("Failed to delete user");
+    }
+  }
+
+  async countByRole(): Promise<Result<Record<Role, number>>> {
+    try {
+      const query = `
+        SELECT role, COUNT(*) as count
+        FROM users
+        WHERE deleted_at IS NULL AND is_active = true
+        GROUP BY role
+      `;
+      const result = await this.pool.query(query);
+      const counts: Record<Role, number> = {
+        STUDENT: 0,
+        TEACHER: 0,
+        ADMIN: 0,
+        SUPERADMIN: 0,
+      };
+      for (const row of result.rows) {
+        if (row.role in counts) {
+          counts[row.role as Role] = parseInt(row.count, 10);
+        }
+      }
+      return Result.ok(counts);
+    } catch (error) {
+      console.error("Error counting users by role:", error);
+      return Result.fail("Failed to count users by role");
     }
   }
 

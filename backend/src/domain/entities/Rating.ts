@@ -35,4 +35,17 @@ export class Rating {
     const diff = new Date().getTime() - this.updatedAt.getTime();
     return diff > days * 24 * 60 * 60 * 1000;
   }
+
+  public toJSON() {
+    return {
+      id: this.id,
+      teacherId: this.teacherId,
+      userId: this.userId,
+      value: this.value,
+      comment: this.comment,
+      version: this.version,
+      createdAt: this.createdAt.toISOString(),
+      updatedAt: this.updatedAt.toISOString(),
+    };
+  }
 }

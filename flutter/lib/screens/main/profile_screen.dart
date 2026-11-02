@@ -1023,6 +1023,28 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
 
               const SizedBox(height: 24),
 
+              // Admin Panel Group (Only for ADMIN role)
+              if (userRole == UserRole.ADMIN) ...[
+                _SettingsGroup(
+                  children: [
+                    _SettingNavigationRow(
+                      icon: Icons.admin_panel_settings,
+                      title: 'Панель администратора (Web)',
+                      subtitle: 'Управление пользователями, контентом и заявками',
+                      onTap: () async {
+                        final uri = Uri.parse('http://185.221.198.242:3000');
+                        try {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } catch (e) {
+                          _showFloatingSnackBar('Не удалось открыть веб-панель', isError: true);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+              ],
+
               // Profile Management Group
               _SettingsGroup(
                 children: [

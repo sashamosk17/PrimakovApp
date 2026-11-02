@@ -23,6 +23,10 @@ export class MockRatingRepository implements IRatingRepository {
     return Result.ok(this.ratings.filter((r) => r.teacherId === teacherId));
   }
 
+  async getAll(): Promise<Result<Rating[]>> {
+    return Result.ok(this.ratings);
+  }
+
   async save(rating: Rating): Promise<Result<void>> {
     this.ratings.push(rating);
     return Result.ok();
