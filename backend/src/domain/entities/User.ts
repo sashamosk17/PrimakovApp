@@ -19,7 +19,8 @@ export class User {
     public vkId?: string,
     public avatarUrl?: string,
     public twoFactorEnabled = false,
-    public deletedAt?: Date
+    public deletedAt?: Date,
+    public groupName?: string
   ) {
     this.updatedAt = updatedAt ?? createdAt;
   }
@@ -91,6 +92,7 @@ export class User {
       avatarUrl: this.avatarUrl,
       twoFactorEnabled: this.twoFactorEnabled,
       deletedAt: this.deletedAt ? this.deletedAt.toISOString() : null,
+      groupName: this.groupName || null,
     };
   }
 }

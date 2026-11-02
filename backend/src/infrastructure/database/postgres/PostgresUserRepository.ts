@@ -14,12 +14,12 @@ import { Password } from "../../../domain/value-objects/Password";
 import { Role } from "../../../shared/types";
 
 export class PostgresUserRepository implements IUserRepository {
-  constructor(private readonly pool: Pool) {}
+  constructor(private readonly pool: Pool) { }
 
   async findById(id: string): Promise<Result<User | null>> {
     try {
       const query = `
-        SELECT id, email, password_hash, first_name, last_name, role,
+        SELECT id, email, password_hash, first_name, last_name, role, group_name,
                is_active, vk_id, avatar_url, two_factor_enabled, created_at, updated_at
         FROM users
         WHERE id = $1 AND deleted_at IS NULL
@@ -42,7 +42,7 @@ export class PostgresUserRepository implements IUserRepository {
   async findByEmail(email: string): Promise<Result<User | null>> {
     try {
       const query = `
-        SELECT id, email, password_hash, first_name, last_name, role,
+        SELECT id, email, password_hash, first_name, last_name, role, group_name,
                is_active, vk_id, avatar_url, two_factor_enabled, created_at, updated_at
         FROM users
         WHERE email = $1 AND deleted_at IS NULL
@@ -65,7 +65,7 @@ export class PostgresUserRepository implements IUserRepository {
   async findByRole(role: Role): Promise<Result<User[]>> {
     try {
       const query = `
-        SELECT id, email, password_hash, first_name, last_name, role,
+        SELECT id, email, password_hash, first_name, last_name, role, group_name,
                is_active, vk_id, avatar_url, two_factor_enabled, created_at, updated_at
         FROM users
         WHERE role = $1 AND is_active = true AND deleted_at IS NULL
@@ -182,7 +182,7 @@ export class PostgresUserRepository implements IUserRepository {
       const offset = (page - 1) * limit;
 
       const dataQuery = `
-        SELECT id, email, password_hash, first_name, last_name, role,
+        SELECT id, email, password_hash, first_name, last_name, role, group_name,
                is_active, vk_id, avatar_url, two_factor_enabled, created_at, updated_at
         FROM users
         ${whereClause}
@@ -273,7 +273,9 @@ export class PostgresUserRepository implements IUserRepository {
       row.is_active,
       row.vk_id,
       row.avatar_url,
-      row.two_factor_enabled ?? false
+      row.two_factor_enabled ?? false,
+      row.deleted_at ? new Date(row.deleted_at) : undefined,
+      row.group_name || undefined
     );
   }
 }

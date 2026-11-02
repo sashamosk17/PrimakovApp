@@ -222,11 +222,13 @@ export class PostgresScheduleRepository implements IScheduleRepository {
    */
   private async getLessonsByScheduleId(scheduleId: string): Promise<Lesson[]> {
     const query = `
-      SELECT id, schedule_id, subject, teacher_id, start_time, end_time,
-             room_number, room_building, floor, has_homework, homework_description, created_at
-      FROM lessons
-      WHERE schedule_id = $1
-      ORDER BY start_time
+      SELECT l.id, l.schedule_id, l.subject, l.teacher_id, l.start_time, l.end_time,
+             l.room_number, l.room_building, l.floor, l.has_homework, l.homework_description, l.created_at,
+             CONCAT(u.first_name, ' ', u.last_name) AS teacher_name
+      FROM lessons l
+      LEFT JOIN users u ON l.teacher_id = u.id
+      WHERE l.schedule_id = $1
+      ORDER BY l.start_time
     `;
 
     const result = await this.pool.query(query, [scheduleId]);
@@ -283,7 +285,8 @@ export class PostgresScheduleRepository implements IScheduleRepository {
       roomResult.value,
       roomFloor,
       row.has_homework,
-      row.homework_description || undefined
+      row.homework_description || undefined,
+      row.teacher_name || undefined
     );
   }
 }

@@ -462,7 +462,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                                 <div className="text-xs text-slate-500 flex items-center gap-3 mt-0.5">
                                   <span className="flex items-center gap-1">
                                     <span className="material-symbols-outlined text-[13px] text-slate-400">person</span>
-                                    {getTeacherName(lesson.teacherId)}
+                                    {lesson.teacherName || getTeacherName(lesson.teacherId)}
                                   </span>
                                   <span className="flex items-center gap-1">
                                     <span className="material-symbols-outlined text-[13px] text-slate-400">meeting_room</span>
@@ -692,7 +692,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               <div>
                 <span className="text-slate-400">Основной преподаватель:</span>{" "}
                 <span className="font-semibold text-slate-700">
-                  {getTeacherName(selectedLessonForSub.lesson.teacherId)}
+                  {selectedLessonForSub.lesson.teacherName || getTeacherName(selectedLessonForSub.lesson.teacherId)}
                 </span>
               </div>
             </div>
