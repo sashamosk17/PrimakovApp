@@ -1,7 +1,9 @@
 /// Main App Entry Point
 /// Updated with 4-tab navigation: Home, Schedule, Services, Profile
 
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -17,6 +19,8 @@ import 'providers/ui_provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'services/cache/offline_cache_service.dart';
 import 'config/app_theme.dart';
+import 'config/app_colors.dart';
+import 'config/app_spacing.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -109,6 +113,7 @@ class _MainNavigatorState extends ConsumerState<MainNavigator> with TickerProvid
   }
 
   void _onItemTapped(int index) {
+    HapticFeedback.lightImpact();
     if (_selectedIndex != index) {
       _animationController.forward().then((_) {
         setState(() {
@@ -126,6 +131,7 @@ class _MainNavigatorState extends ConsumerState<MainNavigator> with TickerProvid
     final loc = AppLocalizations.of(context);
 
     return Scaffold(
+      extendBody: true,
       body: IndexedStack(
         index: _selectedIndex,
         children: const [
@@ -135,53 +141,68 @@ class _MainNavigatorState extends ConsumerState<MainNavigator> with TickerProvid
           ProfileScreen(),     // Tab 3: Профиль
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: isDarkMode
-              ? const Color(0xFF1A1C1D).withOpacity(0.95)
-              : Colors.white.withOpacity(0.95),
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.08),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: isDarkMode ? AppColors.darkFloatingShadow : AppColors.floatingShadow,
             ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          child: BottomNavigationBar(
-            currentIndex: _selectedIndex,
-            onTap: _onItemTapped,
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.transparent,
-            selectedItemColor: theme.colorScheme.primary,
-            unselectedItemColor: isDarkMode
-                ? const Color(0xFF8A9099)
-                : const Color(0xFF9E9E9E),
-            selectedLabelStyle: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 11,
-              letterSpacing: 0.5,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDarkMode
+                        ? const Color(0xCC161B22)
+                        : const Color(0xE6FFFFFF),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: isDarkMode
+                          ? const Color(0x26FFFFFF)
+                          : const Color(0x14000000),
+                      width: 1,
+                    ),
+                  ),
+                  child: Theme(
+                    data: theme.copyWith(
+                      splashColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                    ),
+                    child: BottomNavigationBar(
+                      currentIndex: _selectedIndex,
+                      onTap: _onItemTapped,
+                      type: BottomNavigationBarType.fixed,
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      selectedItemColor: theme.colorScheme.primary,
+                      unselectedItemColor: isDarkMode
+                          ? const Color(0xFF8B949E)
+                          : const Color(0xFF8A9099),
+                      selectedLabelStyle: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                        letterSpacing: 0.3,
+                      ),
+                      unselectedLabelStyle: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontWeight: FontWeight.w500,
+                        fontSize: 11,
+                      ),
+                      items: [
+                        _buildNavItem(Icons.newspaper_rounded, Icons.newspaper_outlined, loc.navHome, 0),
+                        _buildNavItem(Icons.calendar_month_rounded, Icons.calendar_today_outlined, loc.navSchedule, 1),
+                        _buildNavItem(Icons.grid_view_rounded, Icons.grid_view_outlined, loc.navServices, 2),
+                        _buildNavItem(Icons.person_rounded, Icons.person_outline_rounded, loc.navProfile, 3),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
-            unselectedLabelStyle: const TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 11,
-            ),
-            elevation: 0,
-            items: [
-              _buildNavItem(Icons.newspaper, Icons.newspaper_outlined, loc.navHome, 0),
-              _buildNavItem(Icons.calendar_today, Icons.calendar_today_outlined, loc.navSchedule, 1),
-              _buildNavItem(Icons.apps, Icons.apps_outlined, loc.navServices, 2),
-              _buildNavItem(Icons.person, Icons.person_outline, loc.navProfile, 3),
-            ],
           ),
         ),
       ),
@@ -199,20 +220,21 @@ class _MainNavigatorState extends ConsumerState<MainNavigator> with TickerProvid
 
     return BottomNavigationBarItem(
       icon: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
         padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 16 : 0,
-          vertical: 8,
+          horizontal: isSelected ? 16 : 6,
+          vertical: 6,
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? theme.colorScheme.primary.withOpacity(0.1)
+              ? theme.colorScheme.primary.withOpacity(0.12)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
         ),
         child: Icon(
           isSelected ? activeIcon : inactiveIcon,
-          size: 24,
+          size: 22,
         ),
       ),
       label: label,

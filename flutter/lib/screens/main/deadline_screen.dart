@@ -1,4 +1,5 @@
 import '../../config/app_colors.dart';
+import '../../config/app_spacing.dart';
 /// Redesigned based on stitch/_2 design
 
 import 'package:flutter/material.dart';
@@ -539,19 +540,16 @@ class _DeadlineCard extends StatelessWidget {
         : const Color(0xCC5F5E5E);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 24),
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: isDark ? Border.all(color: AppColors.darkBorderPrimary) : null,
-        boxShadow: isDark ? null : const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        border: Border.all(
+          color: isDark ? AppColors.darkSubtleBorder : AppColors.subtleBorder,
+          width: 1,
+        ),
+        boxShadow: isDark ? AppColors.darkCardShadow : AppColors.cardShadow,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -712,14 +710,8 @@ class _TipCard extends StatelessWidget {
             AppColors.primaryRed,
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x336C0C08),
-            blurRadius: 20,
-            offset: Offset(0, 10),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        boxShadow: AppColors.floatingShadow,
       ),
       child: Stack(
         children: [

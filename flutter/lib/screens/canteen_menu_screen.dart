@@ -470,15 +470,12 @@ class _CanteenMenuScreenState extends ConsumerState<CanteenMenuScreen> {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkBackgroundSecondary : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: isDark ? Border.all(color: AppColors.darkBorderPrimary) : null,
-        boxShadow: isDark ? null : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        border: Border.all(
+          color: isDark ? AppColors.darkSubtleBorder : AppColors.subtleBorder,
+          width: 1,
+        ),
+        boxShadow: isDark ? AppColors.darkCardShadow : AppColors.cardShadow,
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),

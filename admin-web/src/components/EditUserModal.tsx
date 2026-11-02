@@ -88,8 +88,8 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-100 flex flex-col gap-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md">
+      <div className="glass-modal dark:bg-slate-900/90 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl flex flex-col gap-5 animate-modal-pop">
         <div className="flex justify-between items-center pb-3 border-b border-slate-100">
           <div>
             <h3 className="text-xl font-bold font-headline text-on-surface">

@@ -1603,7 +1603,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       {/* MODAL 1: ADD LESSON */}
       {isAddLessonOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto space-y-4">
+          <div className="glass-modal animate-modal-pop rounded-3xl max-w-xl w-full p-6 max-h-[90vh] overflow-y-auto space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-slate-800">Добавить урок в расписание</h3>
               <button onClick={() => setIsAddLessonOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -1846,7 +1846,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       {/* MODAL 2: SUBSTITUTE TEACHER */}
       {isSubModalOpen && selectedLessonForSub && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
+          <div className="glass-modal animate-modal-pop rounded-3xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-slate-800">Оформление замены преподавателя</h3>
               <button onClick={() => setIsSubModalOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -1930,7 +1930,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       {/* MODAL 3: ADD SUBJECT */}
       {isAddSubjectOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
+          <div className="glass-modal animate-modal-pop rounded-3xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-slate-800">Добавить учебную дисциплину</h3>
               <button onClick={() => setIsAddSubjectOpen(false)} className="text-slate-400 hover:text-slate-600">

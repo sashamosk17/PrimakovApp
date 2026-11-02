@@ -774,7 +774,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
       {/* MODAL: ADD / EDIT DISH */}
       {isDishModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-100 space-y-5 max-h-[90vh] overflow-y-auto">
+          <div className="glass-modal animate-modal-pop rounded-3xl p-6 max-w-lg w-full space-y-5 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">restaurant</span>
@@ -1038,7 +1038,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
       {/* MODAL: COPY WEEK MENU */}
       {isCopyWeekModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 space-y-5">
+          <div className="glass-modal animate-modal-pop rounded-3xl p-6 max-w-md w-full space-y-5">
             <div className="flex items-center justify-between">
               <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">content_copy</span>

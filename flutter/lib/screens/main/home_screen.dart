@@ -1,7 +1,9 @@
 /// Home Screen - Main Dashboard
 /// Redesigned with Bento Grid layout, Stories section, and modern UI
 
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../config/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
@@ -134,57 +136,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           onRefresh: _loadData,
           color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
           child: CustomScrollView(
-          slivers: [
-            // Top App Bar
-            SliverToBoxAdapter(
-              child: _buildTopAppBar(userName, userRole, currentUser),
-            ),
+            slivers: [
+              // Top App Bar
+              SliverToBoxAdapter(
+                child: _buildTopAppBar(userName, userRole, currentUser),
+              ),
 
-            // Stories Section
-            SliverToBoxAdapter(
-              child: _buildStoriesSection(),
-            ),
+              // Dynamic Day Glance (Contextual Card)
+              SliverToBoxAdapter(
+                child: _buildDynamicDayGlance(),
+              ),
 
-            // Bento Grid Content
-            SliverPadding(
-              padding: AppSpacing.paddingMD,
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    // Row 1: Schedule (full width)
-                    _buildScheduleCard(),
-                    const SizedBox(height: AppSpacing.md),
+              // Stories Section
+              SliverToBoxAdapter(
+                child: _buildStoriesSection(),
+              ),
 
-                    // Row 2: Deadlines + Cafeteria
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: _buildDeadlinesCard(),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildCafeteriaCard(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.md),
+              // Bento Grid Content
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 8),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      // Row 1: Schedule Hero Card (full width)
+                      _buildScheduleCard(),
+                      const SizedBox(height: AppSpacing.md),
 
-                    // Row 3: News (full width)
-                    _buildNewsCard(),
-                    const SizedBox(height: AppSpacing.md),
+                      // Row 2: Deadlines + Cafeteria (2-column Bento)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _buildDeadlinesCard(),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: _buildCafeteriaCard(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.md),
 
-                    // Quote Card
-                    _buildQuoteCard(),
-                  ],
+                      // Row 3: News Carousel (full width)
+                      _buildNewsCard(),
+                      const SizedBox(height: AppSpacing.md),
+
+                      // Row 4: Quote Card
+                      _buildQuoteCard(),
+
+                      // Spacing for Floating Frosted BottomBar
+                      const SizedBox(height: 90),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   String _roleLabel(UserRole role) {
@@ -207,24 +217,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildTopAppBar(String userName, String userRole, User? currentUser) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final initials = _initials(currentUser?.firstName, currentUser?.lastName);
+    final group = currentUser?.groupName;
+    final roleWithClass = (group != null && group.isNotEmpty)
+        ? '$group • $userRole'
+        : userRole;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg - 4, vertical: AppSpacing.md),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.md + 4, AppSpacing.md, AppSpacing.md + 4, 10),
       child: Row(
         children: [
-          // Avatar
+          // Noble Squircle Avatar
           Container(
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
-              borderRadius: BorderRadius.circular(24),
+              gradient: isDark ? null : AppColors.primaryGradient,
+              color: isDark ? AppColors.darkPrimaryContainer : null,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? const Color(0x33FFFFFF) : const Color(0x1A8B0000),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withOpacity(0.3)
+                      : AppColors.primary.withOpacity(0.18),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Center(
               child: Text(
-                initials,
-                style: AppTypography.heading2.copyWith(
-                  color: isDark ? AppColors.darkBackgroundSecondary : AppColors.backgroundSecondary,
+                initials.isNotEmpty ? initials : 'ГП',
+                style: const TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
               ),
             ),
@@ -236,44 +267,284 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  userName,
+                  userName.isNotEmpty ? userName : 'Гимназист',
                   style: TextStyle(
+                    fontFamily: 'Manrope',
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.5,
                     color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  userRole,
-                  style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
+                  roleWithClass,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
           ),
           const NotificationBellIcon(),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Container(
-            child: Center(
-              child: Opacity(
-                opacity: 0.8,
-                child: Image.asset(
-                  'assets/images/primakov_logo.png',
-                  width: 24,
-                  height: 24,
-                  fit: BoxFit.cover,
-                ),
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurfaceContainerHigh : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? AppColors.darkSubtleBorder : AppColors.subtleBorder,
+                width: 0.8,
+              ),
+            ),
+            child: Opacity(
+              opacity: 0.9,
+              child: Image.asset(
+                'assets/images/primakov_logo.png',
+                width: 22,
+                height: 22,
+                fit: BoxFit.contain,
               ),
             ),
           ),
-          // Search Button
-          // IconButton(
-          //   icon: const Icon(Icons.search, size: 28),
-          //   color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-          //   onPressed: () {
-          //     // TODO: Implement search
-          //   },
-          // ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDynamicDayGlance() {
+    final schedule = ref.watch(currentScheduleProvider);
+    final deadlines = ref.watch(allDeadlinesProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final now = DateTime.now();
+    final nowMinutes = now.hour * 60 + now.minute;
+
+    String badgeText = 'СЕЙЧАС';
+    Color badgeColor = isDark ? AppColors.darkPrimary : AppColors.primary;
+    Color badgeBg = isDark ? AppColors.darkPastelRed : AppColors.pastelRed;
+    IconData icon = Icons.access_time_rounded;
+    String headline = 'Учебный день';
+    String detail = 'Гимназия им. Е.М. Примакова';
+    VoidCallback? onTap;
+
+    final lessons = schedule?.lessons ?? [];
+    if (now.weekday == DateTime.sunday) {
+      badgeText = 'ВЫХОДНОЙ';
+      badgeColor = isDark ? const Color(0xFF64B5F6) : const Color(0xFF1976D2);
+      badgeBg = isDark ? AppColors.darkPastelBlue : AppColors.pastelBlue;
+      icon = Icons.spa_rounded;
+      headline = 'Воскресенье • Отдых';
+      detail = 'Подготовьтесь к новой учебной неделе';
+    } else if (lessons.isEmpty) {
+      final activeDeadlines = deadlines.where((d) => d.status == DeadlineStatus.PENDING).length;
+      badgeText = 'ДЕНЬ';
+      badgeColor = isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
+      badgeBg = isDark ? AppColors.darkPastelGreen : AppColors.pastelGreen;
+      icon = Icons.calendar_today_rounded;
+      headline = 'Нет уроков на сегодня';
+      detail = activeDeadlines > 0
+          ? '$activeDeadlines активных дедлайна • Нажмите для просмотра'
+          : 'Свободный график • Отличного дня!';
+      if (activeDeadlines > 0) {
+        onTap = () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const DeadlineScreen()),
+          );
+        };
+      }
+    } else {
+      Lesson? currentLesson;
+      Lesson? nextLesson;
+      Lesson? firstLesson = lessons.first;
+      int? minutesUntilNext;
+      int? minutesUntilEnd;
+
+      for (int i = 0; i < lessons.length; i++) {
+        final l = lessons[i];
+        final startT = _parseTime(l.startTime);
+        final endT = _parseTime(l.endTime);
+        if (startT != null && endT != null) {
+          final startMinutes = startT.hour * 60 + startT.minute;
+          final endMinutes = endT.hour * 60 + endT.minute;
+
+          if (nowMinutes >= startMinutes && nowMinutes <= endMinutes) {
+            currentLesson = l;
+            minutesUntilEnd = endMinutes - nowMinutes;
+            break;
+          } else if (nowMinutes < startMinutes) {
+            nextLesson = l;
+            minutesUntilNext = startMinutes - nowMinutes;
+            break;
+          }
+        }
+      }
+
+      final firstT = _parseTime(firstLesson.startTime);
+      final firstStartMinutes = firstT != null ? firstT.hour * 60 + firstT.minute : 510;
+
+      if (nowMinutes < firstStartMinutes && nextLesson != null) {
+        badgeText = 'СКОРО УРОК';
+        badgeColor = isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100);
+        badgeBg = isDark ? AppColors.darkPastelAmber : AppColors.pastelAmber;
+        icon = Icons.wb_sunny_rounded;
+        final mins = minutesUntilNext ?? (firstStartMinutes - nowMinutes);
+        headline = 'До первого урока ${mins > 0 ? '$mins мин' : 'менее минуты'}';
+        detail = '${nextLesson.subject} • Кабинет ${nextLesson.room}';
+        onTap = () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const ScheduleScreen()),
+          );
+        };
+      } else if (currentLesson != null) {
+        badgeText = 'ИДЕТ УРОК';
+        badgeColor = isDark ? const Color(0xFFFF8A80) : AppColors.primaryRed;
+        badgeBg = isDark ? AppColors.darkPastelRed : AppColors.pastelRed;
+        icon = Icons.menu_book_rounded;
+        headline = currentLesson.subject;
+        final mins = minutesUntilEnd ?? 10;
+        detail = 'Кабинет ${currentLesson.room} • До конца урока $mins мин';
+        onTap = () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const ScheduleScreen()),
+          );
+        };
+      } else if (nextLesson != null) {
+        badgeText = 'ПЕРЕМЕНА';
+        badgeColor = isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100);
+        badgeBg = isDark ? AppColors.darkPastelAmber : AppColors.pastelAmber;
+        icon = Icons.restaurant_rounded;
+        final mins = minutesUntilNext ?? 15;
+        headline = 'Большая перемена ($mins мин)';
+        detail = 'Следующий: ${nextLesson.subject} (Каб. ${nextLesson.room}) • Меню столовой';
+        onTap = () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const CanteenMenuScreen()),
+          );
+        };
+      } else {
+        final activeDeadlines = deadlines.where((d) => d.status == DeadlineStatus.PENDING).length;
+        badgeText = 'ВЕЧЕР';
+        badgeColor = isDark ? const Color(0xFF9FA8DA) : const Color(0xFF3F51B5);
+        badgeBg = isDark ? AppColors.darkPastelIndigo : AppColors.pastelIndigo;
+        icon = Icons.nightlight_round;
+        headline = 'Все уроки на сегодня завершены';
+        detail = activeDeadlines > 0
+            ? '$activeDeadlines дедлайна(ов) на этой неделе • Проверить'
+            : 'Отличная работа! Все задания выполнены';
+        onTap = () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const DeadlineScreen()),
+          );
+        };
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
+      child: Material(
+        color: isDark ? AppColors.darkSurfaceContainerHigh : Colors.white,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusXL),
+        child: InkWell(
+          onTap: onTap != null
+              ? () {
+                  HapticFeedback.lightImpact();
+                  onTap!();
+                }
+              : null,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusXL),
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusXL),
+              border: Border.all(
+                color: isDark ? AppColors.darkSubtleBorder : AppColors.subtleBorder,
+                width: 1.0,
+              ),
+              boxShadow: isDark ? AppColors.darkCardShadow : AppColors.cardShadow,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: badgeBg,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: badgeColor,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: badgeBg,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              badgeText,
+                              style: AppTypography.microBadge.copyWith(
+                                color: badgeColor,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          if (onTap != null)
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 13,
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        headline,
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.4,
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        detail,
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w400,
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -282,7 +553,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final stories = ref.watch(allStoriesProvider);
     final userId = ref.watch(authProvider).userId ?? '';
 
-    // Mock stories if empty
     final displayStories = stories.isEmpty
         ? [
             Story(
@@ -329,8 +599,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         : stories;
 
     return Container(
-      height: 110,
-      margin: const EdgeInsets.only(top: 8, bottom: 16),
+      height: 114,
+      margin: const EdgeInsets.only(top: 8, bottom: 8),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -346,9 +616,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildStoryItem(Story story, bool isViewed) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return GestureDetector(
       onTap: () {
+        HapticFeedback.lightImpact();
         final stories = ref.read(allStoriesProvider);
         final displayStories = stories.isEmpty
             ? [
@@ -407,55 +678,68 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
       },
       child: Container(
-        width: 72,
-        margin: const EdgeInsets.only(right: 12),
+        width: 74,
+        margin: const EdgeInsets.only(right: 14),
         child: Column(
           children: [
             Container(
-              width: 64,
-              height: 64,
+              width: 66,
+              height: 66,
+              padding: const EdgeInsets.all(2.5),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: isViewed 
-                      ? (isDark ? AppColors.darkBorderPrimary : Colors.grey.shade300)
-                      : (isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed),
-                  width: 3,
-                ),
-              ),
-              child: ClipOval(
-                child: Container(
-                  width: 58,
-                  height: 58,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isViewed 
-                        ? (isDark ? AppColors.darkSurfaceVariant : Colors.grey.shade200) 
-                        : (isDark ? AppColors.darkStoryBackground : AppColors.storyBackground),
-                  ),
-                  child: story.imageUrl != null && story.imageUrl!.isNotEmpty
-                      ? Image.asset(
-                          story.imageUrl!,
-                          width: 58,
-                          height: 58,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(
-                              _getStoryIcon(story.title),
-                              color: isViewed 
-                                  ? (isDark ? AppColors.darkIconGray : Colors.grey.shade400) 
-                                  : (isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed),
-                              size: 28,
-                            );
-                          },
-                        )
-                      : Icon(
-                          _getStoryIcon(story.title),
-                          color: isViewed 
-                              ? (isDark ? AppColors.darkIconGray : Colors.grey.shade400) 
-                              : (isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed),
-                          size: 28,
+                gradient: isViewed ? null : AppColors.storyGradientRing,
+                color: isViewed
+                    ? (isDark ? AppColors.darkBorderPrimary : const Color(0xFFE2E4E8))
+                    : null,
+                boxShadow: isViewed
+                    ? null
+                    : [
+                        const BoxShadow(
+                          color: Color(0x33BA1A1A),
+                          blurRadius: 10,
+                          offset: Offset(0, 3),
                         ),
+                      ],
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDark ? AppColors.darkBackgroundPrimary : AppColors.surface,
+                ),
+                child: ClipOval(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isViewed
+                          ? (isDark ? AppColors.darkSurfaceVariant : Colors.grey.shade200)
+                          : (isDark ? AppColors.darkPastelRed : AppColors.storyBackground),
+                    ),
+                    child: story.imageUrl != null && story.imageUrl!.isNotEmpty
+                        ? Image.asset(
+                            story.imageUrl!,
+                            width: 56,
+                            height: 56,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                _getStoryIcon(story.title),
+                                color: isViewed
+                                    ? (isDark ? AppColors.darkIconGray : Colors.grey.shade400)
+                                    : (isDark ? AppColors.darkPrimary : AppColors.primaryRed),
+                                size: 26,
+                              );
+                            },
+                          )
+                        : Icon(
+                            _getStoryIcon(story.title),
+                            color: isViewed
+                                ? (isDark ? AppColors.darkIconGray : Colors.grey.shade400)
+                                : (isDark ? AppColors.darkPrimary : AppColors.primaryRed),
+                            size: 26,
+                          ),
+                  ),
                 ),
               ),
             ),
@@ -463,14 +747,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Text(
               story.title,
               style: TextStyle(
+                fontFamily: 'Manrope',
                 fontSize: 11,
-                color: isViewed 
-                    ? (isDark ? AppColors.darkTextSecondary : Colors.grey.shade500) 
+                color: isViewed
+                    ? (isDark ? AppColors.darkTextSecondary : const Color(0xFF7E848D))
                     : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
-                fontWeight: FontWeight.w500,
+                fontWeight: isViewed ? FontWeight.w500 : FontWeight.w700,
               ),
               textAlign: TextAlign.center,
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ],
@@ -482,17 +767,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   IconData _getStoryIcon(String title) {
     switch (title.toLowerCase()) {
       case 'события':
-        return Icons.event;
+        return Icons.event_rounded;
       case 'приказы':
-        return Icons.description;
+        return Icons.description_rounded;
       case 'меню':
-        return Icons.restaurant_menu;
+        return Icons.restaurant_menu_rounded;
       case 'оценки':
-        return Icons.grade;
+        return Icons.grade_rounded;
       case 'разное':
-        return Icons.more_horiz;
+        return Icons.more_horiz_rounded;
       default:
-        return Icons.circle;
+        return Icons.circle_rounded;
     }
   }
 
@@ -517,111 +802,218 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkBackgroundSecondary : AppColors.backgroundSecondary,
-        borderRadius: BorderRadius.circular(16),
-        border: isDark ? Border.all(color: AppColors.darkBorderPrimary) : null,
-        boxShadow: isDark ? null : [
-          BoxShadow(
-            color: Colors.black.withAlpha((0.05 * 255).round()),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        border: Border.all(
+          color: isDark ? AppColors.darkSubtleBorder : AppColors.subtleBorder,
+          width: 1,
+        ),
+        boxShadow: isDark ? AppColors.darkCardShadow : AppColors.cardShadow,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkStoryBackground : AppColors.storyBackground,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.calendar_today,
-                  color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Мое расписание',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const ScheduleScreen(),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const ScheduleScreen()),
+            );
+          },
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkPastelIndigo : AppColors.pastelIndigo,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        Icons.calendar_month_rounded,
+                        color: isDark ? const Color(0xFF9FA8DA) : const Color(0xFF3F51B5),
+                        size: 20,
+                      ),
                     ),
-                  );
-                },
-                child: Text(
-                  'Смотреть всё',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
-                    fontWeight: FontWeight.w600,
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'РАСПИСАНИЕ',
+                            style: AppTypography.microBadge.copyWith(
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                            ),
+                          ),
+                          Text(
+                            'Мое расписание',
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.4,
+                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkSurfaceContainerHighest : AppColors.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Все уроки',
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 13,
+                            color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (isLoading)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: CircularProgressIndicator(),
-              ),
-            )
-          else if (nextLesson != null)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkLightGray : AppColors.lightGray,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                const SizedBox(height: 16),
+                if (isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else if (nextLesson != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkSurfaceContainerLow : AppColors.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? AppColors.darkSubtleBorder : AppColors.subtleBorder,
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            gradient: isDark ? null : AppColors.primaryGradient,
+                            color: isDark ? AppColors.darkPrimary : null,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    nextLesson.startTime,
+                                    style: TextStyle(
+                                      fontFamily: 'Manrope',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '• Следующий урок',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                nextLesson.subject,
+                                style: TextStyle(
+                                  fontFamily: 'Manrope',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.3,
+                                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.darkSurfaceContainerHigh : Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isDark ? AppColors.darkSubtleBorder : AppColors.subtleBorder,
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.location_on_rounded,
+                                size: 14,
+                                color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Каб. ${nextLesson.room}',
+                                style: TextStyle(
+                                  fontFamily: 'Manrope',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
                   Text(
-                    'Следующий урок: ${nextLesson.subject} • ${nextLesson.startTime}',
+                    'Сегодня нет уроков',
                     style: TextStyle(
+                      fontFamily: 'Manrope',
                       fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                       color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Кабинет: ${nextLesson.room}',
-                    style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            )
-          else
-            Text(
-              'Сегодня нет уроков',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-              ),
+              ],
             ),
-        ],
+          ),
+        ),
       ),
     );
   }
@@ -633,75 +1025,139 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final progress = deadlines.isEmpty ? 0.0 : completedDeadlines.length / deadlines.length;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const DeadlineScreen(),
-          ),
-        );
-      },
-      child: Container(
-        height: 180,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkBackgroundSecondary : AppColors.backgroundSecondary,
-          borderRadius: BorderRadius.circular(16),
-          border: isDark ? Border.all(color: AppColors.darkBorderPrimary) : null,
-          boxShadow: isDark ? null : [
-            BoxShadow(
-              color: Colors.black.withAlpha((0.05 * 255).round()),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
+    return Container(
+      height: 195,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkBackgroundSecondary : AppColors.backgroundSecondary,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        border: Border.all(
+          color: isDark ? AppColors.darkSubtleBorder : AppColors.subtleBorder,
+          width: 1,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
+        boxShadow: isDark ? AppColors.darkCardShadow : AppColors.cardShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const DeadlineScreen()),
+            );
+          },
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkStoryBackground : AppColors.storyBackground,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.alarm,
-                    color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
-                    size: 20,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.darkPastelRed : AppColors.pastelRed,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(
+                            Icons.timer_rounded,
+                            color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                            size: 20,
+                          ),
+                        ),
+                        if (activeDeadlines.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: isDark ? AppColors.darkPastelRed : AppColors.pastelRed,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              '${activeDeadlines.length}',
+                              style: TextStyle(
+                                fontFamily: 'Manrope',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Дедлайны',
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      activeDeadlines.isNotEmpty
+                          ? '${activeDeadlines.length} активных задачи'
+                          : 'Все сдано вовремя',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  'Дедлайны',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${activeDeadlines.length} активных задачи до пятницы',
-                  style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Прогресс',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                          ),
+                        ),
+                        Text(
+                          '${(progress * 100).round()}%',
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: isDark ? AppColors.darkSurfaceContainerHighest : const Color(0xFFF0F2F5),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          isDark ? AppColors.darkPrimary : AppColors.primary,
+                        ),
+                        minHeight: 6,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progress,
-                backgroundColor: isDark ? AppColors.darkMediumGray : Colors.grey.shade200,
-                valueColor: AlwaysStoppedAnimation<Color>(isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed),
-                minHeight: 8,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -715,80 +1171,116 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         canteenState.todayMenu!.first.items.isNotEmpty) {
       todayDish = canteenState.todayMenu!.first.items.first.name;
     } else {
-      todayDish = 'Паста Болоньезе с пармезаном';
+      todayDish = 'Паста Болоньезе';
     }
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const CanteenMenuScreen(),
-          ),
-        );
-      },
-      child: Container(
-        height: 180,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkBackgroundSecondary : AppColors.backgroundSecondary,
-          borderRadius: BorderRadius.circular(16),
-          border: isDark ? Border.all(color: AppColors.darkBorderPrimary) : null,
-          boxShadow: isDark ? null : [
-            BoxShadow(
-              color: Colors.black.withAlpha((0.05 * 255).round()),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
+    return Container(
+      height: 195,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkBackgroundSecondary : AppColors.backgroundSecondary,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        border: Border.all(
+          color: isDark ? AppColors.darkSubtleBorder : AppColors.subtleBorder,
+          width: 1,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
+        boxShadow: isDark ? AppColors.darkCardShadow : AppColors.cardShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const CanteenMenuScreen()),
+            );
+          },
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.darkPastelAmber : AppColors.pastelAmber,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.restaurant_rounded,
+                            color: Color(0xFFE65100),
+                            size: 20,
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 13,
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Столовая',
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Баланс: 1 450 ₽',
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
                 Container(
-                  width: 40,
-                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkLightGray : AppColors.lightGray,
-                    borderRadius: BorderRadius.circular(12),
+                    color: isDark ? AppColors.darkSurfaceContainerLow : AppColors.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(
-                    Icons.restaurant,
-                    color: isDark ? AppColors.darkIconGray : AppColors.iconGray,
-                    size: 20,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.soup_kitchen_rounded, size: 13, color: Color(0xFFE65100)),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          todayDish,
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Столовая',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Баланс: 1 450 ₽',
-                  style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
                 ),
               ],
             ),
-            Text(
-              'Обед: $todayDish',
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
-                fontWeight: FontWeight.w600,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -805,42 +1297,58 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkPrimaryRed.withAlpha((0.05 * 255).round()) : AppColors.primaryRed.withAlpha((0.05 * 255).round()),
-        borderRadius: BorderRadius.circular(16),
-        border: Border(
-          left: BorderSide(
-            color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
-            width: 4,
-          ),
+        color: isDark
+            ? AppColors.darkSurfaceContainerLow
+            : AppColors.primary.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkSubtleBorder
+              : AppColors.primary.withOpacity(0.12),
+          width: 1,
         ),
+        boxShadow: isDark ? AppColors.darkCardShadow : AppColors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.format_quote,
-            color: isDark ? AppColors.darkPrimaryRed.withAlpha((0.5 * 255).round()) : AppColors.primaryRed.withAlpha((0.5 * 255).round()),
-            size: 32,
+          Row(
+            children: [
+              Icon(
+                Icons.format_quote_rounded,
+                color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                size: 28,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'МЫСЛЬ ДНЯ',
+                style: AppTypography.microBadge.copyWith(
+                  color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             quote.text,
             style: TextStyle(
-              fontSize: 16,
-              color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
+              fontFamily: 'Manrope',
+              fontSize: 15,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.onSurface,
               fontStyle: FontStyle.italic,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
               height: 1.5,
             ),
           ),
           const SizedBox(height: 12),
           Text(
-            '— ${quote.author}'.toUpperCase(),
+            '— ${quote.author}',
             style: TextStyle(
-              fontSize: 11,
-              color: isDark ? AppColors.darkPrimaryRed.withAlpha((0.7 * 255).round()) : AppColors.primaryRed.withAlpha((0.7 * 255).round()),
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
+              fontFamily: 'Manrope',
+              fontSize: 12,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -925,17 +1433,12 @@ class _NewsCarouselState extends ConsumerState<_NewsCarousel> {
       constraints: const BoxConstraints(minHeight: 140),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkBackgroundSecondary : AppColors.backgroundSecondary,
-        borderRadius: BorderRadius.circular(16),
-        border: isDark ? Border.all(color: AppColors.darkBorderPrimary) : null,
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withAlpha((0.05 * 255).round()),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        border: Border.all(
+          color: isDark ? AppColors.darkSubtleBorder : AppColors.subtleBorder,
+          width: 1,
+        ),
+        boxShadow: isDark ? AppColors.darkCardShadow : AppColors.cardShadow,
       ),
       child: AnimatedSize(
         duration: const Duration(milliseconds: 300),

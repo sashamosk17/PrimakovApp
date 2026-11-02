@@ -1,9 +1,13 @@
-/// Services Screen
-/// Shows various school services and live teacher search
+/// Services Screen - Bento Grid 2.0 & Campus Directory
+/// Elevated with pastel plates, squircle 18px radiuses, glassmorphism search, and haptic animations
 
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../config/app_colors.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../config/app_colors.dart';
+import '../../config/app_spacing.dart';
+import '../../config/app_typography.dart';
 import '../canteen_menu_screen.dart';
 import '../rooms_list_screen.dart';
 import '../create_request_screen.dart';
@@ -40,15 +44,13 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     final scaffoldBg = isDark ? AppColors.darkBackgroundPrimary : AppColors.backgroundPrimary;
     final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
     final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
-    final surfaceColor = isDark ? AppColors.darkBackgroundSecondary : AppColors.backgroundSecondary;
-    final primaryColor = isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed;
-    final borderColor = isDark ? AppColors.darkBorderSecondary : const Color(0xFFE8E8EA);
+    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primary;
 
     return Scaffold(
       backgroundColor: scaffoldBg,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -56,12 +58,14 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               Text(
                 'Сервисы',
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Manrope',
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.5,
                   color: textPrimary,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
               // Search Section - Campus People Directory
               Row(
@@ -70,98 +74,122 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                   Text(
                     'Поиск по гимназии',
                     style: TextStyle(
+                      fontFamily: 'Manrope',
                       fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
                       color: textPrimary,
                     ),
                   ),
                   TextButton.icon(
                     onPressed: () {
+                      HapticFeedback.lightImpact();
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => const PeopleDirectoryScreen(),
                         ),
                       );
                     },
-                    icon: Icon(Icons.menu_book_outlined, size: 16, color: primaryColor),
+                    icon: Icon(Icons.menu_book_rounded, size: 16, color: primaryColor),
                     label: Text(
                       'Справочник',
                       style: TextStyle(
+                        fontFamily: 'Manrope',
                         fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: primaryColor,
                       ),
                     ),
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       visualDensity: VisualDensity.compact,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
-              TextField(
-                controller: _searchController,
-                onChanged: (value) {
-                  setState(() {
-                    _isSearching = value.trim().isNotEmpty;
-                  });
-                },
-                decoration: InputDecoration(
-                  hintText: 'Поиск по имени, классу или роли...',
-                  hintStyle: TextStyle(color: textSecondary, fontSize: 13),
-                  prefixIcon: Icon(Icons.search, color: textSecondary, size: 20),
-                  suffixIcon: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_isSearching)
-                        IconButton(
-                          icon: Icon(Icons.clear, color: textSecondary, size: 18),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _isSearching = false;
-                            });
-                          },
-                        ),
-                      IconButton(
-                        tooltip: 'Открыть справочник с фильтрами',
-                        icon: Icon(Icons.tune_rounded, color: primaryColor, size: 20),
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const PeopleDirectoryScreen(),
-                            ),
-                          );
-                        },
+
+              // Glassmorphic Search Bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xCC161B22) : const Color(0xE6FFFFFF),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? AppColors.darkSubtleBorder : AppColors.subtleBorder,
+                        width: 1,
                       ),
-                    ],
+                      boxShadow: isDark ? AppColors.darkCardShadow : AppColors.cardShadow,
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (value) {
+                        setState(() {
+                          _isSearching = value.trim().isNotEmpty;
+                        });
+                      },
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        color: textPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Поиск по имени, классу или роли...',
+                        hintStyle: TextStyle(
+                          fontFamily: 'Inter',
+                          color: textSecondary,
+                          fontSize: 13,
+                        ),
+                        prefixIcon: Icon(Icons.search_rounded, color: textSecondary, size: 20),
+                        suffixIcon: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_isSearching)
+                              IconButton(
+                                icon: Icon(Icons.clear_rounded, color: textSecondary, size: 18),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {
+                                    _isSearching = false;
+                                  });
+                                },
+                              ),
+                            IconButton(
+                              tooltip: 'Открыть справочник с фильтрами',
+                              icon: Icon(Icons.tune_rounded, color: primaryColor, size: 20),
+                              onPressed: () {
+                                HapticFeedback.lightImpact();
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const PeopleDirectoryScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        filled: false,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      ),
+                    ),
                   ),
-                  filled: true,
-                  fillColor: surfaceColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: borderColor),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: borderColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: primaryColor, width: 2),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
               ),
-              
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 18),
               if (_isSearching) ...[
                 Text(
                   'Результаты поиска',
                   style: TextStyle(
+                    fontFamily: 'Manrope',
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: textSecondary,
                   ),
                 ),
@@ -186,6 +214,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                           }
 
                           return ListView.builder(
+                            padding: const EdgeInsets.only(bottom: 90),
                             itemCount: users.length,
                             itemBuilder: (context, index) {
                               final user = users[index];
@@ -207,26 +236,32 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                       ),
                 ),
               ] else ...[
-                // Services Grid
+                // Services Grid 2x3 (Bento Tiles)
                 Text(
                   'Все сервисы',
                   style: TextStyle(
+                    fontFamily: 'Manrope',
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
                     color: textPrimary,
                   ),
                 ),
                 const SizedBox(height: 12),
                 Expanded(
                   child: GridView.count(
-                    crossAxisCount: 3,
+                    padding: const EdgeInsets.only(bottom: 90),
+                    crossAxisCount: 2,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
-                    childAspectRatio: 0.9,
+                    childAspectRatio: 1.15,
                     children: [
-                      _ServiceCard(
-                        icon: Icons.support_agent,
+                      _InteractiveBentoTile(
+                        icon: Icons.support_agent_rounded,
                         title: 'Заявки',
+                        subtitle: 'Обращения и помощь',
+                        pastelBg: isDark ? AppColors.darkPastelRed : AppColors.pastelRed,
+                        iconColor: isDark ? AppColors.darkPrimary : AppColors.pastelRedIcon,
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -235,9 +270,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                           );
                         },
                       ),
-                      _ServiceCard(
-                        icon: Icons.restaurant,
+                      _InteractiveBentoTile(
+                        icon: Icons.restaurant_rounded,
                         title: 'Столовая',
+                        subtitle: 'Меню и питание',
+                        pastelBg: isDark ? AppColors.darkPastelAmber : AppColors.pastelAmber,
+                        iconColor: const Color(0xFFE65100),
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -246,9 +284,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                           );
                         },
                       ),
-                      _ServiceCard(
-                        icon: Icons.schedule,
+                      _InteractiveBentoTile(
+                        icon: Icons.calendar_month_rounded,
                         title: 'Расписание',
+                        subtitle: 'Уроки и звонки',
+                        pastelBg: isDark ? AppColors.darkPastelIndigo : AppColors.pastelIndigo,
+                        iconColor: const Color(0xFF3F51B5),
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -257,9 +298,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                           );
                         },
                       ),
-                      _ServiceCard(
-                        icon: Icons.map,
+                      _InteractiveBentoTile(
+                        icon: Icons.map_rounded,
                         title: 'Карта',
+                        subtitle: 'Кабинеты и зоны',
+                        pastelBg: isDark ? AppColors.darkPastelGreen : AppColors.pastelGreen,
+                        iconColor: const Color(0xFF2E7D32),
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -268,9 +312,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                           );
                         },
                       ),
-                      _ServiceCard(
-                        icon: Icons.announcement,
+                      _InteractiveBentoTile(
+                        icon: Icons.campaign_rounded,
                         title: 'Объявления',
+                        subtitle: 'События гимназии',
+                        pastelBg: isDark ? AppColors.darkPastelPink : AppColors.pastelPink,
+                        iconColor: const Color(0xFFC2185B),
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -279,9 +326,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                           );
                         },
                       ),
-                      _ServiceCard(
-                        icon: Icons.star,
+                      _InteractiveBentoTile(
+                        icon: Icons.star_rounded,
                         title: 'Рейтинги',
+                        subtitle: 'Отзывы и оценки',
+                        pastelBg: isDark ? AppColors.darkPastelBlue : AppColors.pastelBlue,
+                        iconColor: const Color(0xFF0288D1),
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -302,72 +352,121 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
   }
 }
 
-class _ServiceCard extends StatelessWidget {
+class _InteractiveBentoTile extends StatefulWidget {
   final IconData icon;
   final String title;
+  final String subtitle;
+  final Color pastelBg;
+  final Color iconColor;
   final VoidCallback onTap;
 
-  const _ServiceCard({
+  const _InteractiveBentoTile({
     required this.icon,
     required this.title,
+    required this.subtitle,
+    required this.pastelBg,
+    required this.iconColor,
     required this.onTap,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final cardColor = isDark ? AppColors.darkBackgroundSecondary : AppColors.backgroundSecondary;
-    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
-    final iconColor = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+  State<_InteractiveBentoTile> createState() => _InteractiveBentoTileState();
+}
 
-    return Material(
-      color: cardColor,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: isDark ? Border.all(color: AppColors.darkBorderPrimary) : null,
-            boxShadow: isDark ? null : const [
-              BoxShadow(
-                color: Color(0x05000000),
-                blurRadius: 4,
-                offset: Offset(0, 1),
+class _InteractiveBentoTileState extends State<_InteractiveBentoTile> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? AppColors.darkBackgroundSecondary : AppColors.backgroundSecondary;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+
+    return AnimatedScale(
+      scale: _isPressed ? 0.97 : 1.0,
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOutCubic,
+      child: Material(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        child: InkWell(
+          onTapDown: (_) => setState(() => _isPressed = true),
+          onTapUp: (_) => setState(() => _isPressed = false),
+          onTapCancel: () => setState(() => _isPressed = false),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            widget.onTap();
+          },
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+              border: Border.all(
+                color: isDark ? AppColors.darkSubtleBorder : AppColors.subtleBorder,
+                width: 1,
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurfaceContainer : AppColors.storyBackground,
-                  borderRadius: BorderRadius.circular(10),
+              boxShadow: isDark ? AppColors.darkCardShadow : AppColors.cardShadow,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: widget.pastelBg,
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusTile), // 18px!
+                      ),
+                      child: Icon(
+                        widget.icon,
+                        color: widget.iconColor,
+                        size: 24,
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 13,
+                      color: isDark
+                          ? AppColors.darkTextSecondary.withOpacity(0.5)
+                          : AppColors.textSecondary.withOpacity(0.5),
+                    ),
+                  ],
                 ),
-                child: Icon(
-                  icon,
-                  color: isDark ? iconColor : AppColors.primaryRed,
-                  size: 20,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      widget.subtitle,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        color: textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
-                  height: 1.2,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -393,9 +492,11 @@ class _UserResultCard extends StatelessWidget {
 
     final isTeacher = user.role == UserRole.TEACHER;
     final avatarBg = isTeacher
-        ? const Color(0xFF1976D2).withOpacity(0.15)
-        : AppColors.primaryRed.withOpacity(0.12);
-    final avatarColor = isTeacher ? const Color(0xFF1976D2) : AppColors.primaryRed;
+        ? (isDark ? AppColors.darkPastelIndigo : AppColors.pastelIndigo)
+        : (isDark ? AppColors.darkPastelRed : AppColors.pastelRed);
+    final avatarColor = isTeacher
+        ? const Color(0xFF3F51B5)
+        : (isDark ? AppColors.darkPrimary : AppColors.primaryRed);
 
     final fName = user.firstName.isNotEmpty ? user.firstName[0] : '';
     final lName = user.lastName.isNotEmpty ? user.lastName[0] : '';
@@ -415,20 +516,35 @@ class _UserResultCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: isDark ? Border.all(color: AppColors.darkBorderPrimary) : null,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.darkSubtleBorder : AppColors.subtleBorder,
+          width: 0.8,
+        ),
+        boxShadow: isDark ? AppColors.darkCardShadow : AppColors.cardShadow,
       ),
       child: ListTile(
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        leading: CircleAvatar(
-          backgroundColor: avatarBg,
-          child: Text(
-            initials,
-            style: TextStyle(
-              color: avatarColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        leading: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: avatarBg,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: Text(
+              initials,
+              style: TextStyle(
+                fontFamily: 'Manrope',
+                color: avatarColor,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
             ),
           ),
         ),
@@ -438,8 +554,9 @@ class _UserResultCard extends StatelessWidget {
               child: Text(
                 '${user.lastName} ${user.firstName}',
                 style: TextStyle(
+                  fontFamily: 'Manrope',
                   color: textPrimary,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                   fontSize: 14,
                 ),
                 maxLines: 1,
@@ -456,11 +573,12 @@ class _UserResultCard extends StatelessWidget {
         subtitle: Text(
           roleLabel,
           style: TextStyle(
+            fontFamily: 'Inter',
             color: textSecondary,
             fontSize: 12,
           ),
         ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
       ),
     );
   }

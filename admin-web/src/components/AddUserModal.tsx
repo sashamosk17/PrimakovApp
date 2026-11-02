@@ -46,8 +46,8 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl p-7 max-w-md w-full shadow-2xl border border-slate-100 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4">
+      <div className="glass-modal dark:bg-slate-900/90 rounded-3xl p-7 max-w-md w-full shadow-2xl animate-modal-pop">
         <div className="flex justify-between items-center mb-5">
           <h4 className="text-lg font-bold font-headline text-on-surface">
             Добавить нового пользователя

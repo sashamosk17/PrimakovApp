@@ -217,7 +217,7 @@ export const RequestsView: React.FC<RequestsViewProps> = ({
       {/* Resolution & Assignee Modal */}
       {editingRequest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-100 flex flex-col gap-4">
+          <div className="glass-modal animate-modal-pop rounded-3xl p-6 sm:p-8 max-w-lg w-full flex flex-col gap-4">
             <div className="flex justify-between items-center pb-3 border-b border-slate-100">
               <div>
                 <h3 className="text-lg font-bold font-headline text-on-surface">

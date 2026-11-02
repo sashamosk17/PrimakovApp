@@ -7,14 +7,14 @@ class AppTypography {
   AppTypography._();
 
   // ==========================================
-  // Editorial Voice - Manrope (Headlines & Display)
+  // Editorial Voice - Manrope (Headlines & Display with tight -0.5px tracking)
   // ==========================================
   static const TextStyle displayLarge = TextStyle(
     fontFamily: 'Manrope',
     fontSize: 32,
     fontWeight: FontWeight.w700,
     height: 1.25, // 40px line height
-    letterSpacing: -0.64, // -0.02em
+    letterSpacing: -0.6,
   );
 
   static const TextStyle displayMedium = TextStyle(
@@ -22,7 +22,7 @@ class AppTypography {
     fontSize: 28,
     fontWeight: FontWeight.w700,
     height: 1.28,
-    letterSpacing: -0.56,
+    letterSpacing: -0.5,
   );
 
   static const TextStyle headlineLarge = TextStyle(
@@ -30,15 +30,15 @@ class AppTypography {
     fontSize: 24,
     fontWeight: FontWeight.w700,
     height: 1.33, // 32px line height
-    letterSpacing: -0.24, // -0.01em
+    letterSpacing: -0.5,
   );
 
   static const TextStyle headlineMedium = TextStyle(
     fontFamily: 'Manrope',
     fontSize: 20,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     height: 1.4, // 28px line height
-    letterSpacing: -0.2,
+    letterSpacing: -0.5,
   );
 
   static const TextStyle headlineSmall = TextStyle(
@@ -46,6 +46,7 @@ class AppTypography {
     fontSize: 18,
     fontWeight: FontWeight.w600,
     height: 1.4,
+    letterSpacing: -0.3,
   );
 
   // Backward-compatible Heading Aliases
@@ -56,6 +57,15 @@ class AppTypography {
     fontSize: 16,
     fontWeight: FontWeight.w600,
     height: 1.5,
+    letterSpacing: -0.2,
+  );
+
+  /// Elegant small-caps micro-badge (letterSpacing: 1.2, 11px)
+  static const TextStyle microBadge = TextStyle(
+    fontFamily: 'Manrope',
+    fontSize: 11,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 1.2,
   );
 
   // ==========================================

@@ -29,22 +29,24 @@ class AppSpacing {
   static const EdgeInsets horizontalLG = EdgeInsets.symmetric(horizontal: lg);
   static const EdgeInsets verticalLG = EdgeInsets.symmetric(vertical: lg);
 
-  // Border Radius (Stitch Academic Curator: strictly 16px for cards & buttons)
+  // Border Radius (Apple Human Interface / Bento Grid 2.0: 20-24px on cards, 18px tiles, 999px pills)
   static const double radiusSM = 8.0;
   static const double radiusMD = 12.0; // Inputs, inner elements
-  static const double radiusLG = 16.0; // Cards, Buttons, BottomSheet, Containers
-  static const double radiusXL = 24.0;
-  static const double radiusPill = 9999.0; // Badges, Status pills
+  static const double radiusLG = 20.0; // Cards, BottomSheet, Containers
+  static const double radiusXL = 24.0; // Hero Cards & Large Bento blocks
+  static const double radiusTile = 18.0; // Services Tiles
+  static const double radiusPill = 999.0; // Badges, Status pills, Navigation Pill
 
   // Semantic Radius Shortcuts
-  static const double radiusCard = radiusLG;
-  static const double radiusButton = radiusLG;
-  static const double radiusInput = radiusMD;
+  static const double radiusCard = 22.0;
+  static const double radiusButton = 16.0;
+  static const double radiusInput = 14.0;
 
   static BorderRadius get borderRadiusSM => BorderRadius.circular(radiusSM);
   static BorderRadius get borderRadiusMD => BorderRadius.circular(radiusMD);
   static BorderRadius get borderRadiusLG => BorderRadius.circular(radiusLG);
   static BorderRadius get borderRadiusXL => BorderRadius.circular(radiusXL);
+  static BorderRadius get borderRadiusTile => BorderRadius.circular(radiusTile);
   static BorderRadius get borderRadiusCard => BorderRadius.circular(radiusCard);
   static BorderRadius get borderRadiusPill => BorderRadius.circular(radiusPill);
 }
