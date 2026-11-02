@@ -85,15 +85,29 @@ export async function runMigrations(pool: Pool): Promise<void> {
       executedResult.rows.map((row) => row.name)
     );
 
-    // Read migration files
-    const migrationsDir = path.join(__dirname);
-    const files = fs
-      .readdirSync(migrationsDir)
-      .filter((file) => file.endsWith(".sql"))
-      .sort();
+    // Read migration files from candidates
+    const candidateDirs = [
+      path.join(__dirname),
+      path.resolve(__dirname, "../../../../src/infrastructure/database/migrations"),
+      path.resolve(process.cwd(), "src/infrastructure/database/migrations"),
+      path.resolve(process.cwd(), "dist/infrastructure/database/migrations"),
+    ];
+
+    let migrationsDir = path.join(__dirname);
+    let files: string[] = [];
+    for (const dir of candidateDirs) {
+      if (fs.existsSync(dir)) {
+        const found = fs.readdirSync(dir).filter((file) => file.endsWith(".sql")).sort();
+        if (found.length > 0) {
+          migrationsDir = dir;
+          files = found;
+          break;
+        }
+      }
+    }
 
     if (files.length === 0) {
-      console.log("No migration files found");
+      console.log("No migration files found in candidates:", candidateDirs);
       return;
     }
 
