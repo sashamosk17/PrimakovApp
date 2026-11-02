@@ -17,13 +17,14 @@ export class PostgresScheduleRepository implements IScheduleRepository {
   constructor(private readonly pool: Pool) {}
 
   async getScheduleByGroup(groupId: string): Promise<Result<Schedule | null>> {
-    // Note: groupId is actually userId in current implementation
     try {
       const scheduleQuery = `
-        SELECT id, user_id, date, created_at, updated_at
-        FROM schedules
-        WHERE user_id = $1
-        ORDER BY date DESC
+        SELECT s.id, s.user_id, s.date, s.created_at, s.updated_at,
+               COALESCE(u.group_name, s.user_id::text) AS group_name
+        FROM schedules s
+        LEFT JOIN users u ON s.user_id = u.id
+        WHERE s.user_id::text = $1 OR u.group_name = $1
+        ORDER BY s.date DESC
         LIMIT 1
       `;
 
@@ -38,7 +39,7 @@ export class PostgresScheduleRepository implements IScheduleRepository {
 
       const schedule = new Schedule(
         scheduleRow.id,
-        scheduleRow.user_id,
+        scheduleRow.group_name || scheduleRow.user_id,
         new Date(scheduleRow.date),
         lessons,
         new Date(scheduleRow.created_at),
@@ -58,9 +59,11 @@ export class PostgresScheduleRepository implements IScheduleRepository {
       const dateString = date.toISOString().split("T")[0];
 
       const scheduleQuery = `
-        SELECT id, user_id, date, created_at, updated_at
-        FROM schedules
-        WHERE user_id = $1 AND date = $2
+        SELECT s.id, s.user_id, s.date, s.created_at, s.updated_at,
+               COALESCE(u.group_name, s.user_id::text) AS group_name
+        FROM schedules s
+        LEFT JOIN users u ON s.user_id = u.id
+        WHERE (s.user_id::text = $1 OR u.group_name = $1) AND s.date = $2
       `;
 
       const scheduleResult = await this.pool.query(scheduleQuery, [groupId, dateString]);
@@ -74,7 +77,7 @@ export class PostgresScheduleRepository implements IScheduleRepository {
 
       const schedule = new Schedule(
         scheduleRow.id,
-        scheduleRow.user_id,
+        scheduleRow.group_name || scheduleRow.user_id,
         new Date(scheduleRow.date),
         lessons,
         new Date(scheduleRow.created_at),
@@ -89,16 +92,17 @@ export class PostgresScheduleRepository implements IScheduleRepository {
   }
 
   async getScheduleByUserId(userId: string, date: Date): Promise<Result<Schedule | null>> {
-    // In PostgreSQL implementation groupId column stores userId, so this is equivalent
     return this.getScheduleByDate(userId, date);
   }
 
   async findById(id: string): Promise<Schedule | undefined> {
     try {
       const scheduleQuery = `
-        SELECT id, user_id, date, created_at, updated_at
-        FROM schedules
-        WHERE id = $1
+        SELECT s.id, s.user_id, s.date, s.created_at, s.updated_at,
+               COALESCE(u.group_name, s.user_id::text) AS group_name
+        FROM schedules s
+        LEFT JOIN users u ON s.user_id = u.id
+        WHERE s.id = $1
       `;
       const result = await this.pool.query(scheduleQuery, [id]);
       if (result.rows.length === 0) return undefined;
@@ -106,7 +110,7 @@ export class PostgresScheduleRepository implements IScheduleRepository {
       const lessons = await this.getLessonsByScheduleId(row.id);
       return new Schedule(
         row.id,
-        row.user_id,
+        row.group_name || row.user_id,
         new Date(row.date),
         lessons,
         new Date(row.created_at),
@@ -121,9 +125,11 @@ export class PostgresScheduleRepository implements IScheduleRepository {
   async getAll(): Promise<Result<Schedule[]>> {
     try {
       const query = `
-        SELECT id, user_id, date, created_at, updated_at
-        FROM schedules
-        ORDER BY date DESC
+        SELECT s.id, s.user_id, s.date, s.created_at, s.updated_at,
+               COALESCE(u.group_name, s.user_id::text) AS group_name
+        FROM schedules s
+        LEFT JOIN users u ON s.user_id = u.id
+        ORDER BY s.date DESC
       `;
       const res = await this.pool.query(query);
       const schedules: Schedule[] = [];
@@ -132,7 +138,7 @@ export class PostgresScheduleRepository implements IScheduleRepository {
         schedules.push(
           new Schedule(
             row.id,
-            row.user_id,
+            row.group_name || row.user_id,
             new Date(row.date),
             lessons,
             new Date(row.created_at),

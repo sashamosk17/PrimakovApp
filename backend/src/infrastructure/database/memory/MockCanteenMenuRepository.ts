@@ -119,6 +119,11 @@ export class MockCanteenMenuRepository implements ICanteenMenuRepository {
     ];
   }
 
+  async findById(id: string): Promise<Result<CanteenMenu | null>> {
+    const menu = this.menus.find((m) => m.id === id);
+    return Result.ok(menu || null);
+  }
+
   async getByDate(date: Date): Promise<Result<CanteenMenu[]>> {
     const targetDateStr = toDateString(date);
     const filtered = this.menus.filter((m) => {
@@ -156,6 +161,11 @@ export class MockCanteenMenuRepository implements ICanteenMenuRepository {
     if (index >= 0) {
       this.menus[index] = menu;
     }
+    return Result.ok();
+  }
+
+  async deleteMenu(id: string): Promise<Result<void>> {
+    this.menus = this.menus.filter((m) => m.id !== id);
     return Result.ok();
   }
 

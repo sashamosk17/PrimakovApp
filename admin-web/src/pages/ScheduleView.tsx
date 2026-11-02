@@ -5,6 +5,7 @@ interface ScheduleViewProps {
   schedules: Schedule[];
   subjects: Subject[];
   teachers: User[];
+  allUsers?: User[];
   assignments: TeacherAssignment[];
   onSubstituteTeacher: (scheduleId: string, lessonId: string, newTeacherId: string, comment?: string) => Promise<void>;
   onAddLesson: (lessonData: {
@@ -24,10 +25,29 @@ interface ScheduleViewProps {
   onTriggerPushAlerts: () => Promise<{ sentCount: number; checkedCount: number }>;
 }
 
+export const formatClassName = (groupId: string, users?: User[]): string => {
+  if (!groupId) return "—";
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(groupId)) {
+    const user = users?.find((u) => u.id === groupId);
+    if (user?.groupName) return user.groupName;
+    return "10-А";
+  }
+  if (/^(\d+)([A-ZА-Я])$/i.test(groupId)) {
+    const match = groupId.match(/^(\d+)([A-ZА-Я])$/i);
+    if (match) {
+      const num = match[1];
+      const letter = match[2].toUpperCase().replace("A", "А").replace("B", "Б").replace("V", "В");
+      return `${num}-${letter}`;
+    }
+  }
+  return groupId;
+};
+
 export const ScheduleView: React.FC<ScheduleViewProps> = ({
   schedules,
   subjects,
   teachers,
+  allUsers,
   assignments,
   onSubstituteTeacher,
   onAddLesson,
@@ -69,6 +89,58 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   const [pushStatusMessage, setPushStatusMessage] = useState<string | null>(null);
   const [isProcessingPush, setIsProcessingPush] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  // Helper: Collision detection (UI-06)
+  const checkTeacherCollision = (
+    teacherId: string,
+    targetDate: string,
+    startTime: string,
+    endTime: string,
+    excludeLessonId?: string
+  ) => {
+    for (const s of schedules) {
+      if (s.date !== targetDate) continue;
+      for (const l of s.lessons) {
+        if (excludeLessonId && l.id === excludeLessonId) continue;
+        if (l.teacherId === teacherId) {
+          // Time overlap check: start1 < end2 && end1 > start2
+          if (startTime < l.endTime && endTime > l.startTime) {
+            return {
+              hasConflict: true,
+              conflictingLesson: l,
+              conflictingGroup: formatClassName(s.groupId, allUsers),
+            };
+          }
+        }
+      }
+    }
+    return { hasConflict: false };
+  };
+
+  const checkRoomCollision = (
+    roomNumber: string,
+    targetDate: string,
+    startTime: string,
+    endTime: string,
+    excludeLessonId?: string
+  ) => {
+    for (const s of schedules) {
+      if (s.date !== targetDate) continue;
+      for (const l of s.lessons) {
+        if (excludeLessonId && l.id === excludeLessonId) continue;
+        if (l.room === roomNumber) {
+          if (startTime < l.endTime && endTime > l.startTime) {
+            return {
+              hasConflict: true,
+              conflictingLesson: l,
+              conflictingGroup: formatClassName(s.groupId, allUsers),
+            };
+          }
+        }
+      }
+    }
+    return { hasConflict: false };
+  };
 
   // Filter schedules
   const availableGroups = Array.from(new Set(schedules.map((s) => s.groupId)));
@@ -314,7 +386,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
                 >
-                  {grp}
+                  {formatClassName(grp, allUsers)}
                 </button>
               ))}
             </div>
@@ -340,7 +412,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <div className="flex items-center gap-3">
                       <span className="px-3 py-1 bg-red-50 text-red-900 font-extrabold rounded-lg text-sm">
-                        Класс {schedule.groupId}
+                        Класс {formatClassName(schedule.groupId, allUsers)}
                       </span>
                       <span className="text-xs text-slate-500 font-medium">
                         Дата: {schedule.date}
@@ -646,6 +718,42 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                 </select>
               </div>
 
+              {/* Collision Status Feedback (UI-06) */}
+              {(() => {
+                const curSchedule = schedules.find((s) => s.id === selectedLessonForSub.scheduleId);
+                if (!curSchedule || !subTeacherId) return null;
+                const collision = checkTeacherCollision(
+                  subTeacherId,
+                  curSchedule.date,
+                  selectedLessonForSub.lesson.startTime,
+                  selectedLessonForSub.lesson.endTime,
+                  selectedLessonForSub.lesson.id
+                );
+
+                if (collision.hasConflict) {
+                  return (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-xs text-amber-900 animate-fadeIn">
+                      <span className="material-symbols-outlined text-amber-600 text-base mt-0.5">warning</span>
+                      <div>
+                        <p className="font-bold">Обнаружен конфликт расписания!</p>
+                        <p className="text-[11px] text-amber-800 mt-0.5">
+                          Преподаватель уже ведет урок <strong>«{collision.conflictingLesson?.subject}»</strong> в классе <strong>{collision.conflictingGroup}</strong> (каб. {collision.conflictingLesson?.room}, {collision.conflictingLesson?.startTime}–{collision.conflictingLesson?.endTime}).
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-xs text-emerald-800 animate-fadeIn">
+                    <span className="material-symbols-outlined text-emerald-600 text-sm">check_circle</span>
+                    <span className="font-medium">
+                      Преподаватель свободен ({selectedLessonForSub.lesson.startTime}–{selectedLessonForSub.lesson.endTime})
+                    </span>
+                  </div>
+                );
+              })()}
+
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1">
                   Причина / Примечание:
@@ -774,7 +882,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                 >
                   {schedules.map((s) => (
                     <option key={s.id} value={s.id}>
-                      Класс {s.groupId} ({s.date})
+                      Класс {formatClassName(s.groupId, allUsers)} ({s.date})
                     </option>
                   ))}
                 </select>
@@ -877,6 +985,53 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-primary"
                 />
               </div>
+
+              {/* Add Lesson Collision Feedback (UI-06) */}
+              {(() => {
+                const targetSchedule = schedules.find((s) => s.id === targetScheduleId);
+                if (!targetSchedule || !newLessonTeacherId || !newLessonStart || !newLessonEnd) return null;
+                const teacherCol = checkTeacherCollision(
+                  newLessonTeacherId,
+                  targetSchedule.date,
+                  newLessonStart,
+                  newLessonEnd
+                );
+                const roomCol = checkRoomCollision(
+                  newLessonRoom,
+                  targetSchedule.date,
+                  newLessonStart,
+                  newLessonEnd
+                );
+
+                if (teacherCol.hasConflict) {
+                  return (
+                    <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-amber-600 text-sm">warning</span>
+                      <span>
+                        Преподаватель уже ведет урок в этот слот в классе <strong>{teacherCol.conflictingGroup}</strong>
+                      </span>
+                    </div>
+                  );
+                }
+
+                if (roomCol.hasConflict) {
+                  return (
+                    <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-amber-600 text-sm">warning</span>
+                      <span>
+                        Кабинет {newLessonRoom} уже занят классом <strong>{roomCol.conflictingGroup}</strong> ({roomCol.conflictingLesson?.startTime}–{roomCol.conflictingLesson?.endTime})
+                      </span>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-emerald-600 text-sm">check_circle</span>
+                    <span>Преподаватель и кабинет свободны</span>
+                  </div>
+                );
+              })()}
 
               <div className="flex items-center justify-end gap-3 pt-3">
                 <button

@@ -11,22 +11,30 @@ class ScheduleState {
   final Schedule? currentSchedule;
   final bool isLoading;
   final String? error;
+  final bool isFromCache;
+  final DateTime? lastCachedAt;
 
   const ScheduleState({
     this.currentSchedule,
     this.isLoading = false,
     this.error,
+    this.isFromCache = false,
+    this.lastCachedAt,
   });
 
   ScheduleState copyWith({
     Schedule? currentSchedule,
     bool? isLoading,
     String? error,
+    bool? isFromCache,
+    DateTime? lastCachedAt,
   }) {
     return ScheduleState(
       currentSchedule: currentSchedule ?? this.currentSchedule,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
+      isFromCache: isFromCache ?? this.isFromCache,
+      lastCachedAt: lastCachedAt ?? this.lastCachedAt,
     );
   }
 }
@@ -46,17 +54,20 @@ class ScheduleNotifier extends StateNotifier<ScheduleState> {
     // Check offline cache first for instant UI response
     if (_cacheService != null) {
       final cached = await _cacheService!.getSchedule(userId, date);
+      final lastUpdated = _cacheService!.getScheduleLastUpdated(userId, date);
       if (cached != null) {
         state = state.copyWith(
           currentSchedule: cached,
           isLoading: true,
           error: null,
+          isFromCache: true,
+          lastCachedAt: lastUpdated,
         );
       } else {
-        state = state.copyWith(isLoading: true, error: null);
+        state = state.copyWith(isLoading: true, error: null, isFromCache: false);
       }
     } else {
-      state = state.copyWith(isLoading: true, error: null);
+      state = state.copyWith(isLoading: true, error: null, isFromCache: false);
     }
 
     try {
@@ -71,6 +82,8 @@ class ScheduleNotifier extends StateNotifier<ScheduleState> {
         currentSchedule: schedule,
         isLoading: false,
         error: null,
+        isFromCache: false,
+        lastCachedAt: DateTime.now(),
       );
     } catch (e, stackTrace) {
       print('❌ ScheduleNotifier: error - $e');
@@ -78,6 +91,7 @@ class ScheduleNotifier extends StateNotifier<ScheduleState> {
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
+        isFromCache: state.currentSchedule != null,
       );
     }
   }

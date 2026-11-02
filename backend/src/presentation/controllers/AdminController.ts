@@ -21,8 +21,15 @@ import { IUserRepository } from "../../domain/repositories/IUserRepository";
 import { IAnnouncementRepository } from "../../domain/repositories/IAnnouncementRepository";
 import { ISubjectRepository } from "../../domain/repositories/ISubjectRepository";
 import { IScheduleRepository } from "../../domain/repositories/IScheduleRepository";
+import { ICanteenMenuRepository } from "../../domain/repositories/ICanteenMenuRepository";
 import { MockSubjectRepository } from "../../infrastructure/database/memory/MockSubjectRepository";
 import { MockScheduleRepository } from "../../infrastructure/database/memory/MockScheduleRepository";
+import { MockCanteenMenuRepository } from "../../infrastructure/database/memory/MockCanteenMenuRepository";
+import { AdminCreateOrUpdateMenuUseCase } from "../../application/admin/canteen/AdminCreateOrUpdateMenuUseCase";
+import { AdminAddMenuItemUseCase } from "../../application/admin/canteen/AdminAddMenuItemUseCase";
+import { AdminUpdateMenuItemUseCase } from "../../application/admin/canteen/AdminUpdateMenuItemUseCase";
+import { AdminDeleteMenuItemUseCase } from "../../application/admin/canteen/AdminDeleteMenuItemUseCase";
+import { AdminCopyWeekMenuUseCase } from "../../application/admin/canteen/AdminCopyWeekMenuUseCase";
 import { Role } from "../../shared/types";
 
 export class AdminController {
@@ -44,8 +51,16 @@ export class AdminController {
   private substituteTeacherUseCase: SubstituteTeacherUseCase;
   private addLessonToScheduleUseCase: AddLessonToScheduleUseCase;
 
+  // Sprint 2 (v0.4.5) Features - Canteen Management
+  private adminCreateOrUpdateMenuUseCase: AdminCreateOrUpdateMenuUseCase;
+  private adminAddMenuItemUseCase: AdminAddMenuItemUseCase;
+  private adminUpdateMenuItemUseCase: AdminUpdateMenuItemUseCase;
+  private adminDeleteMenuItemUseCase: AdminDeleteMenuItemUseCase;
+  private adminCopyWeekMenuUseCase: AdminCopyWeekMenuUseCase;
+
   private subjectRepo: ISubjectRepository;
   private scheduleRepo: IScheduleRepository;
+  private canteenMenuRepo: ICanteenMenuRepository;
 
   constructor(
     private readonly userRepo: IUserRepository,
@@ -53,7 +68,8 @@ export class AdminController {
     private readonly ratingRepo: IRatingRepository,
     private readonly announcementRepo?: IAnnouncementRepository,
     subjectRepository?: ISubjectRepository,
-    scheduleRepository?: IScheduleRepository
+    scheduleRepository?: IScheduleRepository,
+    canteenMenuRepository?: ICanteenMenuRepository
   ) {
     this.getDashboardStatsUseCase = new AdminGetDashboardStatsUseCase(
       userRepo,
@@ -69,6 +85,7 @@ export class AdminController {
 
     this.subjectRepo = subjectRepository || new MockSubjectRepository();
     this.scheduleRepo = scheduleRepository || new MockScheduleRepository();
+    this.canteenMenuRepo = canteenMenuRepository || new MockCanteenMenuRepository();
 
     this.getSubjectsUseCase = new GetSubjectsUseCase(this.subjectRepo);
     this.createSubjectUseCase = new CreateSubjectUseCase(this.subjectRepo);
@@ -79,6 +96,12 @@ export class AdminController {
     this.getAllSchedulesUseCase = new GetAllSchedulesAdminUseCase(this.scheduleRepo);
     this.substituteTeacherUseCase = new SubstituteTeacherUseCase(this.scheduleRepo);
     this.addLessonToScheduleUseCase = new AddLessonToScheduleUseCase(this.scheduleRepo);
+
+    this.adminCreateOrUpdateMenuUseCase = new AdminCreateOrUpdateMenuUseCase(this.canteenMenuRepo);
+    this.adminAddMenuItemUseCase = new AdminAddMenuItemUseCase(this.canteenMenuRepo);
+    this.adminUpdateMenuItemUseCase = new AdminUpdateMenuItemUseCase(this.canteenMenuRepo);
+    this.adminDeleteMenuItemUseCase = new AdminDeleteMenuItemUseCase(this.canteenMenuRepo);
+    this.adminCopyWeekMenuUseCase = new AdminCopyWeekMenuUseCase(this.canteenMenuRepo);
   }
 
   getDashboard = async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -475,6 +498,109 @@ export class AdminController {
           homeworkDescription: l.homeworkDescription,
         },
       });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // --- Canteen Management (Sprint 2 - ADM-01) ---
+
+  getCanteenMenuByDate = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { date } = req.params;
+      const parsedDate = new Date(date);
+      if (isNaN(parsedDate.getTime())) {
+        return res.status(400).json({ status: "error", error: { message: "Invalid date format" } });
+      }
+      const result = await this.canteenMenuRepo.getByDate(parsedDate);
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+      return res.status(200).json({ status: "success", data: result.value });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  createOrUpdateCanteenMenu = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id, date, mealType, isActive } = req.body;
+      const parsedDate = new Date(date);
+      if (isNaN(parsedDate.getTime())) {
+        return res.status(400).json({ status: "error", error: { message: "Invalid date format" } });
+      }
+      const result = await this.adminCreateOrUpdateMenuUseCase.execute({
+        id,
+        date: parsedDate,
+        mealType,
+        isActive,
+      });
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+      return res.status(200).json({ status: "success", data: result.value });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  addCanteenMenuItem = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const result = await this.adminAddMenuItemUseCase.execute(req.body);
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+      return res.status(201).json({ status: "success", data: result.value });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateCanteenMenuItem = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const result = await this.adminUpdateMenuItemUseCase.execute({
+        id,
+        ...req.body,
+      });
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+      return res.status(200).json({ status: "success", data: result.value });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  deleteCanteenMenuItem = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const result = await this.adminDeleteMenuItemUseCase.execute(id);
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+      return res.status(200).json({ status: "success", data: null });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  copyWeekCanteenMenu = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { fromWeekStart, toWeekStart } = req.body;
+      const fromDate = new Date(fromWeekStart);
+      const toDate = new Date(toWeekStart);
+      if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+        return res.status(400).json({ status: "error", error: { message: "Invalid date format for week start" } });
+      }
+      const result = await this.adminCopyWeekMenuUseCase.execute({
+        fromWeekStart: fromDate,
+        toWeekStart: toDate,
+      });
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+      return res.status(200).json({ status: "success", data: result.value });
     } catch (error) {
       next(error);
     }

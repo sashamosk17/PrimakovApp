@@ -18,6 +18,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: "dashboard", label: "Дашборд", icon: "dashboard" },
     { id: "users", label: "Пользователи", icon: "school" },
     { id: "schedule", label: "Расписание и предметы", icon: "calendar_month" },
+    { id: "canteen", label: "Столовая и меню", icon: "restaurant_menu" },
     { id: "requests", label: "Заявки", icon: "pending_actions" },
     { id: "ratings", label: "Рейтинги учителей", icon: "badge" },
     { id: "announcements", label: "Объявления", icon: "campaign" },

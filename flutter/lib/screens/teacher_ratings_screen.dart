@@ -2,6 +2,7 @@
 /// Displays teacher ratings and allows students to rate teachers
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/rating_provider.dart';
@@ -54,6 +55,7 @@ class _TeacherRatingsScreenState extends ConsumerState<TeacherRatingsScreen> {
     });
 
     try {
+      HapticFeedback.mediumImpact();
       await ref.read(ratingProvider.notifier).rateTeacher(
             _selectedTeacherId!,
             _currentRating,
@@ -316,6 +318,7 @@ class _TeacherRatingsScreenState extends ConsumerState<TeacherRatingsScreen> {
                             size: 32,
                           ),
                           onPressed: () {
+                            HapticFeedback.selectionClick();
                             setState(() {
                               _currentRating = index + 1.0;
                             });

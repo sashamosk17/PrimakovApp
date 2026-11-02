@@ -200,17 +200,24 @@ export const UsersView: React.FC<UsersViewProps> = ({
                       </td>
 
                       <td className="py-4 px-4">
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                            u.role === "ADMIN" || u.role === "SUPERADMIN"
-                              ? "bg-red-50 text-red-800 border border-red-200"
-                              : u.role === "TEACHER"
-                              ? "bg-purple-50 text-purple-800 border border-purple-200"
-                              : "bg-blue-50 text-blue-800 border border-blue-200"
-                          }`}
-                        >
-                          {u.role}
-                        </span>
+                        <div className="flex flex-col items-start gap-1">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                              u.role === "ADMIN" || u.role === "SUPERADMIN"
+                                ? "bg-red-50 text-red-800 border border-red-200"
+                                : u.role === "TEACHER"
+                                ? "bg-purple-50 text-purple-800 border border-purple-200"
+                                : "bg-blue-50 text-blue-800 border border-blue-200"
+                            }`}
+                          >
+                            {u.role}
+                          </span>
+                          {u.groupName && (
+                            <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                              {u.groupName}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       <td className="py-4 px-4">

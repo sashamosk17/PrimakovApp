@@ -2,6 +2,7 @@
 /// Converted from React Native DeadlineCard component
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../config/app_colors.dart';
 import '../models/api_models.dart';
 import '../config/app_spacing.dart';
@@ -137,7 +138,10 @@ class DeadlineCard extends StatelessWidget {
               if (deadline.status != DeadlineStatus.COMPLETED &&
                   onComplete != null)
                 ElevatedButton(
-                  onPressed: onComplete,
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    onComplete();
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
                     padding: const EdgeInsets.symmetric(

@@ -33,11 +33,13 @@ export interface CanteenMenu {
 }
 
 export interface ICanteenMenuRepository {
+  findById(id: string): Promise<Result<CanteenMenu | null>>;
   getByDate(date: Date): Promise<Result<CanteenMenu[]>>;
   getByDateAndMealType(date: Date, mealType: MealType): Promise<Result<CanteenMenu | null>>;
   getTodaysMenu(): Promise<Result<CanteenMenu[]>>;
   save(menu: CanteenMenu): Promise<Result<void>>;
   update(menu: CanteenMenu): Promise<Result<void>>;
+  deleteMenu(id: string): Promise<Result<void>>;
   addMenuItem(item: MenuItem): Promise<Result<void>>;
   updateMenuItem(item: MenuItem): Promise<Result<void>>;
   removeMenuItem(itemId: string): Promise<Result<void>>;

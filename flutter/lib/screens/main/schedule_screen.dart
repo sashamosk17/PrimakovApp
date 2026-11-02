@@ -2,11 +2,14 @@ import '../../config/app_colors.dart';
 /// Shows weekly schedule with lesson cards and navigation to lesson details
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../models/api_models.dart';
 import '../../providers/schedule_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/soft_offline_badge.dart';
+import '../../widgets/notification_bell_icon.dart';
 import 'lesson_detail_screen.dart';
 
 class ScheduleScreen extends ConsumerStatefulWidget {
@@ -41,6 +44,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   }
 
   Future<void> _loadData() async {
+    HapticFeedback.lightImpact();
     await _loadScheduleForDate(_selectedDate);
   }
 
@@ -51,6 +55,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   }
 
   Future<void> _pickDate() async {
+    HapticFeedback.selectionClick();
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
@@ -88,9 +93,10 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final schedule = ref.watch(currentScheduleProvider);
-    final scheduleLoading = ref.watch(scheduleLoadingProvider);
-    final scheduleError = ref.watch(scheduleErrorProvider);
+    final scheduleState = ref.watch(scheduleProvider);
+    final schedule = scheduleState.currentSchedule;
+    final scheduleLoading = scheduleState.isLoading;
+    final scheduleError = scheduleState.error;
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -118,12 +124,25 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               ),
             ),
             actions: [
+              const NotificationBellIcon(),
               IconButton(
                 icon: Icon(Icons.calendar_today, color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed),
                 onPressed: _pickDate,
               ),
             ],
           ),
+
+          // Offline Cache Badge
+          if (scheduleState.isFromCache)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                child: SoftOfflineBadge(
+                  lastUpdated: scheduleState.lastCachedAt,
+                  onRefresh: _loadData,
+                ),
+              ),
+            ),
 
           // Date Header
           SliverToBoxAdapter(
@@ -132,16 +151,42 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    DateFormat('MMMM yyyy', 'ru').format(_selectedDate),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        DateFormat('MMMM yyyy', 'ru').format(_selectedDate),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                        ),
+                      ),
+                      if (schedule?.groupId != null && schedule!.groupId.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: (isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed).withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: (isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed).withOpacity(0.3),
+                            ),
+                          ),
+                          child: Text(
+                            'Класс ${schedule.groupId}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   TextButton(
                     onPressed: () {
+                      HapticFeedback.selectionClick();
                       setState(() {
                         _selectedDate = DateTime.now();
                       });
@@ -180,6 +225,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
                   return GestureDetector(
                     onTap: () {
+                      HapticFeedback.selectionClick();
                       setState(() {
                         _selectedDate = date;
                       });
@@ -379,7 +425,10 @@ class _LessonCard extends StatelessWidget {
       color: cardColor,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(20),

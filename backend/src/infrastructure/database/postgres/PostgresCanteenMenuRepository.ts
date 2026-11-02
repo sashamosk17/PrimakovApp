@@ -17,6 +17,26 @@ export { MealType, MenuItem, CanteenMenu, ICanteenMenuRepository };
 export class PostgresCanteenMenuRepository implements ICanteenMenuRepository {
   constructor(private readonly pool: Pool) {}
 
+  async findById(id: string): Promise<Result<CanteenMenu | null>> {
+    try {
+      const menuQuery = `
+        SELECT id, date, meal_type, is_active, created_at, updated_at
+        FROM canteen_menu
+        WHERE id = $1
+      `;
+      const menuResult = await this.pool.query(menuQuery, [id]);
+      if (menuResult.rows.length === 0) {
+        return Result.ok(null);
+      }
+      const menuRow = menuResult.rows[0];
+      const items = await this.getMenuItems(menuRow.id);
+      return Result.ok(this.mapRowToMenu(menuRow, items));
+    } catch (error) {
+      console.error("Error getting menu by id:", error);
+      return Result.fail("Failed to get menu by id");
+    }
+  }
+
   async getByDate(date: Date): Promise<Result<CanteenMenu[]>> {
     try {
       const dateString = date.toISOString().split("T")[0];
@@ -150,6 +170,16 @@ export class PostgresCanteenMenuRepository implements ICanteenMenuRepository {
       return Result.fail("Failed to update menu");
     } finally {
       client.release();
+    }
+  }
+
+  async deleteMenu(id: string): Promise<Result<void>> {
+    try {
+      await this.pool.query("DELETE FROM canteen_menu WHERE id = $1", [id]);
+      return Result.ok();
+    } catch (error) {
+      console.error("Error deleting menu:", error);
+      return Result.fail("Failed to delete menu");
     }
   }
 

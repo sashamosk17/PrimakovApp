@@ -153,6 +153,7 @@ async function startServer() {
         announcementRepository,
         subjectRepository,
         scheduleRepository,
+        canteenMenuRepository,
       })
     );
 

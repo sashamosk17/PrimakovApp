@@ -5,6 +5,8 @@ import type {
   ServiceRequest,
   TeacherRating,
   Announcement,
+  Subject,
+  Schedule,
 } from "../types";
 
 export const MOCK_METRICS: DashboardMetrics = {
@@ -26,6 +28,75 @@ export const MOCK_WEEKLY_ACTIVITY: ActivityPoint[] = [
   { day: "Вс", count: 95 },
 ];
 
+// Helper to generate seed users
+const TEACHERS_SEED_DATA = [
+  { id: "usr-teach-1", email: "elena.sokolova@primakov.school", firstName: "Елена", lastName: "Соколова", dept: "Кафедра математики" },
+  { id: "usr-teach-2", email: "mikhail.vinogradov@primakov.school", firstName: "Михаил", lastName: "Виноградов", dept: "Кафедра математики" },
+  { id: "usr-teach-3", email: "olga.kuznetsova@primakov.school", firstName: "Ольга", lastName: "Кузнецова", dept: "Кафедра математики" },
+  { id: "usr-teach-4", email: "sergey.polyakov@primakov.school", firstName: "Сергей", lastName: "Поляков", dept: "Кафедра математики" },
+  { id: "usr-teach-5", email: "tatiana.voronina@primakov.school", firstName: "Татьяна", lastName: "Воронина", dept: "Кафедра математики" },
+  { id: "usr-teach-6", email: "anna.kovaleva@primakov.school", firstName: "Анна", lastName: "Ковалева", dept: "Кафедра словесности" },
+  { id: "usr-teach-7", email: "victor.sidorov@primakov.school", firstName: "Виктор", lastName: "Сидоров", dept: "Кафедра словесности" },
+  { id: "usr-teach-8", email: "natalia.belova@primakov.school", firstName: "Наталья", lastName: "Белова", dept: "Кафедра словесности" },
+  { id: "usr-teach-9", email: "evgeniy.orlov@primakov.school", firstName: "Евгений", lastName: "Орлов", dept: "Кафедра словесности" },
+  { id: "usr-teach-10", email: "marina.chernova@primakov.school", firstName: "Марина", lastName: "Чернова", dept: "Кафедра словесности" },
+  { id: "usr-teach-11", email: "dmitriy.smirnov@primakov.school", firstName: "Дмитрий", lastName: "Смирнов", dept: "Кафедра естественных наук" },
+  { id: "usr-teach-12", email: "irina.vasilieva@primakov.school", firstName: "Ирина", lastName: "Васильева", dept: "Кафедра естественных наук" },
+  { id: "usr-teach-13", email: "konstantin.lebedev@primakov.school", firstName: "Константин", lastName: "Лебедев", dept: "Кафедра естественных наук" },
+  { id: "usr-teach-14", email: "svetlana.zhukova@primakov.school", firstName: "Светлана", lastName: "Жукова", dept: "Кафедра естественных наук" },
+  { id: "usr-teach-15", email: "artyom.kozlov@primakov.school", firstName: "Артем", lastName: "Козлов", dept: "Кафедра естественных наук" },
+  { id: "usr-teach-16", email: "yulia.morozova@primakov.school", firstName: "Юлия", lastName: "Морозова", dept: "Кафедра иностранных языков" },
+  { id: "usr-teach-17", email: "alexander.davydov@primakov.school", firstName: "Александр", lastName: "Давыдов", dept: "Кафедра иностранных языков" },
+  { id: "usr-teach-18", email: "elizabeth.clark@primakov.school", firstName: "Элизабет", lastName: "Кларк", dept: "Кафедра иностранных языков" },
+  { id: "usr-teach-19", email: "olga.novikova@primakov.school", firstName: "Ольга", lastName: "Новикова", dept: "Кафедра иностранных языков" },
+  { id: "usr-teach-20", email: "denis.tarasov@primakov.school", firstName: "Денис", lastName: "Тарасов", dept: "Кафедра иностранных языков" },
+  { id: "usr-teach-21", email: "ivan.ivanov@primakov.school", firstName: "Иван", lastName: "Иванов", dept: "Кафедра IT и робототехники" },
+  { id: "usr-teach-22", email: "gleb.nikolaev@primakov.school", firstName: "Глеб", lastName: "Николаев", dept: "Кафедра IT и робототехники" },
+  { id: "usr-teach-23", email: "polina.zaytseva@primakov.school", firstName: "Полина", lastName: "Зайцева", dept: "Кафедра IT и робототехники" },
+  { id: "usr-teach-24", email: "roman.fedorov@primakov.school", firstName: "Роман", lastName: "Федоров", dept: "Кафедра IT и робототехники" },
+  { id: "usr-teach-25", email: "vadim.stepanov@primakov.school", firstName: "Вадим", lastName: "Степанов", dept: "Кафедра физкультуры" },
+  { id: "usr-teach-26", email: "marina.karpova@primakov.school", firstName: "Марина", lastName: "Карпова", dept: "Кафедра физкультуры" },
+  { id: "usr-teach-27", email: "igor.matveev@primakov.school", firstName: "Игорь", lastName: "Матвеев", dept: "Кафедра физкультуры" },
+];
+
+const CLASSES_LIST = [
+  "1-А", "2-Б", "4-А",
+  "5-А", "6-Б", "7-А", "8-В", "9-А", "9-Б",
+  "10-А", "10-Б", "11-А", "11-Б",
+];
+
+const FIRST_NAMES = ["Александр", "Максим", "Иван", "Артем", "Дмитрий", "София", "Анна", "Мария", "Алиса", "Полина", "Кирилл", "Егор", "Дарья", "Виктория", "Елизавета"];
+const LAST_NAMES = ["Иванов", "Смирнов", "Кузнецов", "Попов", "Васильев", "Петров", "Соколов", "Михайлов", "Новиков", "Федоров", "Морозов", "Волков", "Алексеев", "Лебедев", "Семенов"];
+
+const generateStudents = (): User[] => {
+  const students: User[] = [];
+  let studentIdx = 1;
+
+  for (const cls of CLASSES_LIST) {
+    // 8-9 students per class -> ~110 students
+    const count = cls.startsWith("10") || cls.startsWith("11") ? 9 : 8;
+    for (let i = 0; i < count; i++) {
+      const fName = FIRST_NAMES[(studentIdx + i) % FIRST_NAMES.length];
+      const lName = LAST_NAMES[(studentIdx * 2 + i) % LAST_NAMES.length];
+      const email = `${fName.toLowerCase()}.${lName.toLowerCase()}.${studentIdx}@primakov.school`;
+      students.push({
+        id: `usr-stud-${studentIdx}`,
+        email,
+        firstName: fName,
+        lastName: lName,
+        role: "STUDENT",
+        isActive: true,
+        groupName: cls,
+        createdAt: "2026-09-01T08:00:00Z",
+        updatedAt: "2026-10-30T10:00:00Z",
+      });
+      studentIdx++;
+    }
+  }
+
+  return students;
+};
+
 export const MOCK_USERS: User[] = [
   {
     id: "usr-admin-1",
@@ -38,137 +109,58 @@ export const MOCK_USERS: User[] = [
     createdAt: "2026-01-15T08:00:00Z",
     updatedAt: "2026-10-30T10:00:00Z",
   },
-  {
-    id: "usr-teach-1",
-    email: "sokolova@primakov.school",
-    firstName: "Елена",
-    lastName: "Соколова",
-    role: "TEACHER",
+  ...TEACHERS_SEED_DATA.map((t) => ({
+    id: t.id,
+    email: t.email,
+    firstName: t.firstName,
+    lastName: t.lastName,
+    role: "TEACHER" as const,
     isActive: true,
-    avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+    groupName: t.dept,
     createdAt: "2026-02-01T09:00:00Z",
-    updatedAt: "2026-10-28T14:20:00Z",
-  },
-  {
-    id: "usr-teach-2",
-    email: "smirnov.d@primakov.school",
-    firstName: "Дмитрий",
-    lastName: "Смирнов",
-    role: "TEACHER",
-    isActive: true,
-    avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-    createdAt: "2026-02-01T09:30:00Z",
-    updatedAt: "2026-10-25T11:00:00Z",
-  },
-  {
-    id: "usr-teach-3",
-    email: "kovaleva@primakov.school",
-    firstName: "Анна",
-    lastName: "Ковалева",
-    role: "TEACHER",
-    isActive: true,
-    avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-    createdAt: "2026-02-10T10:00:00Z",
-    updatedAt: "2026-10-29T16:45:00Z",
-  },
-  {
-    id: "usr-stud-1",
-    email: "orlov.m@primakov.school",
-    firstName: "Максим",
-    lastName: "Орлов",
-    role: "STUDENT",
-    isActive: true,
-    avatarUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80",
-    createdAt: "2026-09-01T08:00:00Z",
-    updatedAt: "2026-10-30T09:15:00Z",
-  },
-  {
-    id: "usr-stud-2",
-    email: "morozova.s@primakov.school",
-    firstName: "София",
-    lastName: "Морозова",
-    role: "STUDENT",
-    isActive: true,
-    avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
-    createdAt: "2026-09-01T08:00:00Z",
-    updatedAt: "2026-10-29T12:00:00Z",
-  },
-  {
-    id: "usr-stud-3",
-    email: "volkov.a@primakov.school",
-    firstName: "Артем",
-    lastName: "Волков",
-    role: "STUDENT",
-    isActive: true,
-    avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-    createdAt: "2026-09-01T08:00:00Z",
-    updatedAt: "2026-10-27T10:30:00Z",
-  },
-  {
-    id: "usr-stud-4",
-    email: "kuznetsova.d@primakov.school",
-    firstName: "Дарья",
-    lastName: "Кузнецова",
-    role: "STUDENT",
-    isActive: false,
-    avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
-    createdAt: "2026-09-01T08:00:00Z",
-    updatedAt: "2026-10-26T18:00:00Z",
-  },
+    updatedAt: "2026-10-30T10:00:00Z",
+  })),
+  ...generateStudents(),
 ];
 
 export const MOCK_REQUESTS: ServiceRequest[] = [
   {
     id: "req-1",
     type: "IT",
-    title: "Калибровка интерактивной панели в ауд. 304",
-    description: "Сенсорная панель смещена на 5 см вправо при касании стилусом. Требуется калибровка перед открытым уроком.",
-    status: "PENDING",
+    title: "Не работает интерактивная панель SmartBoard",
+    description: "В кабинете 305 сенсорный ввод не реагирует на стилус после перезагрузки.",
+    status: "IN_PROGRESS",
     priority: "HIGH",
     creatorId: "usr-teach-1",
-    roomId: "304",
-    createdAt: "2026-10-30T07:45:00Z",
-    updatedAt: "2026-10-30T07:45:00Z",
+    roomId: "305",
+    createdAt: "2026-10-30T08:30:00Z",
+    updatedAt: "2026-10-30T09:00:00Z",
+    notes: "Направлен дежурный инженер IT",
   },
   {
     id: "req-2",
-    type: "IT",
-    title: "Настройка доступа к Wi-Fi для гостевых планшетов",
-    description: "Для участников школьной олимпиады по программированию требуется временная сеть.",
-    status: "IN_PROGRESS",
+    type: "CLEANING",
+    title: "Влажная уборка после практической работы",
+    description: "Лаборатория химии 103: необходимо протереть рабочие столы.",
+    status: "PENDING",
     priority: "MEDIUM",
-    creatorId: "usr-admin-1",
-    assigneeId: "usr-admin-1",
-    roomId: "IT-Центр",
-    createdAt: "2026-10-29T14:10:00Z",
-    updatedAt: "2026-10-30T08:20:00Z",
-    notes: "Создана подсеть Primakov-Oly-Guest, пароль передан организаторам",
+    creatorId: "usr-teach-2",
+    roomId: "103",
+    createdAt: "2026-10-30T10:15:00Z",
+    updatedAt: "2026-10-30T10:15:00Z",
   },
   {
     id: "req-3",
     type: "MAINTENANCE",
-    title: "Ремонт доводчика входной двери корпуса Старшей школы",
-    description: "Дверь хлопает при закрытии из-за сквозняка.",
-    status: "PENDING",
+    title: "Замена светодиодной лампы",
+    description: "Кабинет 201: мигает центральный светильник над доской.",
+    status: "COMPLETED",
     priority: "LOW",
     creatorId: "usr-teach-3",
-    roomId: "Вестибюль А",
-    createdAt: "2026-10-29T11:00:00Z",
-    updatedAt: "2026-10-29T11:00:00Z",
-  },
-  {
-    id: "req-4",
-    type: "CLEANING",
-    title: "Внеплановая влажная уборка Актового зала",
-    description: "Подготовка зала к церемонии награждения победителей гимназического кубка.",
-    status: "COMPLETED",
-    priority: "HIGH",
-    creatorId: "usr-admin-1",
-    assigneeId: "usr-admin-1",
-    roomId: "Актовый зал",
-    createdAt: "2026-10-28T09:00:00Z",
-    updatedAt: "2026-10-28T16:30:00Z",
-    notes: "Уборка выполнена клининговой службой в полном объеме",
+    roomId: "201",
+    createdAt: "2026-10-28T14:00:00Z",
+    updatedAt: "2026-10-29T11:30:00Z",
+    notes: "Лампа заменена завхозом",
   },
 ];
 
@@ -178,79 +170,102 @@ export const MOCK_RATINGS: TeacherRating[] = [
     teacherId: "usr-teach-1",
     userId: "usr-stud-1",
     value: 5,
-    comment: "Потрясающая подача материала по математическому анализу. Все задачи из ЕГЭ разбираются до мельчайших нюансов!",
-    createdAt: "2026-10-29T18:20:00Z",
+    comment: "Очень доступно объясняет начала математического анализа и стереометрию!",
+    createdAt: "2026-10-29T15:00:00Z",
   },
   {
     id: "rat-2",
     teacherId: "usr-teach-2",
     userId: "usr-stud-2",
     value: 5,
-    comment: "Очень наглядные демонстрации законов физики. Лабораторные работы проходят на одном дыхании.",
-    createdAt: "2026-10-28T15:40:00Z",
+    comment: "Лучшие лабораторные работы по оптике и механике в гимназии.",
+    createdAt: "2026-10-28T16:30:00Z",
   },
   {
     id: "rat-3",
     teacherId: "usr-teach-3",
     userId: "usr-stud-3",
-    value: 4.8,
-    comment: "Прекрасный преподаватель литературы, учит критически мыслить и писать сильные эссе.",
-    createdAt: "2026-10-27T12:15:00Z",
+    value: 4,
+    comment: "Строгий, но справедливый учитель. Отличные разборы сочинений.",
+    createdAt: "2026-10-27T12:00:00Z",
   },
 ];
 
 export const MOCK_ANNOUNCEMENTS: Announcement[] = [
   {
     id: "ann-1",
-    title: "Старт осенней олимпиадной сессии по точным наукам",
-    content: "Регистрация открыта в личном кабинете до 5 ноября. Участие обязательно для профильных классов.",
-    category: "Академические события",
-    publishedAt: "2026-10-30T09:00:00Z",
+    title: "Торжественная линейка и День гимназиста",
+    content: "В пятницу в центральном атриуме состоится ежегодная церемония посвящения и награждения победителей олимпиад.",
+    category: "События",
+    publishedAt: "2026-10-29T08:00:00Z",
+    imageUrl: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&auto=format&fit=crop&q=80",
   },
   {
     id: "ann-2",
-    title: "Обновление меню столовой: блюда здорового питания",
-    content: "Шеф-повар гимназии представил обновленный рацион с увеличенным содержанием сезонных овощей и протеинов.",
-    category: "Школьная жизнь",
-    publishedAt: "2026-10-28T11:00:00Z",
+    title: "Обновление рациона школьного питания",
+    content: "Комбинат питания вводит расширенное меню с повышенным содержанием белков и фермерских продуктов.",
+    category: "Питание",
+    publishedAt: "2026-10-28T10:00:00Z",
   },
 ];
 
-export const MOCK_SUBJECTS = [
+export const MOCK_SUBJECTS: Subject[] = [
   { id: "sub-1", name: "Математика", description: "Алгебра, геометрия и начала анализа", createdAt: "2026-09-01T08:00:00Z", updatedAt: "2026-09-01T08:00:00Z" },
   { id: "sub-2", name: "Русский язык", description: "Орфография, стилистика и культура речи", createdAt: "2026-09-01T08:00:00Z", updatedAt: "2026-09-01T08:00:00Z" },
   { id: "sub-3", name: "Физика", description: "Теоретическая и экспериментальная физика", createdAt: "2026-09-01T08:00:00Z", updatedAt: "2026-09-01T08:00:00Z" },
   { id: "sub-4", name: "История", description: "Отечественная и всеобщая история", createdAt: "2026-09-01T08:00:00Z", updatedAt: "2026-09-01T08:00:00Z" },
   { id: "sub-5", name: "Химия", description: "Неорганическая и органическая химия", createdAt: "2026-09-01T08:00:00Z", updatedAt: "2026-09-01T08:00:00Z" },
   { id: "sub-6", name: "Информатика", description: "Программирование Python и веб-технологии", createdAt: "2026-09-01T08:00:00Z", updatedAt: "2026-09-01T08:00:00Z" },
+  { id: "sub-7", name: "Английский язык", description: "Углубленный курс и подготовка к международным экзаменам", createdAt: "2026-09-01T08:00:00Z", updatedAt: "2026-09-01T08:00:00Z" },
+  { id: "sub-8", name: "Биология", description: "Общая биология, анатомия и генетика", createdAt: "2026-09-01T08:00:00Z", updatedAt: "2026-09-01T08:00:00Z" },
 ];
 
-export const MOCK_SCHEDULES = [
+export const MOCK_SCHEDULES: Schedule[] = [
   {
     id: "sch-10a",
-    groupId: "10A",
+    groupId: "10-А",
     date: "2026-11-02",
     createdAt: "2026-11-01T10:00:00Z",
     updatedAt: "2026-11-01T10:00:00Z",
     lessons: [
       { id: "les-1", subject: "Математика", teacherId: "usr-teach-1", teacherName: "Елена Соколова", startTime: "09:00", endTime: "09:45", room: "305", floor: 3, hasHomework: true, homeworkDescription: "Параграф 14, № 120-125" },
-      { id: "les-2", subject: "Русский язык", teacherId: "usr-teach-3", teacherName: "Ольга Морозова", startTime: "10:00", endTime: "10:45", room: "201", floor: 2, hasHomework: false },
-      { id: "les-3", subject: "Физика", teacherId: "usr-teach-2", teacherName: "Дмитрий Смирнов", startTime: "11:00", endTime: "11:45", room: "102", floor: 1, hasHomework: true, homeworkDescription: "Подготовка к лабораторной" },
-      { id: "les-4", subject: "Информатика", teacherId: "usr-teach-1", teacherName: "Елена Соколова", startTime: "12:45", endTime: "13:30", room: "501", floor: 5, hasHomework: false },
+      { id: "les-2", subject: "Русский язык", teacherId: "usr-teach-6", teacherName: "Анна Ковалева", startTime: "10:00", endTime: "10:45", room: "201", floor: 2, hasHomework: false },
+      { id: "les-3", subject: "Физика", teacherId: "usr-teach-11", teacherName: "Дмитрий Смирнов", startTime: "11:00", endTime: "11:45", room: "102", floor: 1, hasHomework: true, homeworkDescription: "Подготовка к лабораторной" },
+      { id: "les-4", subject: "Информатика", teacherId: "usr-teach-21", teacherName: "Иван Иванов", startTime: "12:45", endTime: "13:30", room: "501", floor: 5, hasHomework: false },
     ],
   },
   {
     id: "sch-11b",
-    groupId: "11B",
+    groupId: "11-Б",
     date: "2026-11-02",
     createdAt: "2026-11-01T10:00:00Z",
     updatedAt: "2026-11-01T10:00:00Z",
     lessons: [
       { id: "les-5", subject: "Алгебра", teacherId: "usr-teach-1", teacherName: "Елена Соколова", startTime: "09:00", endTime: "09:45", room: "306", floor: 3, hasHomework: true },
-      { id: "les-6", subject: "Биология", teacherId: "usr-teach-2", teacherName: "Дмитрий Смирнов", startTime: "10:00", endTime: "10:45", room: "205", floor: 2, hasHomework: false },
-      { id: "les-7", subject: "Обществознание", teacherId: "usr-teach-3", teacherName: "Ольга Морозова", startTime: "11:00", endTime: "11:45", room: "401", floor: 4, hasHomework: true },
+      { id: "les-6", subject: "Биология", teacherId: "usr-teach-12", teacherName: "Ирина Васильева", startTime: "10:00", endTime: "10:45", room: "205", floor: 2, hasHomework: false },
+      { id: "les-7", subject: "Обществознание", teacherId: "usr-teach-7", teacherName: "Виктор Сидоров", startTime: "11:00", endTime: "11:45", room: "401", floor: 4, hasHomework: true },
+    ],
+  },
+  {
+    id: "sch-9a",
+    groupId: "9-А",
+    date: "2026-11-02",
+    createdAt: "2026-11-01T10:00:00Z",
+    updatedAt: "2026-11-01T10:00:00Z",
+    lessons: [
+      { id: "les-8", subject: "Химия", teacherId: "usr-teach-13", teacherName: "Константин Лебедев", startTime: "09:00", endTime: "09:45", room: "103", floor: 1, hasHomework: true },
+      { id: "les-9", subject: "Геометрия", teacherId: "usr-teach-2", teacherName: "Михаил Виноградов", startTime: "10:00", endTime: "10:45", room: "305", floor: 3, hasHomework: false },
+    ],
+  },
+  {
+    id: "sch-10b",
+    groupId: "10-Б",
+    date: "2026-11-02",
+    createdAt: "2026-11-01T10:00:00Z",
+    updatedAt: "2026-11-01T10:00:00Z",
+    lessons: [
+      { id: "les-10", subject: "Физика", teacherId: "usr-teach-11", teacherName: "Дмитрий Смирнов", startTime: "09:00", endTime: "09:45", room: "102", floor: 1, hasHomework: false },
+      { id: "les-11", subject: "Информатика", teacherId: "usr-teach-22", teacherName: "Глеб Николаев", startTime: "10:00", endTime: "10:45", room: "502", floor: 5, hasHomework: true },
     ],
   },
 ];
-
-

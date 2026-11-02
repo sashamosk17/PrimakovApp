@@ -2,12 +2,14 @@ import '../../config/app_colors.dart';
 /// Redesigned based on stitch/_2 design
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:confetti/confetti.dart';
 import '../../providers/deadline_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/api_models.dart';
+import '../../widgets/notification_bell_icon.dart';
 import 'add_deadline_screen.dart';
 
 class DeadlineScreen extends ConsumerStatefulWidget {
@@ -46,6 +48,12 @@ class _DeadlineScreenState extends ConsumerState<DeadlineScreen> with SingleTick
   Future<void> _toggleDeadline(String deadlineId) async {
     final deadline = ref.read(allDeadlinesProvider).firstWhere((d) => d.id == deadlineId);
     final wasCompleted = deadline.status == DeadlineStatus.COMPLETED;
+
+    if (!wasCompleted) {
+      HapticFeedback.mediumImpact();
+    } else {
+      HapticFeedback.lightImpact();
+    }
 
     await ref.read(deadlineProvider.notifier).completeDeadline(deadlineId);
 
@@ -109,12 +117,16 @@ class _DeadlineScreenState extends ConsumerState<DeadlineScreen> with SingleTick
                     ),
                   ],
                 ),
+                actions: [
+                  const NotificationBellIcon(),
+                ],
                 bottom: PreferredSize(
                   preferredSize: const Size.fromHeight(50),
                   child: Container(
                     color: appBarBg,
                     child: TabBar(
                       controller: _tabController,
+                      onTap: (_) => HapticFeedback.selectionClick(),
                       indicatorColor: primaryColor,
                       indicatorWeight: 3,
                       labelColor: primaryColor,

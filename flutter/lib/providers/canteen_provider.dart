@@ -10,22 +10,30 @@ class CanteenState {
   final List<CanteenMenu>? todayMenu;
   final bool isLoading;
   final String? error;
+  final bool isFromCache;
+  final DateTime? lastCachedAt;
 
   CanteenState({
     this.todayMenu,
     this.isLoading = false,
     this.error,
+    this.isFromCache = false,
+    this.lastCachedAt,
   });
 
   CanteenState copyWith({
     List<CanteenMenu>? todayMenu,
     bool? isLoading,
     String? error,
+    bool? isFromCache,
+    DateTime? lastCachedAt,
   }) {
     return CanteenState(
       todayMenu: todayMenu ?? this.todayMenu,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      isFromCache: isFromCache ?? this.isFromCache,
+      lastCachedAt: lastCachedAt ?? this.lastCachedAt,
     );
   }
 }
@@ -42,8 +50,15 @@ class CanteenNotifier extends StateNotifier<CanteenState> {
     // Check offline cache first for instant UX
     if (_cacheService != null) {
       final cached = await _cacheService!.getTodaysMenu();
+      final lastUpdated = _cacheService!.getCanteenLastUpdated();
       if (cached != null) {
-        state = state.copyWith(todayMenu: cached, isLoading: true, error: null);
+        state = state.copyWith(
+          todayMenu: cached,
+          isLoading: true,
+          error: null,
+          isFromCache: true,
+          lastCachedAt: lastUpdated,
+        );
       } else {
         state = state.copyWith(isLoading: true, error: null);
       }
@@ -60,10 +75,24 @@ class CanteenNotifier extends StateNotifier<CanteenState> {
         await _cacheService!.saveTodaysMenu(menus);
       }
 
-      state = CanteenState(todayMenu: menus, isLoading: false, error: null);
+      state = CanteenState(
+        todayMenu: menus,
+        isLoading: false,
+        error: null,
+        isFromCache: false,
+        lastCachedAt: DateTime.now(),
+      );
     } catch (e) {
       print('❌ [CanteenProvider] Error: $e');
-      state = state.copyWith(error: e.toString(), isLoading: false);
+      if (state.todayMenu != null && state.todayMenu!.isNotEmpty) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Используются кэшированные данные. ${e.toString()}',
+          isFromCache: true,
+        );
+      } else {
+        state = state.copyWith(error: e.toString(), isLoading: false);
+      }
     }
   }
 }

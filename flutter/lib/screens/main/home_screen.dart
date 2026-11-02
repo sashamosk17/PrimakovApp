@@ -15,6 +15,7 @@ import 'schedule_screen.dart';
 import 'deadline_screen.dart';
 import 'story_viewer_screen.dart';
 import '../canteen_menu_screen.dart';
+import '../../widgets/notification_bell_icon.dart';
 
 // Mock data providers
 final mockNewsListProvider = Provider<List<News>>((ref) {
@@ -243,19 +244,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ],
             ),
           ),
-          Container( //пока так
-                          child: Center(
-                            child: Opacity(
-                              opacity: 0.8,
-                              child: Image.asset(
-                                'assets/images/primakov_logo.png',
-                                width: 24,
-                                height: 24,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          )
+          const NotificationBellIcon(),
+          const SizedBox(width: 8),
+          Container(
+            child: Center(
+              child: Opacity(
+                opacity: 0.8,
+                child: Image.asset(
+                  'assets/images/primakov_logo.png',
+                  width: 24,
+                  height: 24,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
           // Search Button
           // IconButton(
           //   icon: const Icon(Icons.search, size: 28),

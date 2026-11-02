@@ -8,6 +8,7 @@ export interface User {
   role: Role;
   isActive: boolean;
   avatarUrl?: string;
+  groupName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -95,4 +96,36 @@ export interface Schedule {
   lessons: Lesson[];
   createdAt: string;
   updatedAt: string;
+}
+
+export type MealType = "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK";
+
+export interface CanteenMenuItem {
+  id: string;
+  menuId: string;
+  name: string;
+  description?: string;
+  category?: string;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  weight?: number;
+  price?: number;
+  imageUrl?: string;
+  isVegetarian: boolean;
+  isVegan: boolean;
+  allergens?: string[];
+  displayOrder: number;
+  createdAt?: string;
+}
+
+export interface CanteenMenu {
+  id: string;
+  date: string;
+  mealType: MealType;
+  isActive: boolean;
+  items: CanteenMenuItem[];
+  createdAt?: string;
+  updatedAt?: string;
 }

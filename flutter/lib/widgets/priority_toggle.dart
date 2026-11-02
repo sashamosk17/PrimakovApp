@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../config/app_colors.dart';
 import '../config/app_spacing.dart';
@@ -72,7 +73,10 @@ class PriorityToggle extends StatelessWidget {
           ),
           // Toggle Switch (Pill shape)
           GestureDetector(
-            onTap: () => onChanged(!isHighPriority),
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onChanged(!isHighPriority);
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 50,

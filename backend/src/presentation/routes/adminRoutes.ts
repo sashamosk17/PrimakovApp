@@ -7,6 +7,7 @@ import { IRatingRepository } from "../../domain/repositories/IRatingRepository";
 import { IAnnouncementRepository } from "../../domain/repositories/IAnnouncementRepository";
 import { ISubjectRepository } from "../../domain/repositories/ISubjectRepository";
 import { IScheduleRepository } from "../../domain/repositories/IScheduleRepository";
+import { ICanteenMenuRepository } from "../../domain/repositories/ICanteenMenuRepository";
 import { authMiddleware } from "../middleware/authMiddleware";
 import { validate } from "../middleware/validationMiddleware";
 import { AuthenticatedRequest } from "../types";
@@ -19,6 +20,7 @@ export interface AdminRoutesDependencies {
   announcementRepository?: IAnnouncementRepository;
   subjectRepository?: ISubjectRepository;
   scheduleRepository?: IScheduleRepository;
+  canteenMenuRepository?: ICanteenMenuRepository;
 }
 
 const CreateUserSchema = z.object({
@@ -58,6 +60,54 @@ const AddLessonSchema = z.object({
   homeworkDescription: z.string().optional(),
 });
 
+const CreateCanteenMenuSchema = z.object({
+  id: z.string().optional(),
+  date: z.string().min(1),
+  mealType: z.enum(["BREAKFAST", "LUNCH", "DINNER", "SNACK"]),
+  isActive: z.boolean().optional(),
+});
+
+const AddCanteenMenuItemSchema = z.object({
+  menuId: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  category: z.string().optional(),
+  calories: z.number().optional(),
+  protein: z.number().optional(),
+  carbs: z.number().optional(),
+  fat: z.number().optional(),
+  weight: z.number().optional(),
+  price: z.number().optional(),
+  imageUrl: z.string().optional(),
+  isVegetarian: z.boolean().optional(),
+  isVegan: z.boolean().optional(),
+  allergens: z.array(z.string()).optional(),
+  displayOrder: z.number().optional(),
+});
+
+const UpdateCanteenMenuItemSchema = z.object({
+  menuId: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  category: z.string().optional(),
+  calories: z.number().optional(),
+  protein: z.number().optional(),
+  carbs: z.number().optional(),
+  fat: z.number().optional(),
+  weight: z.number().optional(),
+  price: z.number().optional(),
+  imageUrl: z.string().optional(),
+  isVegetarian: z.boolean().optional(),
+  isVegan: z.boolean().optional(),
+  allergens: z.array(z.string()).optional(),
+  displayOrder: z.number().optional(),
+});
+
+const CopyWeekMenuSchema = z.object({
+  fromWeekStart: z.string().min(1),
+  toWeekStart: z.string().min(1),
+});
+
 export function adminRoutes(deps: AdminRoutesDependencies): Router {
   const router = Router();
   const controller = new AdminController(
@@ -66,7 +116,8 @@ export function adminRoutes(deps: AdminRoutesDependencies): Router {
     deps.ratingRepository,
     deps.announcementRepository,
     deps.subjectRepository,
-    deps.scheduleRepository
+    deps.scheduleRepository,
+    deps.canteenMenuRepository
   );
 
   // 1. Must be authenticated
@@ -120,6 +171,22 @@ export function adminRoutes(deps: AdminRoutesDependencies): Router {
     controller.substituteTeacher
   );
   router.post("/schedules/lessons", validate(AddLessonSchema), controller.addLesson);
+
+  // Canteen Menu Management (Sprint 2 - ADM-01)
+  router.get("/canteen/menu/:date", controller.getCanteenMenuByDate);
+  router.post(
+    "/canteen/menu",
+    validate(CreateCanteenMenuSchema),
+    controller.createOrUpdateCanteenMenu
+  );
+  router.post("/canteen/items", validate(AddCanteenMenuItemSchema), controller.addCanteenMenuItem);
+  router.put(
+    "/canteen/items/:id",
+    validate(UpdateCanteenMenuItemSchema),
+    controller.updateCanteenMenuItem
+  );
+  router.delete("/canteen/items/:id", controller.deleteCanteenMenuItem);
+  router.post("/canteen/copy-week", validate(CopyWeekMenuSchema), controller.copyWeekCanteenMenu);
 
   return router;
 }

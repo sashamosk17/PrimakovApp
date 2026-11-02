@@ -8,6 +8,8 @@ import { RequestsView } from "./pages/RequestsView";
 import { RatingsView } from "./pages/RatingsView";
 import { AnnouncementsView } from "./pages/AnnouncementsView";
 import { ScheduleView } from "./pages/ScheduleView";
+import { CanteenView } from "./pages/CanteenView";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AddUserModal } from "./components/AddUserModal";
 import { ImportCsvModal } from "./components/ImportCsvModal";
 import { LoginModal } from "./components/LoginModal";
@@ -577,76 +579,83 @@ export function App() {
 
         {/* View Routing Canvas */}
         <div className="flex-1 px-8 py-6">
-          {currentTab === "dashboard" && (
-            <DashboardView
-              metrics={metrics}
-              weeklyActivity={weeklyActivity}
-              recentRequests={recentRequests}
-              announcements={announcements}
-              onOpenAddUser={() => setIsAddUserOpen(true)}
-              onOpenCreateAnnouncement={() => setCurrentTab("announcements")}
-              onNavigateTab={(tab) => setCurrentTab(tab)}
-            />
-          )}
+          <ErrorBoundary fallbackMessage="Произошла ошибка при отрисовке раздела. Нажмите кнопку, чтобы повторить попытку.">
+            {currentTab === "dashboard" && (
+              <DashboardView
+                metrics={metrics}
+                weeklyActivity={weeklyActivity}
+                recentRequests={recentRequests}
+                announcements={announcements}
+                onOpenAddUser={() => setIsAddUserOpen(true)}
+                onOpenCreateAnnouncement={() => setCurrentTab("announcements")}
+                onNavigateTab={(tab) => setCurrentTab(tab)}
+              />
+            )}
 
-          {currentTab === "users" && (
-            <UsersView
-              users={users}
-              totalUsers={totalUsers}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              selectedRole={selectedRole}
-              onRoleFilter={(role?: Role) => {
-                setSelectedRole(role);
-                loadUsersData(1, role, searchQuery);
-              }}
-              onSearch={(q) => {
-                setSearchQuery(q);
-                loadUsersData(1, selectedRole, q);
-              }}
-              onPageChange={(p) => loadUsersData(p, selectedRole, searchQuery)}
-              onToggleStatus={handleToggleUserStatus}
-              onDeleteUser={handleDeleteUser}
-              onOpenAddModal={() => setIsAddUserOpen(true)}
-              onOpenImportModal={() => setIsImportOpen(true)}
-            />
-          )}
+            {currentTab === "users" && (
+              <UsersView
+                users={users}
+                totalUsers={totalUsers}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                selectedRole={selectedRole}
+                onRoleFilter={(role?: Role) => {
+                  setSelectedRole(role);
+                  loadUsersData(1, role, searchQuery);
+                }}
+                onSearch={(q) => {
+                  setSearchQuery(q);
+                  loadUsersData(1, selectedRole, q);
+                }}
+                onPageChange={(p) => loadUsersData(p, selectedRole, searchQuery)}
+                onToggleStatus={handleToggleUserStatus}
+                onDeleteUser={handleDeleteUser}
+                onOpenAddModal={() => setIsAddUserOpen(true)}
+                onOpenImportModal={() => setIsImportOpen(true)}
+              />
+            )}
 
-          {currentTab === "schedule" && (
-            <ScheduleView
-              schedules={schedules}
-              subjects={subjects}
-              teachers={users.filter((u) => u.role === "TEACHER")}
-              assignments={assignments}
-              onSubstituteTeacher={handleSubstituteTeacher}
-              onAddLesson={handleAddLesson}
-              onCreateSubject={handleCreateSubject}
-              onDeleteSubject={handleDeleteSubject}
-              onAssignTeacher={handleAssignTeacher}
-              onRemoveAssignment={handleRemoveAssignment}
-              onTriggerPushAlerts={handleTriggerPushAlerts}
-            />
-          )}
+            {currentTab === "schedule" && (
+              <ScheduleView
+                schedules={schedules}
+                subjects={subjects}
+                teachers={users.filter((u) => u.role === "TEACHER")}
+                allUsers={users}
+                assignments={assignments}
+                onSubstituteTeacher={handleSubstituteTeacher}
+                onAddLesson={handleAddLesson}
+                onCreateSubject={handleCreateSubject}
+                onDeleteSubject={handleDeleteSubject}
+                onAssignTeacher={handleAssignTeacher}
+                onRemoveAssignment={handleRemoveAssignment}
+                onTriggerPushAlerts={handleTriggerPushAlerts}
+              />
+            )}
 
-          {currentTab === "requests" && (
-            <RequestsView
-              requests={allRequests}
-              onUpdateRequest={handleUpdateRequest}
-            />
-          )}
+            {currentTab === "canteen" && (
+              <CanteenView isDemoMode={isDemoMode} />
+            )}
 
-          {currentTab === "ratings" && (
-            <RatingsView
-              ratings={ratings}
-            />
-          )}
+            {currentTab === "requests" && (
+              <RequestsView
+                requests={allRequests}
+                onUpdateRequest={handleUpdateRequest}
+              />
+            )}
 
-          {currentTab === "announcements" && (
-            <AnnouncementsView
-              announcements={announcements}
-              onCreateAnnouncement={handleCreateAnnouncement}
-            />
-          )}
+            {currentTab === "ratings" && (
+              <RatingsView
+                ratings={ratings}
+              />
+            )}
+
+            {currentTab === "announcements" && (
+              <AnnouncementsView
+                announcements={announcements}
+                onCreateAnnouncement={handleCreateAnnouncement}
+              />
+            )}
+          </ErrorBoundary>
         </div>
       </main>
 

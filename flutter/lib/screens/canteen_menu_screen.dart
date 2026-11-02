@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_spacing.dart';
 import '../models/api_models.dart';
 import '../providers/canteen_provider.dart';
+import '../widgets/soft_offline_badge.dart';
 
 class CanteenMenuScreen extends ConsumerStatefulWidget {
   const CanteenMenuScreen({super.key});
@@ -115,6 +117,9 @@ class _CanteenMenuScreenState extends ConsumerState<CanteenMenuScreen> {
 
   // Прокрутка к секции по нажатию на таб
   void _scrollToSection(MealType mealType, {bool isInitial = false}) {
+    if (!isInitial) {
+      HapticFeedback.selectionClick();
+    }
     final index = _sectionIndices[mealType];
 
     // Если индекса нет (например, секция пуста и не была добавлена), ничего не делаем
@@ -177,9 +182,32 @@ class _CanteenMenuScreenState extends ConsumerState<CanteenMenuScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh, color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed),
+            tooltip: 'Обновить меню',
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              ref.read(canteenProvider.notifier).fetchTodayMenu();
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
+          // Soft Offline Cache Badge
+          if (canteenState.isFromCache)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: SoftOfflineBadge(
+                lastUpdated: canteenState.lastCachedAt,
+                onRefresh: () {
+                  HapticFeedback.lightImpact();
+                  ref.read(canteenProvider.notifier).fetchTodayMenu();
+                },
+              ),
+            ),
+
           // Meal Type Tabs
           Container(
             color: isDark ? AppColors.darkBackgroundSecondary : Colors.white,
