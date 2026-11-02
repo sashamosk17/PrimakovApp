@@ -170,9 +170,15 @@ class _TeacherRatingsScreenState extends ConsumerState<TeacherRatingsScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  error.toString(),
+                  'Не удалось загрузить список преподавателей. Пожалуйста, проверьте подключение и повторите попытку.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: textSecondary),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () => ref.refresh(teachersProvider),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Повторить попытку'),
                 ),
               ],
             ),

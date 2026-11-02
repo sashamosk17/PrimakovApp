@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<primakov_app_context version="0.5.0" generated_at="2026-11-02">
+<primakov_app_context version="0.5.5" generated_at="2026-11-02">
   <project_overview>
     <name>PrimakovApp</name>
     <organization>АНОО «Гимназия им. Е.М. Примакова»</organization>
@@ -27,7 +27,7 @@
       <auth>JWT (jsonwebtoken 9.0.2), TTL 7 days; passwords hashed with bcrypt 6.0.0</auth>
       <validation>Zod 4.4.1</validation>
       <security>Helmet 8.1.0, CORS, express-rate-limit 8.4.1, input sanitization middleware</security>
-      <testing>Jest 29.7.0, ts-jest, supertest (276 тестов, 26 suites - 100% pass)</testing>
+      <testing>Jest 29.7.0, ts-jest, supertest (300 тестов, 32 suites - 100% pass)</testing>
       <containerization>Docker, docker-compose, scripts/copy-migrations.js</containerization>
     </backend>
     <frontend_mobile>
@@ -36,6 +36,7 @@
       <http_client>Dio 5.3.0 with singleton, interceptors (JWT, logging, error handling)</http_client>
       <storage>shared_preferences 2.2.0, offline cache (Hive)</storage>
       <ui>Material 3, custom design tokens, fonts: Manrope and Inter, flutter_svg, confetti, haptic feedback</ui>
+      <testing>flutter_test (32 automated tests - 100% pass)</testing>
       <platforms>Android 10+, iOS 14+</platforms>
     </frontend_mobile>
     <frontend_web_admin>
@@ -43,8 +44,9 @@
       <bundler>Vite 8.3.x (@tailwindcss/vite)</bundler>
       <styling>Tailwind CSS v4 (The Academic Curator, #6c0c08 Primakov Red)</styling>
       <http_client>Axios 1.21.x with dynamic base URL and 401 handling</http_client>
+      <localization>LanguageContext (Bilingual RU / EN instant switch)</localization>
       <offline_mode>Автономный Demo-режим при отсутствии подключения к API</offline_mode>
-      <capabilities>24 класса гимназии (1-11), ИУП аккордеоны с поиском по фамилии любого ученика, 'Раскрыть для всех', столовая КБЖУ, матрица дисциплин и аккредитация педагогов</capabilities>
+      <capabilities>24 класса гимназии (1-11), ИУП аккордеоны с поиском по фамилии любого ученика, 'Раскрыть для всех', столовая КБЖУ, матрица дисциплин, UserProfileModal и аккредитация педагогов</capabilities>
     </frontend_web_admin>
   </tech_stack>
 

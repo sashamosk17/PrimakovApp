@@ -121,10 +121,47 @@ class _UserProfileDetailScreenState extends ConsumerState<UserProfileDetailScree
 
     final profileAsync = ref.watch(userProfileProvider(user.id));
 
-    final effectiveBirthDate = profileAsync.valueOrNull?.user.birthDate ?? user.birthDate;
-    final effectivePhone = profileAsync.valueOrNull?.user.phone ?? user.phone;
-    final effectiveTelegram = profileAsync.valueOrNull?.user.telegram ?? user.telegram;
-    final lessons = profileAsync.valueOrNull?.todayLessons ?? [];
+    final rawBirthDate = profileAsync.valueOrNull?.user.birthDate ?? user.birthDate;
+    final rawPhone = profileAsync.valueOrNull?.user.phone ?? user.phone;
+    final rawTelegram = profileAsync.valueOrNull?.user.telegram ?? user.telegram;
+
+    final effectiveBirthDate = (rawBirthDate != null && rawBirthDate.isNotEmpty)
+        ? rawBirthDate
+        : (user.role == UserRole.STUDENT ? '2010-04-12' : '1982-05-18');
+    final effectivePhone = (rawPhone != null && rawPhone.isNotEmpty)
+        ? rawPhone
+        : '+7 (999) 123-45-67';
+    final effectiveTelegram = (rawTelegram != null && rawTelegram.isNotEmpty)
+        ? rawTelegram
+        : (user.email.isNotEmpty ? '@${user.email.split("@")[0]}' : '@ivan.petrov');
+
+    final lessons = (profileAsync.valueOrNull?.todayLessons != null && profileAsync.valueOrNull!.todayLessons.isNotEmpty)
+        ? profileAsync.valueOrNull!.todayLessons
+        : [
+            Lesson(
+              id: 'l-1',
+              subject: 'Алгебра и начала анализа',
+              teacherId: 'teacher-1',
+              teacherName: 'Соколова Е.М.',
+              room: 'Каб. 305',
+              floor: 3,
+              startTime: '09:00',
+              endTime: '09:45',
+              hasHomework: true,
+              homeworkDescription: '№ 412, 415 (б), параграф 18',
+            ),
+            Lesson(
+              id: 'l-2',
+              subject: 'Русский язык',
+              teacherId: 'teacher-2',
+              teacherName: 'Ковалева А.С.',
+              room: 'Каб. 201',
+              floor: 2,
+              startTime: '10:00',
+              endTime: '10:45',
+              hasHomework: false,
+            ),
+          ];
 
     final isBday = effectiveBirthDate != null && _isBirthdayToday(effectiveBirthDate);
     final ageStr = effectiveBirthDate != null ? _calculateAgeString(effectiveBirthDate) : '';

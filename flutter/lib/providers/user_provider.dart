@@ -86,13 +86,19 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
         telegram: telegram,
       );
       
+      final effectiveUser = updatedUser.copyWith(
+        birthDate: birthDate ?? updatedUser.birthDate,
+        phone: phone ?? updatedUser.phone,
+        telegram: telegram ?? updatedUser.telegram,
+      );
+
       state = state.copyWith(
-        currentUser: updatedUser,
+        currentUser: effectiveUser,
         isLoading: false,
       );
 
       // Синхронизируем с AuthNotifier
-      _authNotifier.updateCurrentUser(updatedUser);
+      _authNotifier.updateCurrentUser(effectiveUser);
     } catch (e) {
       state = state.copyWith(
         isLoading: false,

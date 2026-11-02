@@ -86,22 +86,90 @@
 
 ---
 
-### 2.2. Модуль пользователей и профиля (`/api/users`)
+### 2.2. Модуль пользователей, профиля и каталога (`/api/users`)
 Реализация: [userRoutes.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/presentation/routes/userRoutes.ts) | [UserController.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/presentation/controllers/UserController.ts)
 
 | Метод | Путь | Auth | Назначение |
 | :--- | :--- | :---: | :--- |
 | `GET` | `/api/users/teachers` | Нет | Публичный список преподавателей для рейтинга |
+| `GET` | `/api/users/directory` | Да | Сквозной поиск учащихся и учителей (параметры: `query`, `role`, `groupName`) |
+| `GET` | `/api/users/:id/profile` | Да | Получение детального профиля любого пользователя (ДР, возраст, контакты, расписание дня) |
 | `GET` | `/api/users/me` | Да | Получение профиля текущего пользователя |
-| `PUT` | `/api/users/me` | Да | Редактирование имени и фамилии профиля |
+| `PUT` | `/api/users/me` | Да | Редактирование личных данных (имя, фамилия, ДР, телефон, telegram) |
 | `PUT` | `/api/users/me/password` | Да | Смена пароля текущего пользователя |
+
+#### `GET /api/users/directory`
+- **Query параметры**: `query` (поиск по имени/фамилии/email), `role` (`STUDENT`, `TEACHER`), `groupName` (`10-А`, `11-Б`).
+- **Успешный ответ (HTTP 200)**:
+  ```json
+  {
+    "status": "success",
+    "data": [
+      {
+        "id": "c4b18c64-42b7-4c07-b352-7f7229a4e99a",
+        "email": "ivan.petrov@primakov.school",
+        "firstName": "Иван",
+        "lastName": "Петров",
+        "role": "STUDENT",
+        "groupName": "10-А",
+        "birthDate": "2010-04-12",
+        "phone": "+7 (999) 123-45-67",
+        "telegram": "@ivan.petrov",
+        "isBirthdayThisWeek": false
+      }
+    ]
+  }
+  ```
+
+#### `GET /api/users/:id/profile`
+- **Успешный ответ (HTTP 200)**:
+  ```json
+  {
+    "status": "success",
+    "data": {
+      "user": {
+        "id": "c4b18c64-42b7-4c07-b352-7f7229a4e99a",
+        "email": "ivan.petrov@primakov.school",
+        "firstName": "Иван",
+        "lastName": "Петров",
+        "role": "STUDENT",
+        "groupName": "10-А",
+        "birthDate": "2010-04-12",
+        "phone": "+7 (999) 123-45-67",
+        "telegram": "@ivan.petrov",
+        "isActive": true
+      },
+      "age": 16,
+      "isBirthdayToday": false,
+      "isBirthdayThisWeek": false,
+      "todaySchedule": {
+        "date": "2026-11-02",
+        "lessons": [
+          {
+            "id": "1",
+            "subject": "Алгебра и начала анализа",
+            "room": "305",
+            "floor": 3,
+            "startTime": "09:00:00",
+            "endTime": "09:45:00",
+            "teacherName": "Соколова Е.М.",
+            "hasHomework": true
+          }
+        ]
+      }
+    }
+  }
+  ```
 
 #### `PUT /api/users/me`
 - **Запрос Body**:
   ```json
   {
-    "firstName": "Александр",
-    "lastName": "Смирнов"
+    "firstName": "Иван",
+    "lastName": "Петров",
+    "birthDate": "2010-04-12",
+    "phone": "+7 (999) 123-45-67",
+    "telegram": "@ivan.petrov"
   }
   ```
 - **Успешный ответ (HTTP 200)**:
@@ -110,10 +178,14 @@
     "status": "success",
     "data": {
       "id": "c4b18c64-42b7-4c07-b352-7f7229a4e99a",
-      "email": "student@primakov.school",
-      "firstName": "Александр",
-      "lastName": "Смирнов",
-      "role": "STUDENT"
+      "email": "ivan.petrov@primakov.school",
+      "firstName": "Иван",
+      "lastName": "Петров",
+      "role": "STUDENT",
+      "groupName": "10-А",
+      "birthDate": "2010-04-12",
+      "phone": "+7 (999) 123-45-67",
+      "telegram": "@ivan.petrov"
     }
   }
   ```
@@ -322,7 +394,9 @@
 | :--- | :--- | :---: | :--- |
 | `GET` | `/api/admin/dashboard` | Да (Admin) | Сводные метрики гимназии, график недельной активности, заявки и анонсы |
 | `GET` | `/api/admin/users` | Да (Admin) | Список пользователей с пагинацией (`page`, `limit`), фильтром по `role` и `search` |
+| `GET` | `/api/admin/users/:id/profile` | Да (Admin) | Детальный профиль пользователя со статистикой, ДР и расписанием дня |
 | `POST` | `/api/admin/users` | Да (Admin) | Создание учетной записи сотрудника или учащегося вручную |
+| `PUT` | `/api/admin/users/:id` | Да (Admin) | Редактирование пользователя администратором (имя, фамилия, ДР, телефон, telegram, роль, класс) |
 | `POST` | `/api/admin/users/import` | Да (Admin) | Пакетный импорт пользователей из CSV/Excel |
 | `PATCH`| `/api/admin/users/:id/status`| Да (Admin) | Переключение статуса активности (`isActive: boolean`) |
 | `DELETE`| `/api/admin/users/:id` | Да (Admin) | Мягкое удаление пользователя (`deleted_at`) |
@@ -411,7 +485,7 @@ export interface IRatingRepository {
 ### 3.2. Клиентские модели данных (Dart / Flutter)
 Расположение: [flutter/lib/models/api_models.dart](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/flutter/lib/models/api_models.dart)
 
-- `User`: Поля `id`, `email`, `firstName`, `lastName`, `role` (`UserRole`), `isActive`, `vkId`.
+- `User`: Поля `id`, `email`, `firstName`, `lastName`, `role` (`UserRole`), `isActive`, `groupName`, `birthDate`, `phone`, `telegram`, `vkId`.
 - `Lesson`: Поля `id`, `subject`, `teacherId`, `teacherName`, `startTime`, `endTime`, `room`, `floor`, `hasHomework`, `homeworkDescription`.
 - `Schedule`: Поля `id`, `groupId`, `date`, `List<Lesson> lessons`.
 - `Deadline`: Поля `id`, `title`, `description`, `dueDate`, `userId`, `status` (`DeadlineStatus`), `subject`, `createdAt`, `completedAt`.

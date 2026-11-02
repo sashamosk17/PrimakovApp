@@ -19,7 +19,7 @@
 
 ### 2.1. Таблица `users` (Пользователи)
 Основная таблица учетных записей учащихся, преподавателей и администраторов гимназии.
-Миграции: `001_CreateUsersTable.sql`, `001a_AddGroupNameToUsers.sql`, `008_AddDeletedAtToUsers.sql`, `018_AddAvatarAndTwoFactorToUsers.sql`.
+Миграции: `001_CreateUsersTable.sql`, `001a_AddGroupNameToUsers.sql`, `008_AddDeletedAtToUsers.sql`, `018_AddAvatarAndTwoFactorToUsers.sql`, `025_AddUserProfileFields.sql`.
 
 | Столбец | Тип данных | Nullable | Ограничения / Default | Описание |
 | :--- | :--- | :---: | :--- | :--- |
@@ -33,6 +33,9 @@
 | `is_active` | `BOOLEAN` | Нет | `DEFAULT true` | Флаг активности учетной записи |
 | `vk_id` | `VARCHAR(100)` | Да | `NULL` | Идентификатор профиля VK для будущей интеграции |
 | `avatar_url` | `TEXT` | Да | `NULL` | URL или путь к загруженному аватару профиля |
+| `birth_date` | `DATE` | Да | `NULL` | Дата рождения пользователя (для именинников и возраста) |
+| `phone` | `VARCHAR(50)` | Да | `NULL` | Контактный номер телефона |
+| `telegram` | `VARCHAR(100)` | Да | `NULL` | Telegram username (@username) для быстрой связи |
 | `two_factor_enabled` | `BOOLEAN` | Нет | `DEFAULT false` | Флаг двухфакторной аутентификации |
 | `created_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Дата и время регистрации |
 | `updated_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Дата и время последнего обновления профиля |
@@ -349,3 +352,4 @@
 | `022` | `022_CreateDeadlineNotificationsTable.sql` | Создание таблицы `deadline_notifications` для дедупликации пуш-алертов за 24ч и 2ч. |
 | `023` | `023_SeedLargeScaleUsersAndClasses.sql` | Масштабное сидирование 110+ учащихся и 27 педагогов по всем 24 классам гимназии с нормализацией классов через дефис (`10-А`, `11-А`). |
 | `024` | `024_SeedStandardSubjects.sql` | Первоначальное наполнение справочника 25 ключевыми гимназическими дисциплинами по 5 кафедрам. |
+| `025` | `025_AddUserProfileFields.sql` | Добавление полей профиля `birth_date`, `phone`, `telegram` в таблицу `users`, сидирование ДР и контактов тестовых пользователей. |

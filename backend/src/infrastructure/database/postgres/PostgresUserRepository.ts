@@ -34,7 +34,22 @@ export class PostgresUserRepository implements IUserRepository {
 
       const user = this.mapRowToUser(result.rows[0]);
       return Result.ok(user);
-    } catch (error) {
+    } catch (error: any) {
+      if (error && (error.code === '42703' || /column.*does not exist/i.test(String(error.message)))) {
+        try {
+          const fallbackQuery = `
+            SELECT id, email, password_hash, first_name, last_name, role, group_name,
+                   is_active, vk_id, avatar_url, two_factor_enabled, created_at, updated_at
+            FROM users
+            WHERE id = $1 AND deleted_at IS NULL
+          `;
+          const fallbackRes = await this.pool.query(fallbackQuery, [id]);
+          if (fallbackRes.rows.length === 0) return Result.ok(null);
+          return Result.ok(this.mapRowToUser(fallbackRes.rows[0]));
+        } catch (innerErr) {
+          console.error("Error finding user by id (fallback):", innerErr);
+        }
+      }
       console.error("Error finding user by id:", error);
       return Result.fail("Failed to find user");
     }
@@ -58,7 +73,22 @@ export class PostgresUserRepository implements IUserRepository {
 
       const user = this.mapRowToUser(result.rows[0]);
       return Result.ok(user);
-    } catch (error) {
+    } catch (error: any) {
+      if (error && (error.code === '42703' || /column.*does not exist/i.test(String(error.message)))) {
+        try {
+          const fallbackQuery = `
+            SELECT id, email, password_hash, first_name, last_name, role, group_name,
+                   is_active, vk_id, avatar_url, two_factor_enabled, created_at, updated_at
+            FROM users
+            WHERE email = $1 AND deleted_at IS NULL
+          `;
+          const fallbackRes = await this.pool.query(fallbackQuery, [email.toLowerCase()]);
+          if (fallbackRes.rows.length === 0) return Result.ok(null);
+          return Result.ok(this.mapRowToUser(fallbackRes.rows[0]));
+        } catch (innerErr) {
+          console.error("Error finding user by email (fallback):", innerErr);
+        }
+      }
       console.error("Error finding user by email:", error);
       return Result.fail("Failed to find user");
     }
@@ -79,7 +109,23 @@ export class PostgresUserRepository implements IUserRepository {
       const users = result.rows.map(row => this.mapRowToUser(row));
 
       return Result.ok(users);
-    } catch (error) {
+    } catch (error: any) {
+      if (error && (error.code === '42703' || /column.*does not exist/i.test(String(error.message)))) {
+        try {
+          const fallbackQuery = `
+            SELECT id, email, password_hash, first_name, last_name, role, group_name,
+                   is_active, vk_id, avatar_url, two_factor_enabled, created_at, updated_at
+            FROM users
+            WHERE role = $1 AND is_active = true AND deleted_at IS NULL
+            ORDER BY last_name, first_name
+          `;
+          const fallbackResult = await this.pool.query(fallbackQuery, [role]);
+          const users = fallbackResult.rows.map(row => this.mapRowToUser(row));
+          return Result.ok(users);
+        } catch (innerErr) {
+          console.error("Error finding users by role (fallback):", innerErr);
+        }
+      }
       console.error("Error finding users by role:", error);
       return Result.fail("Failed to find users by role");
     }

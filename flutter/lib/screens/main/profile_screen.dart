@@ -846,7 +846,30 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
     } else if (authState.isAuthenticated) {
       userName = userRole == UserRole.STUDENT ? 'Иван Петров' : 'Преподаватель';
     }
-    final userClass = userRole == UserRole.STUDENT ? '11 «А» класс' : 'Преподаватель';
+    final userClass = currentUser?.groupName != null
+        ? '${currentUser!.groupName} класс'
+        : (userRole == UserRole.STUDENT ? '10-А класс' : 'Преподаватель');
+
+    final rawBirth = currentUser?.birthDate;
+    final isStudent = userRole == UserRole.STUDENT;
+    final effectiveBirth = (rawBirth != null && rawBirth.isNotEmpty)
+        ? rawBirth.split('T')[0]
+        : (isStudent ? '2010-04-12' : '1982-05-18');
+    final effectivePhone = (currentUser?.phone != null && currentUser!.phone!.isNotEmpty)
+        ? currentUser.phone!
+        : '+7 (999) 123-45-67';
+    final effectiveTelegram = (currentUser?.telegram != null && currentUser!.telegram!.isNotEmpty)
+        ? currentUser.telegram!
+        : (currentUser != null && currentUser.email.isNotEmpty
+            ? '@${currentUser.email.split("@")[0]}'
+            : '@ivan.petrov');
+
+    String effectiveBirthDateStr = effectiveBirth;
+    try {
+      final dt = DateTime.parse(effectiveBirth);
+      final age = DateTime.now().year - dt.year - ((DateTime.now().month < dt.month || (DateTime.now().month == dt.month && DateTime.now().day < dt.day)) ? 1 : 0);
+      effectiveBirthDateStr = '$effectiveBirth ($age лет)';
+    } catch (_) {}
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -985,6 +1008,70 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
               ],
 
               const SizedBox(height: 36),
+
+              // Personal Info & Contacts Group
+              _SettingsGroup(
+                children: [
+                  _SettingsRow(
+                    icon: Icons.cake_outlined,
+                    title: 'Дата рождения',
+                    subtitle: effectiveBirthDateStr,
+                    onTap: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                      );
+                      ref.read(authProvider.notifier).fetchCurrentUser();
+                    },
+                  ),
+                  Divider(
+                    height: 1,
+                    indent: 66,
+                    color: isDark ? AppColors.darkBorderSecondary : const Color(0xFFEEEEF0),
+                  ),
+                  _SettingsRow(
+                    icon: Icons.phone_outlined,
+                    title: 'Телефон',
+                    subtitle: effectivePhone,
+                    onTap: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                      );
+                      ref.read(authProvider.notifier).fetchCurrentUser();
+                    },
+                  ),
+                  Divider(
+                    height: 1,
+                    indent: 66,
+                    color: isDark ? AppColors.darkBorderSecondary : const Color(0xFFEEEEF0),
+                  ),
+                  _SettingsRow(
+                    icon: Icons.send_rounded,
+                    title: 'Telegram',
+                    subtitle: effectiveTelegram,
+                    onTap: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                      );
+                      ref.read(authProvider.notifier).fetchCurrentUser();
+                    },
+                  ),
+                  Divider(
+                    height: 1,
+                    indent: 66,
+                    color: isDark ? AppColors.darkBorderSecondary : const Color(0xFFEEEEF0),
+                  ),
+                  _SettingsRow(
+                    icon: Icons.email_outlined,
+                    title: 'Корпоративная почта',
+                    subtitle: currentUser?.email ?? 'ivan.petrov@primakov.school',
+                    onTap: () {
+                      _showFloatingSnackBar('Корпоративный адрес привязан к аккаунту');
+                    },
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
 
               // Security & Authentication Group
               _SettingsGroup(

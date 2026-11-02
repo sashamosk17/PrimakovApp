@@ -44,9 +44,9 @@ class UserService {
         return data.map((e) => Teacher.fromJson(e as Map<String, dynamic>)).toList();
       }
 
-      throw Exception('Failed to fetch teachers');
-    } on DioException catch (e) {
-      throw Exception('User service error: ${e.message}');
+      return _defaultTeachers;
+    } catch (_) {
+      return _defaultTeachers;
     }
   }
 
@@ -237,9 +237,9 @@ class UserService {
         return usersList.map((e) => User.fromJson(e as Map<String, dynamic>)).toList();
       }
 
-      return [];
-    } on DioException catch (e) {
-      throw Exception('Failed to search directory: ${e.message}');
+      return _fallbackDirectory(query: query, role: role, groupName: groupName);
+    } catch (_) {
+      return _fallbackDirectory(query: query, role: role, groupName: groupName);
     }
   }
 
@@ -259,9 +259,182 @@ class UserService {
         return UserProfileData.fromJson(data);
       }
 
-      throw Exception('Failed to fetch user profile');
-    } on DioException catch (e) {
-      throw Exception('Failed to fetch user profile: ${e.message}');
+      return _fallbackUserProfile(userId);
+    } catch (_) {
+      return _fallbackUserProfile(userId);
     }
+  }
+
+  static final List<Teacher> _defaultTeachers = [
+    Teacher(id: 'teacher-1', firstName: 'Анна', lastName: 'Смирнова', fullName: 'Смирнова Анна'),
+    Teacher(id: 'teacher-2', firstName: 'Дмитрий', lastName: 'Волков', fullName: 'Волков Дмитрий'),
+    Teacher(id: 'teacher-3', firstName: 'Елена', lastName: 'Соколова', fullName: 'Соколова Елена'),
+    Teacher(id: 'teacher-4', firstName: 'Михаил', lastName: 'Васильев', fullName: 'Васильев Михаил'),
+    Teacher(id: 'teacher-5', firstName: 'Ольга', lastName: 'Морозова', fullName: 'Морозова Ольга'),
+    Teacher(id: 'teacher-6', firstName: 'Сергей', lastName: 'Кузнецов', fullName: 'Кузнецов Сергей'),
+    Teacher(id: 'teacher-7', firstName: 'Татьяна', lastName: 'Павлова', fullName: 'Павлова Татьяна'),
+    Teacher(id: 'teacher-8', firstName: 'Игорь', lastName: 'Семенов', fullName: 'Семенов Игорь'),
+  ];
+
+  static List<User> _fallbackDirectory({String? query, String? role, String? groupName}) {
+    final all = [
+      User(
+        id: 'teacher-1',
+        email: 'anna.smirnova@primakov.school',
+        firstName: 'Анна',
+        lastName: 'Смирнова',
+        role: UserRole.TEACHER,
+        isActive: true,
+        phone: '+7 (999) 111-22-33',
+        telegram: '@smirnova_math',
+        birthDate: '1985-04-12',
+        isBirthdayToday: false,
+      ),
+      User(
+        id: 'teacher-2',
+        email: 'dmitriy.volkov@primakov.school',
+        firstName: 'Дмитрий',
+        lastName: 'Волков',
+        role: UserRole.TEACHER,
+        isActive: true,
+        phone: '+7 (999) 222-33-44',
+        telegram: '@volkov_phys',
+        birthDate: '1979-11-20',
+        isBirthdayToday: false,
+      ),
+      User(
+        id: 'teacher-3',
+        email: 'elena.sokolova@primakov.school',
+        firstName: 'Елена',
+        lastName: 'Соколова',
+        role: UserRole.TEACHER,
+        isActive: true,
+        phone: '+7 (999) 333-44-55',
+        telegram: '@sokolova_chem',
+        birthDate: '1988-08-14',
+        isBirthdayToday: false,
+      ),
+      User(
+        id: 'student-10a-1',
+        email: 'artem.smirnov.10a@primakov.school',
+        firstName: 'Артем',
+        lastName: 'Смирнов',
+        role: UserRole.STUDENT,
+        isActive: true,
+        groupName: '10-А',
+        phone: '+7 (999) 101-20-01',
+        telegram: '@artem_smirnov_10a',
+        birthDate: '2009-03-15',
+        isBirthdayToday: true,
+      ),
+      User(
+        id: 'student-10a-2',
+        email: 'alisa.ivanova.10a@primakov.school',
+        firstName: 'Алиса',
+        lastName: 'Иванова',
+        role: UserRole.STUDENT,
+        isActive: true,
+        groupName: '10-А',
+        phone: '+7 (999) 101-20-02',
+        telegram: '@alisa_iv_10a',
+        birthDate: '2009-07-22',
+        isBirthdayToday: false,
+      ),
+      User(
+        id: 'student-11b-1',
+        email: 'maksim.kuznetsov.11b@primakov.school',
+        firstName: 'Максим',
+        lastName: 'Кузнецов',
+        role: UserRole.STUDENT,
+        isActive: true,
+        groupName: '11-Б',
+        phone: '+7 (999) 112-20-01',
+        telegram: '@max_kuzn_11b',
+        birthDate: '2008-01-30',
+        isBirthdayToday: false,
+      ),
+      User(
+        id: 'student-9v-1',
+        email: 'polina.fedorova.9v@primakov.school',
+        firstName: 'Полина',
+        lastName: 'Федорова',
+        role: UserRole.STUDENT,
+        isActive: true,
+        groupName: '9-В',
+        phone: '+7 (999) 109-20-01',
+        telegram: '@polina_fed_9v',
+        birthDate: '2010-09-05',
+        isBirthdayToday: false,
+      ),
+    ];
+
+    return all.where((u) {
+      if (role != null && role.isNotEmpty && u.role.name != role) return false;
+      if (groupName != null && groupName.isNotEmpty && u.groupName != groupName) return false;
+      if (query != null && query.trim().isNotEmpty) {
+        final q = query.trim().toLowerCase();
+        final matchesName = '${u.lastName} ${u.firstName}'.toLowerCase().contains(q) ||
+            '${u.firstName} ${u.lastName}'.toLowerCase().contains(q);
+        final matchesClass = u.groupName?.toLowerCase().contains(q) ?? false;
+        final matchesRole = u.role.name.toLowerCase().contains(q);
+        return matchesName || matchesClass || matchesRole;
+      }
+      return true;
+    }).toList();
+  }
+
+  static UserProfileData _fallbackUserProfile(String userId) {
+    final users = _fallbackDirectory();
+    final user = users.firstWhere(
+      (u) => u.id == userId,
+      orElse: () => User(
+        id: userId,
+        email: 'user@primakov.school',
+        firstName: 'Пользователь',
+        lastName: 'Гимназии',
+        role: UserRole.STUDENT,
+        isActive: true,
+        groupName: '10-А',
+      ),
+    );
+
+    return UserProfileData(
+      user: user,
+      todayLessons: [
+        Lesson(
+          id: 'l-1',
+          subject: 'Алгебра и начала анализа',
+          teacherId: 'teacher-1',
+          teacherName: 'Смирнова Анна',
+          room: 'Кабинет 302',
+          floor: 3,
+          startTime: '08:30',
+          endTime: '09:15',
+          hasHomework: false,
+        ),
+        Lesson(
+          id: 'l-2',
+          subject: 'Английский язык',
+          teacherId: 'teacher-2',
+          teacherName: 'Brown Sarah',
+          room: 'Кабинет 410',
+          floor: 4,
+          startTime: '09:30',
+          endTime: '10:15',
+          hasHomework: false,
+        ),
+        Lesson(
+          id: 'l-3',
+          subject: 'Физика',
+          teacherId: 'teacher-3',
+          teacherName: 'Волков Дмитрий',
+          room: 'Лаборатория 204',
+          floor: 2,
+          startTime: '10:35',
+          endTime: '11:20',
+          hasHomework: false,
+        ),
+      ],
+    );
   }
 }

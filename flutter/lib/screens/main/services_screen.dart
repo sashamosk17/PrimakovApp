@@ -63,14 +63,41 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Search Section - Live Teachers Search
-              Text(
-                'Поиск учителей',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
-                ),
+              // Search Section - Campus People Directory
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Поиск по гимназии',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const PeopleDirectoryScreen(),
+                        ),
+                      );
+                    },
+                    icon: Icon(Icons.menu_book_outlined, size: 16, color: primaryColor),
+                    label: Text(
+                      'Справочник',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: primaryColor,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               TextField(
@@ -81,35 +108,50 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                   });
                 },
                 decoration: InputDecoration(
-                  hintText: 'Поиск учителей по имени...',
-                  hintStyle: TextStyle(color: textSecondary),
+                  hintText: 'Поиск по имени, классу или роли...',
+                  hintStyle: TextStyle(color: textSecondary, fontSize: 13),
                   prefixIcon: Icon(Icons.search, color: textSecondary, size: 20),
-                  suffixIcon: _isSearching
-                      ? IconButton(
-                          icon: Icon(Icons.clear, color: textSecondary, size: 20),
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_isSearching)
+                        IconButton(
+                          icon: Icon(Icons.clear, color: textSecondary, size: 18),
                           onPressed: () {
                             _searchController.clear();
                             setState(() {
                               _isSearching = false;
                             });
                           },
-                        )
-                      : null,
+                        ),
+                      IconButton(
+                        tooltip: 'Открыть справочник с фильтрами',
+                        icon: Icon(Icons.tune_rounded, color: primaryColor, size: 20),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const PeopleDirectoryScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                   filled: true,
                   fillColor: surfaceColor,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: borderColor),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: borderColor),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: primaryColor, width: 2),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
               ),
               
@@ -125,49 +167,35 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                 ),
                 const SizedBox(height: 8),
                 Expanded(
-                  child: ref.watch(teachersProvider).when(
+                  child: ref.watch(directorySearchProvider(DirectorySearchParams(query: _searchController.text.trim()))).when(
                         loading: () => const Center(child: CircularProgressIndicator()),
                         error: (err, stack) => Center(
                           child: Text(
-                            'Ошибка загрузки: $err',
+                            'Ничего не найдено',
                             style: TextStyle(color: textSecondary),
                           ),
                         ),
-                        data: (teachers) {
-                          final query = _searchController.text.trim().toLowerCase();
-                          final filtered = teachers.where((t) {
-                            return t.fullName.toLowerCase().contains(query) ||
-                                t.firstName.toLowerCase().contains(query) ||
-                                t.lastName.toLowerCase().contains(query);
-                          }).toList();
-
-                          if (filtered.isEmpty) {
+                        data: (users) {
+                          if (users.isEmpty) {
                             return Center(
                               child: Text(
-                                'Преподаватели не найдены',
+                                'Ничего не найдено по запросу «${_searchController.text.trim()}»',
                                 style: TextStyle(color: textSecondary),
                               ),
                             );
                           }
 
                           return ListView.builder(
-                            itemCount: filtered.length,
+                            itemCount: users.length,
                             itemBuilder: (context, index) {
-                              final teacher = filtered[index];
-                              return _TeacherCard(
-                                teacher: teacher,
+                              final user = users[index];
+                              return _UserResultCard(
+                                user: user,
                                 onTap: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (context) => UserProfileDetailScreen(
-                                        initialUser: User(
-                                          id: teacher.id,
-                                          email: '${teacher.firstName.toLowerCase()}.${teacher.lastName.toLowerCase()}@primakov.school',
-                                          firstName: teacher.firstName,
-                                          lastName: teacher.lastName,
-                                          role: UserRole.TEACHER,
-                                          isActive: true,
-                                        ),
+                                        initialUser: user,
                                       ),
                                     ),
                                   );
@@ -262,17 +290,6 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                           );
                         },
                       ),
-                      _ServiceCard(
-                        icon: Icons.people_alt_outlined,
-                        title: 'Люди гимназии',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const PeopleDirectoryScreen(),
-                            ),
-                          );
-                        },
-                      ),
                     ],
                   ),
                 ),
@@ -358,12 +375,12 @@ class _ServiceCard extends StatelessWidget {
   }
 }
 
-class _TeacherCard extends StatelessWidget {
-  final Teacher teacher;
+class _UserResultCard extends StatelessWidget {
+  final User user;
   final VoidCallback onTap;
 
-  const _TeacherCard({
-    required this.teacher,
+  const _UserResultCard({
+    required this.user,
     required this.onTap,
   });
 
@@ -374,38 +391,70 @@ class _TeacherCard extends StatelessWidget {
     final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
     final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
 
-    final initials = '${teacher.firstName.isNotEmpty ? teacher.firstName[0] : ""}${teacher.lastName.isNotEmpty ? teacher.lastName[0] : ""}';
+    final isTeacher = user.role == UserRole.TEACHER;
+    final avatarBg = isTeacher
+        ? const Color(0xFF1976D2).withOpacity(0.15)
+        : AppColors.primaryRed.withOpacity(0.12);
+    final avatarColor = isTeacher ? const Color(0xFF1976D2) : AppColors.primaryRed;
+
+    final fName = user.firstName.isNotEmpty ? user.firstName[0] : '';
+    final lName = user.lastName.isNotEmpty ? user.lastName[0] : '';
+    final initials = '$lName$fName'.isNotEmpty ? '$lName$fName' : 'Г';
+
+    String roleLabel = 'Учащийся';
+    if (isTeacher) {
+      roleLabel = 'Преподаватель';
+    } else if (user.role == UserRole.ADMIN) {
+      roleLabel = 'Администрация';
+    }
+    if (user.groupName != null && user.groupName!.isNotEmpty) {
+      roleLabel = '$roleLabel • ${user.groupName}';
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border: isDark ? Border.all(color: AppColors.darkBorderPrimary) : null,
       ),
       child: ListTile(
         onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         leading: CircleAvatar(
-          backgroundColor: const Color(0xFF1976D2).withOpacity(0.15),
+          backgroundColor: avatarBg,
           child: Text(
             initials,
-            style: const TextStyle(
-              color: Color(0xFF1976D2),
+            style: TextStyle(
+              color: avatarColor,
               fontWeight: FontWeight.bold,
               fontSize: 14,
             ),
           ),
         ),
-        title: Text(
-          teacher.fullName,
-          style: TextStyle(
-            color: textPrimary,
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                '${user.lastName} ${user.firstName}',
+                style: TextStyle(
+                  color: textPrimary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (user.isBirthdayToday)
+              const Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Text('🎂', style: TextStyle(fontSize: 14)),
+              ),
+          ],
         ),
         subtitle: Text(
-          'Преподаватель',
+          roleLabel,
           style: TextStyle(
             color: textSecondary,
             fontSize: 12,

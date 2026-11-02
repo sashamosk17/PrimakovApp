@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../models/api_models.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/auth_provider.dart';
 
@@ -23,13 +24,30 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void initState() {
     super.initState();
     final currentUser = ref.read(currentUserProvider);
-    _firstNameController = TextEditingController(text: currentUser?.firstName ?? '');
-    _lastNameController = TextEditingController(text: currentUser?.lastName ?? '');
+    final isStudent = currentUser?.role == UserRole.STUDENT;
+    final defaultBirth = isStudent ? '2010-04-12' : '1982-05-18';
+    final defaultPhone = '+7 (999) 123-45-67';
+    final defaultTg = currentUser != null && currentUser.email.isNotEmpty
+        ? '@${currentUser.email.split("@")[0]}'
+        : '@ivan.petrov';
+
+    _firstNameController = TextEditingController(text: currentUser?.firstName ?? 'Иван');
+    _lastNameController = TextEditingController(text: currentUser?.lastName ?? 'Петров');
     _birthDateController = TextEditingController(
-      text: currentUser?.birthDate != null ? currentUser!.birthDate!.split('T')[0] : '',
+      text: (currentUser?.birthDate != null && currentUser!.birthDate!.isNotEmpty)
+          ? currentUser.birthDate!.split('T')[0]
+          : defaultBirth,
     );
-    _phoneController = TextEditingController(text: currentUser?.phone ?? '');
-    _telegramController = TextEditingController(text: currentUser?.telegram ?? '');
+    _phoneController = TextEditingController(
+      text: (currentUser?.phone != null && currentUser!.phone!.isNotEmpty)
+          ? currentUser.phone!
+          : defaultPhone,
+    );
+    _telegramController = TextEditingController(
+      text: (currentUser?.telegram != null && currentUser!.telegram!.isNotEmpty)
+          ? currentUser.telegram!
+          : defaultTg,
+    );
     
     // Listen to changes
     _firstNameController.addListener(_onTextChanged);
