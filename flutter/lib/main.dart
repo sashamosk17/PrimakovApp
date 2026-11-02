@@ -12,10 +12,14 @@ import 'screens/main/services_screen.dart';
 import 'screens/main/profile_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/ui_provider.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'services/cache/offline_cache_service.dart';
 import 'config/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  await OfflineCacheService().init();
   await initializeDateFormatting('ru', null);
   runApp(const ProviderScope(child: PrimakovApp()));
 }

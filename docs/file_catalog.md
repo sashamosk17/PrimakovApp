@@ -69,6 +69,12 @@
 | `application/story/MarkStoryAsViewedUseCase.ts` | Сценарий фиксации факта просмотра истории пользователем. | `class MarkStoryAsViewedUseCase` |
 | `application/announcement/GetAnnouncementsUseCase.ts` | Сценарий выборки объявлений гимназии. | `class GetAnnouncementsUseCase` |
 | `application/announcement/GetAnnouncementByCategoryUseCase.ts` | Сценарий выборки объявлений по категории. | `class GetAnnouncementByCategoryUseCase` |
+| `application/admin/AdminGetDashboardStatsUseCase.ts` | Сценарий вычисления сводных метрик дашборда администратора. | `class AdminGetDashboardStatsUseCase` |
+| `application/admin/AdminGetUsersUseCase.ts` | Сценарий выборки пользователей с пагинацией, поиском и фильтром ролей. | `class AdminGetUsersUseCase` |
+| `application/admin/AdminCreateUserUseCase.ts` | Сценарий ручного создания аккаунта администратором. | `class AdminCreateUserUseCase` |
+| `application/admin/AdminUpdateUserStatusUseCase.ts` | Сценарий активации/деактивации учетной записи пользователя. | `class AdminUpdateUserStatusUseCase` |
+| `application/admin/AdminDeleteUserUseCase.ts` | Сценарий мягкого удаления пользователя (`softDelete`). | `class AdminDeleteUserUseCase` |
+| `application/admin/AdminBatchImportUsersUseCase.ts` | Сценарий пакетного создания пользователей из CSV/Excel. | `class AdminBatchImportUsersUseCase` |
 
 ### 1.4. Слой представления (Presentation Layer: Routes, Controllers, Middleware)
 Каталог: [backend/src/presentation/](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/presentation)
@@ -85,6 +91,7 @@
 | `presentation/routes/roomRoutes.ts` | Роуты справочника аудиторий (`/api/rooms`, `/:number`). | `roomRoutes()` |
 | `presentation/routes/requestRoutes.ts` | Роуты сервисных заявок (`/api/requests`, `/:id/status`). | `requestRoutes()` |
 | `presentation/routes/canteenRoutes.ts` | Роуты меню столовой (`/api/canteen/menu/today`, `/:date`). | `canteenRoutes()` |
+| `presentation/routes/adminRoutes.ts` | Маршруты административной панели (`/api/admin/*`, RBAC guard). | `adminRoutes()` |
 | `presentation/controllers/AuthController.ts` | Контроллер обработки HTTP-запросов авторизации. | `class AuthController` |
 | `presentation/controllers/UserController.ts` | Контроллер профиля и управления пользователями. | `class UserController` |
 | `presentation/controllers/ScheduleController.ts` | Контроллер выдачи индивидуального/группового расписания. | `class ScheduleController` |
@@ -95,6 +102,7 @@
 | `presentation/controllers/RoomController.ts` | Контроллер каталога аудиторий, корпусов и этажей. | `class RoomController` |
 | `presentation/controllers/RequestController.ts` | Контроллер создания и модерации сервисных заявок. | `class RequestController` |
 | `presentation/controllers/CanteenController.ts` | Контроллер столовой: меню на даты и приемы пищи. | `class CanteenController` |
+| `presentation/controllers/AdminController.ts` | Контроллер админ-панели (дашборд, пользователи, CSV-импорт, тикеты). | `class AdminController` |
 | `presentation/middleware/authMiddleware.ts` | Проверка валидности Bearer JWT токена в заголовке запроса. | `authMiddleware` |
 | `presentation/middleware/rbacMiddleware.ts` | Проверка прав доступа пользователя по списку `Permission`. | `requirePermission` |
 | `presentation/middleware/validationMiddleware.ts` | Валидация тела запроса против схемы Zod. | `validate` |
@@ -210,3 +218,45 @@
 | `custom_text_field.dart` | Стилизованное поле ввода с валидацией и переключателем видимости пароля. |
 | `custom_dropdown.dart` | Выпадающее меню выбора категорий и аудиторий. |
 | `priority_toggle.dart` | Сегментированный переключатель приоритета заявок (LOW/MEDIUM/HIGH/URGENT). |
+
+---
+
+## 3. Административная веб-панель (admin-web)
+
+Корень каталога: [admin-web/](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/admin-web)
+
+| Файл | Описание и ответственность | Ключевые символы |
+| :--- | :--- | :--- |
+| `src/main.tsx` | Точка входа React-приложения. | `createRoot` |
+| `src/App.tsx` | Главный компонент: роутинг табов, сессии, связывание состояний и fallback при недоступности API. | `App` |
+| `src/api/client.ts` | Axios-инстанс с инъекцией JWT Bearer, сохранением токена и селектором `localhost / VPS`. | `apiClient`, `getApiBaseUrl` |
+| `src/types.ts` | TypeScript интерфейсы сущностей: `User`, `DashboardMetrics`, `ServiceRequest`, `TeacherRating`. | `Role`, `User`, `ServiceRequest` |
+| `src/data/mockData.ts` | Реалистичный датасет гимназии для автономного Demo-режима. | `MOCK_METRICS`, `MOCK_USERS` |
+| `src/components/Sidebar.tsx` | Боковая навигация в стиле Stitch Design System. | `Sidebar` |
+| `src/components/Header.tsx` | Верхняя панель с поисковой строкой, аватаром и информацией о текущем администраторе. | `Header` |
+| `src/components/LoginModal.tsx` | Окно входа: форма логина, селектор адреса API, кнопка мгновенного входа в демо-режим. | `LoginModal` |
+| `src/components/AddUserModal.tsx` | Модальное окно создания нового пользователя с валидацией. | `AddUserModal` |
+| `src/components/ImportCsvModal.tsx` | Модальное окно пакетного парсинга и загрузки CSV/Excel списка пользователей. | `ImportCsvModal` |
+| `src/pages/DashboardView.tsx` | Главный экран: бенто-сетка метрик, график недельной активности, заявки и анонсы. | `DashboardView` |
+| `src/pages/UsersView.tsx` | Управление пользователями: фильтры ролей, таблица, переключатели активности, пагинация. | `UsersView` |
+| `src/pages/RequestsView.tsx` | Служба заявок (Helpdesk): канбан/реестр тикетов, смена статусов и добавление заметок. | `RequestsView` |
+| `src/pages/RatingsView.tsx` | Модерация рейтингов учителей с просмотром авторов отзывов для администрации. | `RatingsView` |
+| `src/pages/AnnouncementsView.tsx`| Публикация и управление общешкольными объявлениями. | `AnnouncementsView` |
+
+---
+
+## 4. Документация проекта (docs/)
+
+Корень каталога: [docs/](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs)
+
+| Файл | Описание и назначение документа |
+| :--- | :--- |
+| `README.md` | Центральный портал документации, инструкции сборки, деплоя и общая карта репозитория. |
+| `features.md` | Матрица функциональности: текущее состояние (100% Ready), backlog, матрицы MoSCoW и RICE, релизный Roadmap. |
+| `architecture.md` | Системный дизайн, C4-диаграммы, диаграммы последовательностей, правила зависимостей Clean Architecture. |
+| `frontend.md` | Полное описание архитектуры Flutter: экраны, Riverpod-провайдеры, дизайн-код. |
+| `database.md` | Спецификация PostgreSQL: 15 таблиц, типы, индексы, мягкое удаление, OCC, реестр 21 миграции. |
+| `api_and_interfaces.md` | Полная спецификация REST API (11 модулей, включая `/api/admin`), контракты DTO, обработка edge cases. |
+| `file_catalog.md` | Настоящий пофайловый каталог всех исходных модулей и их ролей. |
+| `llm_context.xml` | Высокоплотный XML-манифест для сессий больших языковых моделей (LLM). |
+| `DEPLOYMENT_GUIDE.md` | Руководство по серверному развертыванию на VPS `185.221.198.242` через Docker Compose. |

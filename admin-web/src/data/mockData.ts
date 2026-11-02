@@ -216,3 +216,41 @@ export const MOCK_ANNOUNCEMENTS: Announcement[] = [
   },
 ];
 
+export const MOCK_SUBJECTS = [
+  { id: "sub-1", name: "Математика", description: "Алгебра, геометрия и начала анализа", createdAt: "2026-09-01T08:00:00Z", updatedAt: "2026-09-01T08:00:00Z" },
+  { id: "sub-2", name: "Русский язык", description: "Орфография, стилистика и культура речи", createdAt: "2026-09-01T08:00:00Z", updatedAt: "2026-09-01T08:00:00Z" },
+  { id: "sub-3", name: "Физика", description: "Теоретическая и экспериментальная физика", createdAt: "2026-09-01T08:00:00Z", updatedAt: "2026-09-01T08:00:00Z" },
+  { id: "sub-4", name: "История", description: "Отечественная и всеобщая история", createdAt: "2026-09-01T08:00:00Z", updatedAt: "2026-09-01T08:00:00Z" },
+  { id: "sub-5", name: "Химия", description: "Неорганическая и органическая химия", createdAt: "2026-09-01T08:00:00Z", updatedAt: "2026-09-01T08:00:00Z" },
+  { id: "sub-6", name: "Информатика", description: "Программирование Python и веб-технологии", createdAt: "2026-09-01T08:00:00Z", updatedAt: "2026-09-01T08:00:00Z" },
+];
+
+export const MOCK_SCHEDULES = [
+  {
+    id: "sch-10a",
+    groupId: "10A",
+    date: "2026-11-02",
+    createdAt: "2026-11-01T10:00:00Z",
+    updatedAt: "2026-11-01T10:00:00Z",
+    lessons: [
+      { id: "les-1", subject: "Математика", teacherId: "usr-teach-1", teacherName: "Елена Соколова", startTime: "09:00", endTime: "09:45", room: "305", floor: 3, hasHomework: true, homeworkDescription: "Параграф 14, № 120-125" },
+      { id: "les-2", subject: "Русский язык", teacherId: "usr-teach-3", teacherName: "Ольга Морозова", startTime: "10:00", endTime: "10:45", room: "201", floor: 2, hasHomework: false },
+      { id: "les-3", subject: "Физика", teacherId: "usr-teach-2", teacherName: "Дмитрий Смирнов", startTime: "11:00", endTime: "11:45", room: "102", floor: 1, hasHomework: true, homeworkDescription: "Подготовка к лабораторной" },
+      { id: "les-4", subject: "Информатика", teacherId: "usr-teach-1", teacherName: "Елена Соколова", startTime: "12:45", endTime: "13:30", room: "501", floor: 5, hasHomework: false },
+    ],
+  },
+  {
+    id: "sch-11b",
+    groupId: "11B",
+    date: "2026-11-02",
+    createdAt: "2026-11-01T10:00:00Z",
+    updatedAt: "2026-11-01T10:00:00Z",
+    lessons: [
+      { id: "les-5", subject: "Алгебра", teacherId: "usr-teach-1", teacherName: "Елена Соколова", startTime: "09:00", endTime: "09:45", room: "306", floor: 3, hasHomework: true },
+      { id: "les-6", subject: "Биология", teacherId: "usr-teach-2", teacherName: "Дмитрий Смирнов", startTime: "10:00", endTime: "10:45", room: "205", floor: 2, hasHomework: false },
+      { id: "les-7", subject: "Обществознание", teacherId: "usr-teach-3", teacherName: "Ольга Морозова", startTime: "11:00", endTime: "11:45", room: "401", floor: 4, hasHomework: true },
+    ],
+  },
+];
+
+

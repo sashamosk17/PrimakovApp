@@ -7,6 +7,7 @@ import { UsersView } from "./pages/UsersView";
 import { RequestsView } from "./pages/RequestsView";
 import { RatingsView } from "./pages/RatingsView";
 import { AnnouncementsView } from "./pages/AnnouncementsView";
+import { ScheduleView } from "./pages/ScheduleView";
 import { AddUserModal } from "./components/AddUserModal";
 import { ImportCsvModal } from "./components/ImportCsvModal";
 import { LoginModal } from "./components/LoginModal";
@@ -17,6 +18,8 @@ import {
   MOCK_REQUESTS,
   MOCK_RATINGS,
   MOCK_ANNOUNCEMENTS,
+  MOCK_SUBJECTS,
+  MOCK_SCHEDULES,
 } from "./data/mockData";
 import type {
   User,
@@ -25,6 +28,9 @@ import type {
   ServiceRequest,
   TeacherRating,
   Announcement,
+  Subject,
+  Schedule,
+  TeacherAssignment,
   Role,
 } from "./types";
 
@@ -61,6 +67,11 @@ export function App() {
 
   // Ratings Data
   const [ratings, setRatings] = useState<TeacherRating[]>(MOCK_RATINGS);
+
+  // Schedules & Subjects Data (Sprint 1 - Feature 3)
+  const [schedules, setSchedules] = useState<Schedule[]>(MOCK_SCHEDULES as Schedule[]);
+  const [subjects, setSubjects] = useState<Subject[]>(MOCK_SUBJECTS as Subject[]);
+  const [assignments, setAssignments] = useState<TeacherAssignment[]>([]);
 
   // Modals
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
@@ -234,6 +245,32 @@ export function App() {
     }
   }, [isDemoMode]);
 
+  const loadScheduleData = useCallback(async () => {
+    if (isDemoMode) {
+      setSchedules(MOCK_SCHEDULES as Schedule[]);
+      setSubjects(MOCK_SUBJECTS as Subject[]);
+      return;
+    }
+    try {
+      const [schedRes, subjRes, assignRes] = await Promise.allSettled([
+        apiClient.get("/admin/schedules"),
+        apiClient.get("/admin/subjects"),
+        apiClient.get("/admin/teacher-assignments"),
+      ]);
+      if (schedRes.status === "fulfilled" && schedRes.value.data.data) {
+        setSchedules(schedRes.value.data.data);
+      }
+      if (subjRes.status === "fulfilled" && subjRes.value.data.data) {
+        setSubjects(subjRes.value.data.data);
+      }
+      if (assignRes.status === "fulfilled" && assignRes.value.data.data) {
+        setAssignments(assignRes.value.data.data);
+      }
+    } catch (err) {
+      console.warn("Failed to load schedule data from API, using mock fallback", err);
+    }
+  }, [isDemoMode]);
+
   // Initial load when token is present
   useEffect(() => {
     if (token) {
@@ -241,8 +278,9 @@ export function App() {
       loadUsersData(1, selectedRole);
       loadRequestsData();
       loadRatingsData();
+      loadScheduleData();
     }
-  }, [token, loadDashboardData, loadUsersData, loadRequestsData, loadRatingsData, selectedRole]);
+  }, [token, loadDashboardData, loadUsersData, loadRequestsData, loadRatingsData, loadScheduleData, selectedRole]);
 
   // Actions
   const handleAddUser = async (data: any) => {
@@ -349,6 +387,131 @@ export function App() {
     loadDashboardData();
   };
 
+  // Feature 3: Schedule & Substitution Handlers
+  const handleSubstituteTeacher = async (
+    scheduleId: string,
+    lessonId: string,
+    newTeacherId: string,
+    comment?: string
+  ) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      setSchedules((prev) =>
+        prev.map((sch) => {
+          if (sch.id !== scheduleId && !sch.lessons.some((l) => l.id === lessonId)) return sch;
+          return {
+            ...sch,
+            lessons: sch.lessons.map((l) => {
+              if (l.id !== lessonId) return l;
+              return {
+                ...l,
+                teacherId: newTeacherId,
+                homeworkDescription: comment
+                  ? `${l.homeworkDescription ? l.homeworkDescription + " | " : ""}[Замена: ${comment}]`
+                  : l.homeworkDescription,
+              };
+            }),
+          };
+        })
+      );
+      return;
+    }
+    await apiClient.patch(`/admin/schedules/lessons/${lessonId}/substitute`, {
+      scheduleId,
+      newTeacherId,
+      comment,
+    });
+    await loadScheduleData();
+  };
+
+  const handleAddLesson = async (lessonData: any) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      const newLesson = {
+        id: `les-${Date.now()}`,
+        subject: lessonData.subject,
+        teacherId: lessonData.teacherId,
+        startTime: lessonData.startTime,
+        endTime: lessonData.endTime,
+        room: lessonData.roomNumber,
+        floor: lessonData.floor,
+        homeworkDescription: lessonData.homeworkDescription,
+      };
+      setSchedules((prev) =>
+        prev.map((s) =>
+          s.id === lessonData.scheduleId
+            ? { ...s, lessons: [...s.lessons, newLesson] }
+            : s
+        )
+      );
+      return;
+    }
+    await apiClient.post("/admin/schedules/lessons", lessonData);
+    await loadScheduleData();
+  };
+
+  const handleCreateSubject = async (name: string, description?: string) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      const newSub: Subject = {
+        id: `sub-${Date.now()}`,
+        name,
+        description,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setSubjects((prev) => [...prev, newSub]);
+      return;
+    }
+    await apiClient.post("/admin/subjects", { name, description });
+    await loadScheduleData();
+  };
+
+  const handleDeleteSubject = async (id: string) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      setSubjects((prev) => prev.filter((s) => s.id !== id));
+      return;
+    }
+    await apiClient.delete(`/admin/subjects/${id}`);
+    await loadScheduleData();
+  };
+
+  const handleAssignTeacher = async (teacherId: string, subjectId: string) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      setAssignments((prev) => [
+        ...prev,
+        {
+          teacherId,
+          subjectId,
+          createdAt: new Date().toISOString(),
+          subjectName: subjects.find((s) => s.id === subjectId)?.name,
+        },
+      ]);
+      return;
+    }
+    await apiClient.post(`/admin/teachers/${teacherId}/subjects`, { subjectId });
+    await loadScheduleData();
+  };
+
+  const handleRemoveAssignment = async (teacherId: string, subjectId: string) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      setAssignments((prev) =>
+        prev.filter((a) => !(a.teacherId === teacherId && a.subjectId === subjectId))
+      );
+      return;
+    }
+    await apiClient.delete(`/admin/teachers/${teacherId}/subjects/${subjectId}`);
+    await loadScheduleData();
+  };
+
+  const handleTriggerPushAlerts = async () => {
+    if (isDemoMode || serverUnavailableWarning) {
+      return { sentCount: 2, checkedCount: 6 };
+    }
+    const res = await apiClient.post("/deadlines/check-alerts");
+    return {
+      sentCount: res.data.data?.sentCount ?? 0,
+      checkedCount: res.data.data?.checkedCount ?? 0,
+    };
+  };
+
   // If not authenticated, show Login View
   if (!token) {
     return <LoginModal onLogin={handleLogin} onDemoLogin={handleDemoLogin} />;
@@ -362,6 +525,7 @@ export function App() {
         onTabChange={(tab) => {
           setCurrentTab(tab);
           if (tab === "users") loadUsersData(1, selectedRole);
+          if (tab === "schedule") loadScheduleData();
           if (tab === "requests") loadRequestsData();
           if (tab === "ratings") loadRatingsData();
         }}
@@ -445,6 +609,22 @@ export function App() {
               onDeleteUser={handleDeleteUser}
               onOpenAddModal={() => setIsAddUserOpen(true)}
               onOpenImportModal={() => setIsImportOpen(true)}
+            />
+          )}
+
+          {currentTab === "schedule" && (
+            <ScheduleView
+              schedules={schedules}
+              subjects={subjects}
+              teachers={users.filter((u) => u.role === "TEACHER")}
+              assignments={assignments}
+              onSubstituteTeacher={handleSubstituteTeacher}
+              onAddLesson={handleAddLesson}
+              onCreateSubject={handleCreateSubject}
+              onDeleteSubject={handleDeleteSubject}
+              onAssignTeacher={handleAssignTeacher}
+              onRemoveAssignment={handleRemoveAssignment}
+              onTriggerPushAlerts={handleTriggerPushAlerts}
             />
           )}
 

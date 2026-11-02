@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<primakov_app_context version="0.2.0" generated_at="2026-10-28">
+<primakov_app_context version="0.3.0" generated_at="2026-11-02">
   <project_overview>
     <name>PrimakovApp</name>
     <organization>АНОО «Гимназия им. Е.М. Примакова»</organization>
-    <goal>Кроссплатформенная мобильная система для автоматизации учебного процесса, индивидуального расписания, дедлайнов, сторис, рейтинга преподавателей, меню столовой, навигации по кампусу и тикетов техподдержки.</goal>
+    <goal>Кроссплатформенная мобильная и веб-система для автоматизации учебного процесса, индивидуального расписания, дедлайнов, сторис, рейтинга преподавателей, меню столовой, навигации по кампусу, тикетов техподдержки и администрирования.</goal>
     <repo_root>c:/Users/sasha/ВШЭ/3 курс/Digital_PM/Primakov_App</repo_root>
     <docs_root>c:/Users/sasha/ВШЭ/3 курс/Digital_PM/Primakov_App/docs</docs_root>
   </project_overview>
 
   <llm_navigation_instructions>
     <instruction priority="1">Этот файл (llm_context.xml) — точка первичного входа (System Context / Zero-shot seed) для LLM. Содержит ментальную модель архитектуры, правил и компонентов.</instruction>
-    <instruction priority="2">Для задач по Flutter, экранам, виджетам и Riverpod провайдерам читать: docs/frontend.md.</instruction>
-    <instruction priority="3">Для задач по таблицам, SQL-запросам, типам столбцов, ключам и миграциям читать: docs/database.md.</instruction>
-    <instruction priority="4">Для задач по REST API, контрактам эндпоинтов, DTO и кодам ошибок читать: docs/api_and_interfaces.md.</instruction>
-    <instruction priority="5">Для задач по Clean Architecture, DDD, потокам данных и Mermaid-схемам читать: docs/architecture.md.</instruction>
-    <instruction priority="6">Для поиска конкретного исходного файла и его роли читать: docs/file_catalog.md.</instruction>
+    <instruction priority="2">Для просмотра готового и планируемого функционала, матрицы приоритетов (MoSCoW/RICE) и Roadmap читать: docs/features.md.</instruction>
+    <instruction priority="3">Для задач по Flutter, экранам, виджетам и Riverpod провайдерам читать: docs/frontend.md.</instruction>
+    <instruction priority="4">Для задач по таблицам, SQL-запросам, типам столбцов, ключам и 21 миграции читать: docs/database.md.</instruction>
+    <instruction priority="5">Для задач по REST API (включая /api/admin), контрактам эндпоинтов, DTO и кодам ошибок читать: docs/api_and_interfaces.md.</instruction>
+    <instruction priority="6">Для задач по Clean Architecture, DDD, потокам данных и Mermaid-схемам читать: docs/architecture.md.</instruction>
+    <instruction priority="7">Для поиска конкретного исходного файла и его роли читать: docs/file_catalog.md.</instruction>
   </llm_navigation_instructions>
 
   <tech_stack>
@@ -26,17 +27,24 @@
       <auth>JWT (jsonwebtoken 9.0.2), TTL 7 days; passwords hashed with bcrypt 6.0.0</auth>
       <validation>Zod 4.4.1</validation>
       <security>Helmet 8.1.0, CORS, express-rate-limit 8.4.1, input sanitization middleware</security>
-      <testing>Jest 29.7.0, ts-jest, supertest</testing>
+      <testing>Jest 29.7.0, ts-jest, supertest (238 тестов, 20 suites)</testing>
       <containerization>Docker, docker-compose</containerization>
     </backend>
-    <frontend>
+    <frontend_mobile>
       <framework>Flutter SDK (Dart 3.x, >=3.0.0 &lt;4.0.0)</framework>
       <state_management>Riverpod 2.4.0 (flutter_riverpod, StateNotifier, AsyncNotifier)</state_management>
       <http_client>Dio 5.3.0 with singleton, interceptors (JWT, logging, error handling)</http_client>
       <storage>shared_preferences 2.2.0</storage>
       <ui>Material 3, custom design tokens, fonts: Manrope and Inter, flutter_svg, confetti</ui>
       <platforms>Android 10+, iOS 14+</platforms>
-    </frontend>
+    </frontend_mobile>
+    <frontend_web_admin>
+      <framework>React 19.3.x</framework>
+      <bundler>Vite 8.3.x (@tailwindcss/vite)</bundler>
+      <styling>Tailwind CSS v4 (The Academic Curator, #6c0c08 Primakov Red)</styling>
+      <http_client>Axios 1.21.x with dynamic base URL and 401 handling</http_client>
+      <offline_mode>Автономный Demo-режим при отсутствии подключения к API</offline_mode>
+    </frontend_web_admin>
   </tech_stack>
 
   <project_rules>
@@ -150,6 +158,12 @@
       <frontend_widgets>PriorityToggle, CustomDropdown</frontend_widgets>
       <role>Создание и отслеживание тикетов на IT-поддержку, ремонт и клининг.</role>
     </module>
+    <module name="AdminPanel">
+      <backend_controller>backend/src/presentation/controllers/AdminController.ts</backend_controller>
+      <backend_routes>backend/src/presentation/routes/adminRoutes.ts</backend_routes>
+      <web_app>admin-web (React 19, Tailwind v4, Vite)</web_app>
+      <role>Дашборд сводных метрик, модерация пользователей, пакетный импорт CSV, управление тикетами и модерация рейтингов.</role>
+    </module>
   </core_components>
 
   <database_schema doc_ref="docs/database.md">
@@ -189,6 +203,18 @@
     <table name="menu_items">
       <columns>id (UUID PK), menu_id (UUID FK -&gt; canteen_menu), name, description, category, calories, protein, carbs, fat, weight, image_url, allergens (TEXT[]), is_vegetarian, is_vegan, price, display_order</columns>
     </table>
+    <table name="audit_logs">
+      <columns>id (UUID PK), action, entity_type, entity_id, user_id (UUID FK -&gt; users), details (JSONB), ip_address, created_at</columns>
+    </table>
+    <table name="subjects">
+      <columns>id (UUID PK), name (VARCHAR UK), code, description, is_active, created_at, updated_at</columns>
+    </table>
+    <table name="teacher_subjects">
+      <columns>id (UUID PK), teacher_id (UUID FK -&gt; users), subject_id (UUID FK -&gt; subjects), is_primary, created_at</columns>
+    </table>
+    <table name="system_settings">
+      <columns>key (VARCHAR PK), value (TEXT), description, updated_by (UUID FK -&gt; users), updated_at</columns>
+    </table>
   </database_schema>
 
   <api_contracts_summary doc_ref="docs/api_and_interfaces.md">
@@ -213,12 +239,21 @@
     <endpoint method="GET" path="/api/requests" auth="true" role="all">Мои заявки</endpoint>
     <endpoint method="GET" path="/api/canteen/menu/today" auth="false" role="all">Меню столовой на сегодня</endpoint>
     <endpoint method="GET" path="/api/canteen/menu/:date" auth="false" role="all">Меню столовой на дату</endpoint>
+    <endpoint method="GET" path="/api/admin/dashboard" auth="true" role="ADMIN,SUPERADMIN">Сводные метрики дашборда</endpoint>
+    <endpoint method="GET" path="/api/admin/users" auth="true" role="ADMIN,SUPERADMIN">Управление пользователями с пагинацией</endpoint>
+    <endpoint method="POST" path="/api/admin/users" auth="true" role="ADMIN,SUPERADMIN">Создание пользователя</endpoint>
+    <endpoint method="POST" path="/api/admin/users/import" auth="true" role="ADMIN,SUPERADMIN">Пакетный импорт CSV/Excel</endpoint>
+    <endpoint method="PATCH" path="/api/admin/users/:id/status" auth="true" role="ADMIN,SUPERADMIN">Смена статуса активности</endpoint>
+    <endpoint method="DELETE" path="/api/admin/users/:id" auth="true" role="ADMIN,SUPERADMIN">Мягкое удаление пользователя</endpoint>
+    <endpoint method="GET" path="/api/admin/requests" auth="true" role="ADMIN,SUPERADMIN">Реестр всех тикетов служб</endpoint>
+    <endpoint method="PATCH" path="/api/admin/requests/:id" auth="true" role="ADMIN,SUPERADMIN">Модерация заявки</endpoint>
+    <endpoint method="GET" path="/api/admin/ratings" auth="true" role="ADMIN,SUPERADMIN">Модерация рейтингов учителей</endpoint>
   </api_contracts_summary>
 
   <current_state>
     <working_features>
-      <feature>Полный цикл аутентификации JWT с валидацией паролей и ролями (STUDENT, TEACHER, ADMIN).</feature>
-      <feature>Автоматический запуск 17 SQL-миграций при старте сервера в migrationRunner.ts.</feature>
+      <feature>Полный цикл аутентификации JWT с валидацией паролей и ролями (STUDENT, TEACHER, ADMIN, SUPERADMIN).</feature>
+      <feature>Автоматический запуск 21 SQL-миграций при старте сервера в migrationRunner.ts.</feature>
       <feature>Индивидуальное расписание уроков с отображением аудиторий, корпусов, этажей и описаний ДЗ.</feature>
       <feature>Управление дедлайнами: создание, валидация сроков, отметка выполнения с анимацией конфетти.</feature>
       <feature>Анонимное оценивание преподавателей с вычислением ip_hash и optimistic locking (версионирование).</feature>
@@ -226,7 +261,9 @@
       <feature>Меню столовой с расчетом КБЖУ, маркировкой аллергенов и вегетарианских блюд.</feature>
       <feature>Реестр аудиторий кампуса с группировкой по корпусам и этажам.</feature>
       <feature>Внутренняя система сервисных заявок со сменой статусов (PENDING, IN_PROGRESS, COMPLETED).</feature>
+      <feature>Веб-панель администратора (admin-web): дашборд, управление пользователями, CSV-импорт, модерация заявок и отзывов.</feature>
       <feature>Клиентский дизайн-код: кастомные темы, шрифты Manrope и Inter, GlassmorphicAppBar.</feature>
+      <feature>238 автоматизированных тестов Jest (20 тест-сьютов, 100% pass).</feature>
     </working_features>
 
     <known_debts_and_edge_cases>
@@ -235,10 +272,11 @@
       <item>Интерактивная карта кампуса отображается в виде структурированного списка аудиторий с координатами, полноценный рендер 2D/3D карты этажей планируется в следующем релизе.</item>
     </known_debts_and_edge_cases>
 
-    <next_steps>
-      <step>Внедрение локального кэша Hive/Isar во Flutter для оффлайн-доступа к расписанию и меню.</step>
-      <step>Подключение Firebase Cloud Messaging (FCM) для отправки push-уведомлений о приближающихся дедлайнах и срочных объявлениях.</step>
-      <step>Разработка административной веб-панели для публикации меню столовой и сторис без ручных SQL-сидов.</step>
+    <next_steps doc_ref="docs/features.md">
+      <step priority="RICE_1350">FCM Push-уведомления (дедлайны за 24ч/2ч, замены уроков, срочные объявления).</step>
+      <step priority="RICE_1393">Офлайн-кэш расписания и меню во Flutter (Hive/Isar) для мгновенного доступа без сети.</step>
+      <step priority="RICE_180">Визуальный конструктор расписания уроков и замен в веб-админке.</step>
+      <step priority="RICE_1020">Групповые дедлайны от преподавателей на учебные группы/классы.</step>
     </next_steps>
   </current_state>
 </primakov_app_context>

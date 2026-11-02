@@ -314,6 +314,47 @@
 
 ---
 
+### 2.11. Модуль административной панели (`/api/admin`)
+Реализация: [adminRoutes.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/presentation/routes/adminRoutes.ts) | [AdminController.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/presentation/controllers/AdminController.ts)
+*Доступ строго ограничен ролями `ADMIN` и `SUPERADMIN` (проверяется через `requireAdmin` middleware).*
+
+| Метод | Путь | Auth | Назначение |
+| :--- | :--- | :---: | :--- |
+| `GET` | `/api/admin/dashboard` | Да (Admin) | Сводные метрики гимназии, график недельной активности, заявки и анонсы |
+| `GET` | `/api/admin/users` | Да (Admin) | Список пользователей с пагинацией (`page`, `limit`), фильтром по `role` и `search` |
+| `POST` | `/api/admin/users` | Да (Admin) | Создание учетной записи сотрудника или учащегося вручную |
+| `POST` | `/api/admin/users/import` | Да (Admin) | Пакетный импорт пользователей из CSV/Excel |
+| `PATCH`| `/api/admin/users/:id/status`| Да (Admin) | Переключение статуса активности (`isActive: boolean`) |
+| `DELETE`| `/api/admin/users/:id` | Да (Admin) | Мягкое удаление пользователя (`deleted_at`) |
+| `GET` | `/api/admin/requests` | Да (Admin) | Реестр всех сервисных заявок гимназии с данными заявителей |
+| `PATCH`| `/api/admin/requests/:id` | Да (Admin) | Модерация заявки (смена статуса, назначение исполнителя, заметки) |
+| `GET` | `/api/admin/ratings` | Да (Admin) | Модерация отзывов учеников о преподавателях (с раскрытием ID авторов для администрации) |
+
+#### Пример ответа `/api/admin/dashboard`:
+```json
+{
+  "status": "success",
+  "data": {
+    "metrics": {
+      "totalStudents": 1240,
+      "totalTeachers": 86,
+      "totalAdmins": 5,
+      "activeRequests": 14,
+      "csiIndex": 4.88,
+      "attendanceRate": 96.4
+    },
+    "weeklyActivity": [
+      { "day": "Пн", "count": 340 },
+      { "day": "Вт", "count": 420 }
+    ],
+    "recentRequests": [],
+    "recentAnnouncements": []
+  }
+}
+```
+
+---
+
 ## 3. Ключевые интерфейсы и контракты
 
 ### 3.1. Интерфейсы репозиториев ядра (TypeScript)

@@ -93,6 +93,64 @@ export class PostgresScheduleRepository implements IScheduleRepository {
     return this.getScheduleByDate(userId, date);
   }
 
+  async findById(id: string): Promise<Schedule | undefined> {
+    try {
+      const scheduleQuery = `
+        SELECT id, user_id, date, created_at, updated_at
+        FROM schedules
+        WHERE id = $1
+      `;
+      const result = await this.pool.query(scheduleQuery, [id]);
+      if (result.rows.length === 0) return undefined;
+      const row = result.rows[0];
+      const lessons = await this.getLessonsByScheduleId(row.id);
+      return new Schedule(
+        row.id,
+        row.user_id,
+        new Date(row.date),
+        lessons,
+        new Date(row.created_at),
+        new Date(row.updated_at)
+      );
+    } catch (error) {
+      console.error("Error finding schedule by id:", error);
+      return undefined;
+    }
+  }
+
+  async getAll(): Promise<Result<Schedule[]>> {
+    try {
+      const query = `
+        SELECT id, user_id, date, created_at, updated_at
+        FROM schedules
+        ORDER BY date DESC
+      `;
+      const res = await this.pool.query(query);
+      const schedules: Schedule[] = [];
+      for (const row of res.rows) {
+        const lessons = await this.getLessonsByScheduleId(row.id);
+        schedules.push(
+          new Schedule(
+            row.id,
+            row.user_id,
+            new Date(row.date),
+            lessons,
+            new Date(row.created_at),
+            new Date(row.updated_at)
+          )
+        );
+      }
+      return Result.ok(schedules);
+    } catch (error) {
+      console.error("Error getting all schedules:", error);
+      return Result.fail("Failed to get schedules");
+    }
+  }
+
+  async update(schedule: Schedule): Promise<Result<void>> {
+    return this.save(schedule);
+  }
+
   async save(schedule: Schedule): Promise<Result<void>> {
     const client = await this.pool.connect();
 

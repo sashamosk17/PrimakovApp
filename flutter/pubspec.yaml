@@ -23,6 +23,8 @@ dependencies:
     sdk: flutter
   scrollable_positioned_list: ^0.3.8
   url_launcher: ^6.2.0
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
 
 dev_dependencies:
   flutter_test:

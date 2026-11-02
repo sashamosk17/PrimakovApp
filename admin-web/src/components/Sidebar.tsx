@@ -17,6 +17,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { id: "dashboard", label: "Дашборд", icon: "dashboard" },
     { id: "users", label: "Пользователи", icon: "school" },
+    { id: "schedule", label: "Расписание и предметы", icon: "calendar_month" },
     { id: "requests", label: "Заявки", icon: "pending_actions" },
     { id: "ratings", label: "Рейтинги учителей", icon: "badge" },
     { id: "announcements", label: "Объявления", icon: "campaign" },

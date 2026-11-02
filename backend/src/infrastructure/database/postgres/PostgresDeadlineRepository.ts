@@ -33,6 +33,26 @@ export class PostgresDeadlineRepository implements IDeadlineRepository {
     }
   }
 
+  async getPendingDeadlines(): Promise<Result<Deadline[]>> {
+    try {
+      const query = `
+        SELECT id, user_id, title, description, subject, due_date, status,
+               completed_at, created_at, updated_at
+        FROM deadlines
+        WHERE status = 'PENDING'
+        ORDER BY due_date ASC
+      `;
+
+      const result = await this.pool.query(query);
+      const deadlines = result.rows.map((row) => this.mapRowToDeadline(row));
+
+      return Result.ok(deadlines);
+    } catch (error) {
+      console.error("Error getting pending deadlines:", error);
+      return Result.fail("Failed to get pending deadlines");
+    }
+  }
+
   async findById(id: string): Promise<Deadline | undefined> {
     try {
       const query = `

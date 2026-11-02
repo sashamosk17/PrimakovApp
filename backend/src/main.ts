@@ -38,7 +38,13 @@ import {
   PostgresRoomRepository,
   PostgresRequestRepository,
   PostgresCanteenMenuRepository,
+  PostgresSubjectRepository,
+  PostgresDeadlineNotificationLogRepository,
 } from "./infrastructure/database/postgres";
+import { MockNotificationPreferencesRepository } from "./infrastructure/database/memory/MockNotificationPreferencesRepository";
+import { MockPushNotificationService } from "./infrastructure/external-services/MockPushNotificationService";
+import { ProcessDeadlineNotificationsUseCase } from "./application/deadline/ProcessDeadlineNotificationsUseCase";
+import { DeadlineNotificationWorker } from "./application/deadline/DeadlineNotificationWorker";
 
 async function startServer() {
   try {
@@ -61,6 +67,20 @@ async function startServer() {
     const roomRepository = new PostgresRoomRepository(pool);
     const requestRepository = new PostgresRequestRepository(pool);
     const canteenMenuRepository = new PostgresCanteenMenuRepository(pool);
+    const subjectRepository = new PostgresSubjectRepository(pool);
+    const deadlineNotificationLogRepository = new PostgresDeadlineNotificationLogRepository(pool);
+    const notificationPreferencesRepository = new MockNotificationPreferencesRepository();
+    const pushNotificationService = new MockPushNotificationService();
+
+    const processDeadlineNotificationsUseCase = new ProcessDeadlineNotificationsUseCase(
+      deadlineRepository,
+      notificationPreferencesRepository,
+      deadlineNotificationLogRepository,
+      pushNotificationService
+    );
+
+    const deadlineNotificationWorker = new DeadlineNotificationWorker(processDeadlineNotificationsUseCase);
+    deadlineNotificationWorker.start();
 
     const app = express();
 
@@ -117,7 +137,7 @@ async function startServer() {
     app.use("/api/auth", authRoutes(userRepository));
     app.use("/api/users", userRoutes(userRepository));
     app.use("/api/schedule", scheduleRoutes(scheduleRepository, userRepository));
-    app.use("/api/deadlines", deadlineRoutes(deadlineRepository));
+    app.use("/api/deadlines", deadlineRoutes(deadlineRepository, processDeadlineNotificationsUseCase));
     app.use("/api/ratings", ratingRoutes(ratingRepository));
     app.use("/api/stories", storyRoutes(storyRepository));
     app.use("/api/announcements", announcementRoutes(announcementRepository));
@@ -131,6 +151,8 @@ async function startServer() {
         requestRepository,
         ratingRepository,
         announcementRepository,
+        subjectRepository,
+        scheduleRepository,
       })
     );
 

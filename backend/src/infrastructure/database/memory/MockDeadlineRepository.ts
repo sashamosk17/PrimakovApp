@@ -94,6 +94,10 @@ export class MockDeadlineRepository implements IDeadlineRepository {
     return Result.ok(this.deadlines.filter((d) => d.userId === userId));
   }
 
+  async getPendingDeadlines(): Promise<Result<Deadline[]>> {
+    return Result.ok(this.deadlines.filter((d) => d.status === DeadlineStatus.PENDING));
+  }
+
   async findById(id: string): Promise<Deadline | undefined> {
     return this.deadlines.find((d) => d.id === id);
   }

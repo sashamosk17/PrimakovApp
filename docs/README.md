@@ -50,6 +50,16 @@
 | **Анимации** | confetti | `^0.7.0` | Визуальные микроэффекты завершения дедлайнов |
 | **Типографика** | Google Fonts Manrope & Inter | Локальные шрифты | Корпоративный шрифт гимназии |
 
+### 2.3. Frontend (Веб-панель администратора - Desktop Web)
+| Компонент / Слой | Технология | Версия / Требования | Назначение |
+| :--- | :--- | :--- | :--- |
+| **Фреймворк** | React | `^19.3.x` | Компонентный интерфейс панели управления |
+| **Сборщик / Dev Server** | Vite | `^8.3.x` | Молниеносная HMR-сборка |
+| **Стилизация** | Tailwind CSS v4 | `^4.3.x` (@tailwindcss/vite) | Академическая дизайн-система "The Academic Curator" |
+| **HTTP-клиент** | Axios | `^1.21.x` | Автоматическая инъекция Bearer токенов, перехватчики 401 |
+| **Типизация** | TypeScript | `~7.0.x` | Строгие типы DTO и сущностей |
+| **Дизайн-система** | Stitch UI / Material Symbols | #6c0c08 (Primakov Red) | Бенто-сетка, графики активности, адаптивность |
+
 ---
 
 ## 3. Инструкции по сборке и запуску
@@ -158,6 +168,13 @@ Primakov_App/
 │   ├── tests/                            # Модульные и интеграционные тесты
 │   ├── Dockerfile                        # Докеризация Node.js
 │   └── package.json                      # Зависимости и скрипты
+├── admin-web/                            # Административная веб-панель (React 19 + Tailwind v4 + Vite)
+│   ├── src/
+│   │   ├── api/                          # HTTP-клиент с JWT инъекцией и селектором серверов
+│   │   ├── components/                   # Сайдбар, шапка, модалки добавления/импорта пользователей
+│   │   ├── pages/                        # Дашборд, Пользователи, Заявки, Рейтинги, Объявления
+│   │   └── data/mockData.ts              # Автономный Demo-режим при недоступности бэкенда
+│   └── package.json
 ├── flutter/                              # Мобильный клиент на Flutter / Dart
 │   ├── lib/
 │   │   ├── config/                       # Конфигурация API, тем, типографики, палитры цветов
@@ -171,10 +188,11 @@ Primakov_App/
 │   └── pubspec.yaml                      # Зависимости Flutter
 └── docs/                                 # Документация проекта (LLM-ready)
     ├── README.md                         # Точка входа в документацию (текущий файл)
+    ├── features.md                       # Матрица фич (готовые, backlog, MoSCoW, RICE, дорожная карта)
     ├── architecture.md                   # Системный дизайн, DDD, C4 и UML диаграммы
     ├── frontend.md                       # Детальная архитектура Flutter, экранов, провайдеров и виджетов
-    ├── database.md                       # Полная спецификация БД PostgreSQL, схемы таблиц и миграций
-    ├── api_and_interfaces.md             # Спецификация REST API и контрактов
+    ├── database.md                       # Полная спецификация БД PostgreSQL, схемы таблиц и 21 миграции
+    ├── api_and_interfaces.md             # Спецификация REST API (11 модулей, включая /api/admin)
     ├── file_catalog.md                   # Пофайловый реестр всех модулей проекта с описанием их роли
     └── llm_context.xml                   # Высокоплотный XML-манифест для контекста нейросетей
 ```
@@ -186,10 +204,11 @@ Primakov_App/
 | Документ | Основное содержание | Целевая аудитория |
 | :--- | :--- | :--- |
 | [docs/README.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/README.md) | Назначение, стек технологий, инструкции сборки и развертывания, алгоритм навигации LLM | Разработчики, DevOps, LLM |
+| [docs/features.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/features.md) | Полный реестр готовых и планируемых фич, матрицы MoSCoW и RICE, релизная дорожная карта | Product Managers, Заказчик, LLM |
 | [docs/architecture.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/architecture.md) | Чистая архитектура (DDD), схемы взаимодействия, Mermaid C4/Sequence диаграммы, ERD базы данных, алгоритмические решения | Архитекторы, Senior Devs, LLM |
 | [docs/frontend.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/frontend.md) | Полная декомпозиция Flutter: 18 экранов, 11 Riverpod-провайдеров, 10 кастомных виджетов, дизайн-система | Flutter Developers, UI/UX, LLM |
-| [docs/database.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/database.md) | Спецификация PostgreSQL: 12 таблиц, типы столбцов, ключи, индексы, мягкое удаление, OCC, реестр 17 миграций | Backend Devs, DBA, LLM |
-| [docs/api_and_interfaces.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/api_and_interfaces.md) | Контракты REST API (все 10 эндпоинтов), DTO, валидация Zod, обработка edge cases | Frontend/Backend Devs, QA, LLM |
+| [docs/database.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/database.md) | Спецификация PostgreSQL: 15 таблиц, типы столбцов, ключи, индексы, мягкое удаление, OCC, реестр 21 миграции | Backend Devs, DBA, LLM |
+| [docs/api_and_interfaces.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/api_and_interfaces.md) | Контракты REST API (все 11 модулей, включая `/api/admin`), DTO, валидация Zod, коды ошибок | Frontend/Backend Devs, QA, LLM |
 | [docs/file_catalog.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/file_catalog.md) | Реестр абсолютно каждого исходного файла проекта с его ролью, экспортами и зависимостями | Code Reviewers, LLM |
 | [docs/llm_context.xml](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/llm_context.xml) | Высокоплотный структурированный XML-манифест проекта со всеми правилами, сущностями и актуальным статусом | LLM (Claude, Gemini, GPT) |
 
@@ -205,11 +224,12 @@ graph TD
     Step1 --> Decision{Какая задача поставлена?}
     
     Decision -->|Общая ориентация / Сборка| Step2A[docs/README.md]
-    Decision -->|Системный дизайн / Потоки данных| Step2B[docs/architecture.md]
-    Decision -->|Клиент / Экран / Riverpod / UI| Step2C[docs/frontend.md]
-    Decision -->|База данных / SQL / Миграции| Step2D[docs/database.md]
-    Decision -->|REST API / Роуты / DTO / Валидация| Step2E[docs/api_and_interfaces.md]
-    Decision -->|Поиск конкретного файла / Роль модуля| Step2F[docs/file_catalog.md]
+    Decision -->|Требования / Приоритеты / Roadmap| Step2B[docs/features.md]
+    Decision -->|Системный дизайн / Потоки данных| Step2C[docs/architecture.md]
+    Decision -->|Клиент / Экран / Riverpod / UI| Step2D[docs/frontend.md]
+    Decision -->|База данных / SQL / Миграции| Step2E[docs/database.md]
+    Decision -->|REST API / Роуты / DTO / Валидация| Step2F[docs/api_and_interfaces.md]
+    Decision -->|Поиск конкретного файла / Роль модуля| Step2G[docs/file_catalog.md]
     
     Step2A --> CodeNav[Переход к коду по прямым ссылкам file:///...]
     Step2B --> CodeNav
@@ -217,6 +237,7 @@ graph TD
     Step2D --> CodeNav
     Step2E --> CodeNav
     Step2F --> CodeNav
+    Step2G --> CodeNav
 ```
 
 ### Как LLM использует эту структуру:

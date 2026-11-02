@@ -4,6 +4,7 @@ import { AuthenticatedRequest } from "../types";
 import { CreateDeadlineUseCase } from "../../application/deadline/CreateDeadlineUseCase";
 import { GetUserDeadlinesUseCase } from "../../application/deadline/GetUserDeadlinesUseCase";
 import { CompleteDeadlineUseCase } from "../../application/deadline/CompleteDeadlineUseCase";
+import { ProcessDeadlineNotificationsUseCase } from "../../application/deadline/ProcessDeadlineNotificationsUseCase";
 import type { IDeadlineRepository } from "../../domain/repositories/IDeadlineRepository";
 import { Deadline } from "../../domain/entities/Deadline";
 import { DeadlineStatus } from "../../domain/value-objects/DeadlineStatus";
@@ -13,7 +14,8 @@ export class DeadlineController {
     private readonly createDeadlineUseCase: CreateDeadlineUseCase,
     private readonly getUserDeadlinesUseCase: GetUserDeadlinesUseCase,
     private readonly completeDeadlineUseCase: CompleteDeadlineUseCase,
-    private readonly deadlineRepository: IDeadlineRepository
+    private readonly deadlineRepository: IDeadlineRepository,
+    private readonly processDeadlineNotificationsUseCase?: ProcessDeadlineNotificationsUseCase
   ) {}
 
   public getDeadlines = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -61,6 +63,25 @@ export class DeadlineController {
         if (result.error === "Deadline not found") {
           return res.status(404).json({ status: "error", error: { message: "Deadline not found" } });
         }
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+      return res.json({ status: "success", data: result.value });
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  public checkAlerts = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!this.processDeadlineNotificationsUseCase) {
+        return res.status(501).json({
+          status: "error",
+          error: { message: "Notification service not configured" },
+        });
+      }
+      const refTime = req.body?.referenceTime ? new Date(req.body.referenceTime) : new Date();
+      const result = await this.processDeadlineNotificationsUseCase.execute({ referenceTime: refTime });
+      if (result.isFailure) {
         return res.status(400).json({ status: "error", error: { message: result.error } });
       }
       return res.json({ status: "success", data: result.value });

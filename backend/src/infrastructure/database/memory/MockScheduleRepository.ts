@@ -215,6 +215,24 @@ export class MockScheduleRepository implements IScheduleRepository {
     return this.getScheduleByDate(groupId, date);
   }
 
+  async findById(id: string): Promise<Schedule | undefined> {
+    return this.schedules.find((s) => s.id === id);
+  }
+
+  async getAll(): Promise<Result<Schedule[]>> {
+    return Result.ok([...this.schedules]);
+  }
+
+  async update(schedule: Schedule): Promise<Result<void>> {
+    const idx = this.schedules.findIndex((s) => s.id === schedule.id);
+    if (idx >= 0) {
+      this.schedules[idx] = schedule;
+    } else {
+      this.schedules.push(schedule);
+    }
+    return Result.ok();
+  }
+
   async save(schedule: Schedule): Promise<Result<void>> {
     const existingIndex = this.schedules.findIndex(
       (s) => s.id === schedule.id

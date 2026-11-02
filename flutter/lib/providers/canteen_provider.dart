@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/api_models.dart';
 import '../../services/api/canteen_service.dart';
+import '../../services/cache/offline_cache_service.dart';
 import '../../config/api_config.dart';
 import 'package:dio/dio.dart';
 import 'auth_provider.dart';
@@ -31,18 +32,34 @@ class CanteenState {
 
 class CanteenNotifier extends StateNotifier<CanteenState> {
   final CanteenService _canteenService;
+  final OfflineCacheService? _cacheService;
 
-  CanteenNotifier(this._canteenService) : super(CanteenState());
+  CanteenNotifier(this._canteenService, {OfflineCacheService? cacheService})
+      : _cacheService = cacheService,
+        super(CanteenState());
 
   Future<void> fetchTodayMenu() async {
-    state = state.copyWith(isLoading: true, error: null);
+    // Check offline cache first for instant UX
+    if (_cacheService != null) {
+      final cached = await _cacheService!.getTodaysMenu();
+      if (cached != null) {
+        state = state.copyWith(todayMenu: cached, isLoading: true, error: null);
+      } else {
+        state = state.copyWith(isLoading: true, error: null);
+      }
+    } else {
+      state = state.copyWith(isLoading: true, error: null);
+    }
+
     try {
       print('🍽️ [CanteenProvider] Fetching today menu...');
       final menus = await _canteenService.getTodaysMenuList();
       print('🍽️ [CanteenProvider] Received ${menus.length} menus');
-      for (var menu in menus) {
-        print('🍽️ [CanteenProvider] Menu: ${menu.mealType}, items: ${menu.items.length}');
+
+      if (_cacheService != null) {
+        await _cacheService!.saveTodaysMenu(menus);
       }
+
       state = CanteenState(todayMenu: menus, isLoading: false, error: null);
     } catch (e) {
       print('❌ [CanteenProvider] Error: $e');
@@ -74,5 +91,6 @@ final canteenServiceProvider = Provider<CanteenService>((ref) {
 
 final canteenProvider = StateNotifierProvider<CanteenNotifier, CanteenState>((ref) {
   final service = ref.watch(canteenServiceProvider);
-  return CanteenNotifier(service);
+  final cacheService = ref.watch(offlineCacheServiceProvider);
+  return CanteenNotifier(service, cacheService: cacheService);
 });

@@ -4,6 +4,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/api_models.dart';
 import '../services/api/schedule_service.dart';
+import '../services/cache/offline_cache_service.dart';
 
 /// Schedule State
 class ScheduleState {
@@ -33,42 +34,53 @@ class ScheduleState {
 /// Schedule Notifier
 class ScheduleNotifier extends StateNotifier<ScheduleState> {
   final ScheduleService _service;
+  final OfflineCacheService? _cacheService;
 
-  ScheduleNotifier(this._service) : super(const ScheduleState());
+  ScheduleNotifier(this._service, {OfflineCacheService? cacheService})
+      : _cacheService = cacheService,
+        super(const ScheduleState());
 
   Future<void> fetchSchedule(String userId, String date) async {
-  print('📡 ScheduleNotifier: fetchSchedule called with userId=$userId, date=$date');
-  state = ScheduleState(
-    currentSchedule: state.currentSchedule,
-    isLoading: true,
-    error: null,
-  );
-  try {
-    final schedule = await _service.getScheduleByDate(userId, date);
-    print('✅ ScheduleNotifier: received schedule with ${schedule.lessons.length} lessons');
+    print('📡 ScheduleNotifier: fetchSchedule called with userId=$userId, date=$date');
     
-    // 🔥 ДОБАВЛЕНО: Логируем состояние ДО и ПОСЛЕ
-    print('📊 State before: currentSchedule=${state.currentSchedule != null}');
-    
-    state = ScheduleState(
-      currentSchedule: schedule,
-      isLoading: false,
-      error: null,
-    );
-    
-    print('📊 State after: currentSchedule=${state.currentSchedule != null}');
-    print('📊 State after: lessons=${state.currentSchedule?.lessons.length}');
-    
-  } catch (e, stackTrace) {
-    print('❌ ScheduleNotifier: error - $e');
-    print('📚 Stack trace: $stackTrace');
-    state = ScheduleState(
-      currentSchedule: state.currentSchedule,
-      isLoading: false,
-      error: e.toString(),
-    );
+    // Check offline cache first for instant UI response
+    if (_cacheService != null) {
+      final cached = await _cacheService!.getSchedule(userId, date);
+      if (cached != null) {
+        state = state.copyWith(
+          currentSchedule: cached,
+          isLoading: true,
+          error: null,
+        );
+      } else {
+        state = state.copyWith(isLoading: true, error: null);
+      }
+    } else {
+      state = state.copyWith(isLoading: true, error: null);
+    }
+
+    try {
+      final schedule = await _service.getScheduleByDate(userId, date);
+      print('✅ ScheduleNotifier: received schedule with ${schedule.lessons.length} lessons');
+
+      if (_cacheService != null) {
+        await _cacheService!.saveSchedule(userId, date, schedule);
+      }
+
+      state = ScheduleState(
+        currentSchedule: schedule,
+        isLoading: false,
+        error: null,
+      );
+    } catch (e, stackTrace) {
+      print('❌ ScheduleNotifier: error - $e');
+      print('📚 Stack trace: $stackTrace');
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
   }
-}
 
   Future<Lesson?> fetchLessonDetails(String lessonId) async {
     try {
@@ -98,20 +110,19 @@ final scheduleServiceProvider = Provider((ref) => ScheduleService());
 /// Schedule State Provider
 final scheduleProvider = StateNotifierProvider<ScheduleNotifier, ScheduleState>((ref) {
   final service = ref.watch(scheduleServiceProvider);
-  return ScheduleNotifier(service);
+  final cacheService = ref.watch(offlineCacheServiceProvider);
+  return ScheduleNotifier(service, cacheService: cacheService);
 });
 
-/// Schedule selectors
-final currentScheduleProvider = Provider<Schedule?>((ref) =>
-    ref.watch(scheduleProvider).currentSchedule);
-
-final scheduleLessonsProvider = Provider<List<Lesson>>((ref) {
-  final schedule = ref.watch(scheduleProvider).currentSchedule;
-  return schedule?.lessons ?? [];
+/// Convenience Providers
+final currentScheduleProvider = Provider<Schedule?>((ref) {
+  return ref.watch(scheduleProvider).currentSchedule;
 });
 
-final scheduleLoadingProvider = Provider<bool>((ref) =>
-    ref.watch(scheduleProvider).isLoading);
+final scheduleLoadingProvider = Provider<bool>((ref) {
+  return ref.watch(scheduleProvider).isLoading;
+});
 
-final scheduleErrorProvider = Provider<String?>((ref) =>
-    ref.watch(scheduleProvider).error);
+final scheduleErrorProvider = Provider<String?>((ref) {
+  return ref.watch(scheduleProvider).error;
+});

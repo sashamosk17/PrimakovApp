@@ -59,3 +59,40 @@ export interface Announcement {
   imageUrl?: string;
 }
 
+export interface Subject {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeacherAssignment {
+  teacherId: string;
+  subjectId: string;
+  createdAt: string;
+  teacherName?: string;
+  subjectName?: string;
+}
+
+export interface Lesson {
+  id: string;
+  subject: string;
+  teacherId: string;
+  teacherName?: string;
+  startTime: string;
+  endTime: string;
+  room: string;
+  floor?: number;
+  hasHomework?: boolean;
+  homeworkDescription?: string;
+}
+
+export interface Schedule {
+  id: string;
+  groupId: string;
+  date: string;
+  lessons: Lesson[];
+  createdAt: string;
+  updatedAt: string;
+}
