@@ -8,6 +8,8 @@ import { IAnnouncementRepository } from "../../domain/repositories/IAnnouncement
 import { ISubjectRepository } from "../../domain/repositories/ISubjectRepository";
 import { IScheduleRepository } from "../../domain/repositories/IScheduleRepository";
 import { ICanteenMenuRepository } from "../../domain/repositories/ICanteenMenuRepository";
+import { IGradeRepository } from "../../domain/repositories/IGradeRepository";
+import { IBoardingRepository } from "../../domain/repositories/IBoardingRepository";
 import { authMiddleware } from "../middleware/authMiddleware";
 import { validate } from "../middleware/validationMiddleware";
 import { AuthenticatedRequest } from "../types";
@@ -21,6 +23,8 @@ export interface AdminRoutesDependencies {
   subjectRepository?: ISubjectRepository;
   scheduleRepository?: IScheduleRepository;
   canteenMenuRepository?: ICanteenMenuRepository;
+  gradeRepository?: IGradeRepository;
+  boardingRepository?: IBoardingRepository;
 }
 
 const CreateUserSchema = z.object({
@@ -144,7 +148,9 @@ export function adminRoutes(deps: AdminRoutesDependencies): Router {
     deps.announcementRepository,
     deps.subjectRepository,
     deps.scheduleRepository,
-    deps.canteenMenuRepository
+    deps.canteenMenuRepository,
+    deps.gradeRepository,
+    deps.boardingRepository
   );
 
   // 1. Must be authenticated
@@ -229,6 +235,12 @@ export function adminRoutes(deps: AdminRoutesDependencies): Router {
   );
   router.delete("/canteen/items/:id", controller.deleteCanteenMenuItem);
   router.post("/canteen/copy-week", validate(CopyWeekMenuSchema), controller.copyWeekCanteenMenu);
+
+  // Mesh Grades Import (Sprint 3 / Block 1)
+  router.post("/grades/import", controller.importMeshGrades);
+
+  // Boarding Life Roster (Sprint 3 / Block 3)
+  router.get("/boarding/roster", controller.getBoardingRoster);
 
   return router;
 }

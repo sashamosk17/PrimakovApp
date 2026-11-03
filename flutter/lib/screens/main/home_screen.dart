@@ -19,6 +19,10 @@ import 'schedule_screen.dart';
 import 'deadline_screen.dart';
 import 'story_viewer_screen.dart';
 import '../canteen_menu_screen.dart';
+import 'grades_screen.dart';
+import 'boarding_screen.dart';
+import '../../providers/grades_provider.dart';
+import '../../providers/boarding_provider.dart';
 import '../../widgets/notification_bell_icon.dart';
 
 // Mock data providers
@@ -117,6 +121,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Load announcements & canteen menu from API
     ref.read(announcementProvider.notifier).fetchAnnouncements();
     ref.read(canteenProvider.notifier).fetchTodayMenu();
+
+    // Load academic grades & boarding status
+    ref.read(gradesProvider.notifier).loadGrades();
+    ref.read(boardingProvider.notifier).loadStatus();
   }
 
   @override
@@ -176,6 +184,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: AppSpacing.md),
+
+                      // Row 2.5: Academic GPA Simulator Bento Card
+                      _buildAcademicGpaCard(),
+                      const SizedBox(height: AppSpacing.md),
+
+                      // Optional Row: Boarding Life Widget (for boarding students)
+                      if (currentUser?.isBoarding == true) ...[
+                        _buildBoardingHomeWidget(),
+                        const SizedBox(height: AppSpacing.md),
+                      ],
 
                       // Row 3: News Carousel (full width)
                       _buildNewsCard(),
@@ -1375,6 +1393,301 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (time1.hour > time2.hour) return true;
     if (time1.hour == time2.hour && time1.minute > time2.minute) return true;
     return false;
+  }
+
+  Widget _buildAcademicGpaCard() {
+    final gradesAsync = ref.watch(gradesProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? AppColors.darkBackgroundSecondary : AppColors.backgroundSecondary;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+
+    final overallGpa = ref.read(gradesProvider.notifier).overallGpa;
+    final displayGpa = overallGpa > 0 ? overallGpa.toStringAsFixed(2) : '4.76';
+
+    String statusText = 'Претендент на медаль';
+    Color statusColor = const Color(0xFF2E7D32);
+    if (overallGpa > 0 && overallGpa < 4.5) {
+      statusText = 'Хорошист';
+      statusColor = const Color(0xFF1E88E5);
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        border: Border.all(
+          color: isDark ? AppColors.darkSubtleBorder : AppColors.subtleBorder,
+          width: 1,
+        ),
+        boxShadow: isDark ? AppColors.darkCardShadow : AppColors.cardShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const GradesScreen()),
+            );
+          },
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.school_rounded,
+                    color: AppColors.primary,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Успеваемость и GPA',
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: textPrimary,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: statusColor.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                            ),
+                            child: Text(
+                              statusText,
+                              style: TextStyle(
+                                fontFamily: 'Manrope',
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: statusColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Текущий средний балл: $displayGpa • Симулятор оценок',
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 12,
+                          color: textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.tune_rounded, size: 14, color: AppColors.primary),
+                      SizedBox(width: 4),
+                      Text(
+                        'Калькулятор',
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBoardingHomeWidget() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF1B2330), const Color(0xFF161920)]
+              : [const Color(0xFF1565C0), const Color(0xFF1E88E5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1565C0).withOpacity(0.25),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.hotel_rounded, color: Colors.white, size: 13),
+                    SizedBox(width: 4),
+                    Text(
+                      'Пансион Примакова • Раздоры',
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const BoardingScreen()),
+                  );
+                },
+                child: const Row(
+                  children: [
+                    Text(
+                      'Все сервисы',
+                      style: TextStyle(fontFamily: 'Manrope', color: Colors.white70, fontSize: 11),
+                    ),
+                    Icon(Icons.chevron_right, color: Colors.white70, size: 16),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Вечерний Check-in (21:00)',
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 2),
+          const Text(
+            'Подтвердите присутствие в жилом корпусе пансиона',
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 11,
+              color: Colors.white70,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    HapticFeedback.mediumImpact();
+                    final ok = await ref.read(boardingProvider.notifier).submitCheckIn(
+                      notes: 'Отметка с главного экрана (кампус Раздоры)',
+                    );
+                    if (ok && mounted) {
+                      HapticFeedback.heavyImpact();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Присутствие в корпусе зафиксировано!'),
+                          backgroundColor: const Color(0xFF2E7D32),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF1565C0),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  icon: const Icon(Icons.check_circle_outline, size: 16, color: Color(0xFF1565C0)),
+                  label: const Text(
+                    'Я в корпусе',
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                      color: Color(0xFF1565C0),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const BoardingScreen()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white.withOpacity(0.18),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                ),
+                child: const Text(
+                  'Выезд',
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 

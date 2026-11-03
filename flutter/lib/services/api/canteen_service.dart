@@ -6,6 +6,21 @@ class CanteenService {
 
   CanteenService(this._dio);
 
+  String _extractErrorMessage(DioException e, [String defaultMsg = 'Server error']) {
+    final resData = e.response?.data;
+    if (resData is Map) {
+      final err = resData['error'];
+      if (err is Map) {
+        return err['message']?.toString() ?? defaultMsg;
+      } else if (err is String) {
+        return err;
+      } else if (resData['message'] is String) {
+        return resData['message'] as String;
+      }
+    }
+    return e.message ?? defaultMsg;
+  }
+
   Future<CanteenMenu?> getTodaysMenu() async {
     try {
       final response = await _dio.get('/canteen/menu/today');
@@ -30,7 +45,7 @@ class CanteenService {
       }
       return null;
     } on DioException catch (e) {
-      throw Exception(e.response?.data?['error']?['message'] ?? e.message);
+      throw Exception(_extractErrorMessage(e, 'Failed to load today menu'));
     }
   }
 
@@ -70,7 +85,7 @@ class CanteenService {
     } on DioException catch (e) {
       print('❌ [CanteenService] DioException: ${e.message}');
       print('❌ [CanteenService] Response: ${e.response?.data}');
-      throw Exception(e.response?.data?['error']?['message'] ?? e.message);
+      throw Exception(_extractErrorMessage(e, 'Failed to load today menu'));
     } catch (e) {
       print('❌ [CanteenService] Unexpected error: $e');
       rethrow;
@@ -92,7 +107,7 @@ class CanteenService {
       }
       throw Exception(apiResponse.error?['message'] ?? 'Failed to load menu for date');
     } on DioException catch (e) {
-      throw Exception(e.response?.data?['error']?['message'] ?? e.message);
+      throw Exception(_extractErrorMessage(e, 'Failed to load menu for date'));
     }
   }
 
@@ -109,7 +124,7 @@ class CanteenService {
       }
       throw Exception(apiResponse.error?['message'] ?? 'Failed to load menu');
     } on DioException catch (e) {
-      throw Exception(e.response?.data?['error']?['message'] ?? e.message);
+      throw Exception(_extractErrorMessage(e, 'Failed to load menu'));
     }
   }
 }

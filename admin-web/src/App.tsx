@@ -12,6 +12,7 @@ import { CanteenView } from "./pages/CanteenView";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AddUserModal } from "./components/AddUserModal";
 import { ImportCsvModal } from "./components/ImportCsvModal";
+import { ImportMeshGradesModal } from "./components/ImportMeshGradesModal";
 import { LoginModal } from "./components/LoginModal";
 import {
   MOCK_METRICS,
@@ -80,6 +81,7 @@ export function App() {
   // Modals
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isImportMeshGradesOpen, setIsImportMeshGradesOpen] = useState(false);
 
   // Login handler
   const handleLogin = async (email: string, pass: string) => {
@@ -722,6 +724,7 @@ export function App() {
                 onUpdateUser={handleUpdateUser}
                 onOpenAddModal={() => setIsAddUserOpen(true)}
                 onOpenImportModal={() => setIsImportOpen(true)}
+                onOpenImportMeshModal={() => setIsImportMeshGradesOpen(true)}
               />
             )}
 
@@ -741,6 +744,7 @@ export function App() {
                 onAssignTeacher={handleAssignTeacher}
                 onRemoveAssignment={handleRemoveAssignment}
                 onTriggerPushAlerts={handleTriggerPushAlerts}
+                onOpenImportMeshModal={() => setIsImportMeshGradesOpen(true)}
               />
             )}
 
@@ -787,6 +791,14 @@ export function App() {
         isOpen={isImportOpen}
         onClose={() => setIsImportOpen(false)}
         onImport={handleImportUsers}
+      />
+
+      <ImportMeshGradesModal
+        isOpen={isImportMeshGradesOpen}
+        onClose={() => setIsImportMeshGradesOpen(false)}
+        onSuccess={() => {
+          loadUsersData(currentPage, selectedRole, searchQuery);
+        }}
       />
     </div>
   );

@@ -23,7 +23,9 @@ export class User {
     public groupName?: string,
     public birthDate?: string,
     public phone?: string,
-    public telegram?: string
+    public telegram?: string,
+    public house?: "NORTH" | "SOUTH" | "EAST" | "WEST",
+    public isBoarding = false
   ) {
     this.updatedAt = updatedAt ?? createdAt;
   }
@@ -59,7 +61,9 @@ export class User {
     twoFactorEnabled?: boolean,
     birthDate?: string,
     phone?: string,
-    telegram?: string
+    telegram?: string,
+    house?: "NORTH" | "SOUTH" | "EAST" | "WEST",
+    isBoarding?: boolean
   ): void {
     if (firstName !== undefined) this.firstName = firstName;
     if (lastName !== undefined) this.lastName = lastName;
@@ -68,6 +72,8 @@ export class User {
     if (birthDate !== undefined) this.birthDate = birthDate;
     if (phone !== undefined) this.phone = phone;
     if (telegram !== undefined) this.telegram = telegram;
+    if (house !== undefined) this.house = house;
+    if (isBoarding !== undefined) this.isBoarding = isBoarding;
     this.updatedAt = new Date();
   }
 
@@ -105,6 +111,8 @@ export class User {
       birthDate: this.birthDate || null,
       phone: this.phone || null,
       telegram: this.telegram || null,
+      house: this.house || null,
+      isBoarding: this.isBoarding ?? false,
     };
   }
 }

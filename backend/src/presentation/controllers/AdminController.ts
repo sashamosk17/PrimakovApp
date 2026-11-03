@@ -23,9 +23,15 @@ import { IAnnouncementRepository } from "../../domain/repositories/IAnnouncement
 import { ISubjectRepository } from "../../domain/repositories/ISubjectRepository";
 import { IScheduleRepository } from "../../domain/repositories/IScheduleRepository";
 import { ICanteenMenuRepository } from "../../domain/repositories/ICanteenMenuRepository";
+import { IGradeRepository } from "../../domain/repositories/IGradeRepository";
+import { IBoardingRepository } from "../../domain/repositories/IBoardingRepository";
 import { MockSubjectRepository } from "../../infrastructure/database/memory/MockSubjectRepository";
 import { MockScheduleRepository } from "../../infrastructure/database/memory/MockScheduleRepository";
 import { MockCanteenMenuRepository } from "../../infrastructure/database/memory/MockCanteenMenuRepository";
+import { MockGradeRepository } from "../../infrastructure/database/memory/MockGradeRepository";
+import { MockBoardingRepository } from "../../infrastructure/database/memory/MockBoardingRepository";
+import { AdminImportMeshGradesUseCase } from "../../application/grades/AdminImportMeshGradesUseCase";
+import { GetBoardingRosterUseCase } from "../../application/boarding/GetBoardingRosterUseCase";
 import { AdminCreateOrUpdateMenuUseCase } from "../../application/admin/canteen/AdminCreateOrUpdateMenuUseCase";
 import { AdminAddMenuItemUseCase } from "../../application/admin/canteen/AdminAddMenuItemUseCase";
 import { AdminUpdateMenuItemUseCase } from "../../application/admin/canteen/AdminUpdateMenuItemUseCase";
@@ -79,6 +85,8 @@ export class AdminController {
   private subjectRepo: ISubjectRepository;
   private scheduleRepo: IScheduleRepository;
   private canteenMenuRepo: ICanteenMenuRepository;
+  private gradeRepo: IGradeRepository;
+  private boardingRepo: IBoardingRepository;
 
   constructor(
     private readonly userRepo: IUserRepository,
@@ -87,7 +95,9 @@ export class AdminController {
     private readonly announcementRepo?: IAnnouncementRepository,
     subjectRepository?: ISubjectRepository,
     scheduleRepository?: IScheduleRepository,
-    canteenMenuRepository?: ICanteenMenuRepository
+    canteenMenuRepository?: ICanteenMenuRepository,
+    gradeRepository?: IGradeRepository,
+    boardingRepository?: IBoardingRepository
   ) {
     this.getDashboardStatsUseCase = new AdminGetDashboardStatsUseCase(
       userRepo,
@@ -104,6 +114,8 @@ export class AdminController {
     this.subjectRepo = subjectRepository || new MockSubjectRepository();
     this.scheduleRepo = scheduleRepository || new MockScheduleRepository();
     this.canteenMenuRepo = canteenMenuRepository || new MockCanteenMenuRepository();
+    this.gradeRepo = gradeRepository || new MockGradeRepository();
+    this.boardingRepo = boardingRepository || new MockBoardingRepository();
 
     this.getSubjectsUseCase = new GetSubjectsUseCase(this.subjectRepo);
     this.createSubjectUseCase = new CreateSubjectUseCase(this.subjectRepo);
@@ -807,6 +819,42 @@ export class AdminController {
         return res.status(400).json({ status: "error", error: { message: result.error } });
       }
       return res.status(200).json({ status: "success", message: "Announcement deleted successfully" });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  importMeshGrades = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { csvData, defaultPeriod, classFilter } = req.body;
+      const useCase = new AdminImportMeshGradesUseCase(this.gradeRepo, this.userRepo);
+      const result = await useCase.execute({
+        csvData,
+        defaultPeriod,
+        classFilter,
+      });
+
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+
+      return res.status(200).json({ status: "success", data: result.value });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getBoardingRoster = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const date = req.query.date as string | undefined;
+      const useCase = new GetBoardingRosterUseCase(this.boardingRepo);
+      const result = await useCase.execute(date);
+
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+
+      return res.status(200).json({ status: "success", data: result.value });
     } catch (error) {
       next(error);
     }

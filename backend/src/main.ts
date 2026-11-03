@@ -21,6 +21,9 @@ import { requestRoutes } from "./presentation/routes/requestRoutes";
 import { canteenRoutes } from "./presentation/routes/canteenRoutes";
 import { userRoutes } from "./presentation/routes/userRoutes";
 import { adminRoutes } from "./presentation/routes/adminRoutes";
+import { gradeRoutes } from "./presentation/routes/gradeRoutes";
+import { houseRoutes } from "./presentation/routes/houseRoutes";
+import { boardingRoutes } from "./presentation/routes/boardingRoutes";
 import { errorHandlerMiddleware } from "./presentation/middleware/errorHandlerMiddleware";
 import { sanitizeInput } from "./presentation/middleware/sanitizationMiddleware";
 import { createDatabasePool, closeDatabasePool } from "./infrastructure/config/database";
@@ -40,6 +43,9 @@ import {
   PostgresCanteenMenuRepository,
   PostgresSubjectRepository,
   PostgresDeadlineNotificationLogRepository,
+  PostgresGradeRepository,
+  PostgresHouseRepository,
+  PostgresBoardingRepository,
 } from "./infrastructure/database/postgres";
 import { MockNotificationPreferencesRepository } from "./infrastructure/database/memory/MockNotificationPreferencesRepository";
 import { MockPushNotificationService } from "./infrastructure/external-services/MockPushNotificationService";
@@ -69,6 +75,9 @@ async function startServer() {
     const canteenMenuRepository = new PostgresCanteenMenuRepository(pool);
     const subjectRepository = new PostgresSubjectRepository(pool);
     const deadlineNotificationLogRepository = new PostgresDeadlineNotificationLogRepository(pool);
+    const gradeRepository = new PostgresGradeRepository(pool);
+    const houseRepository = new PostgresHouseRepository(pool);
+    const boardingRepository = new PostgresBoardingRepository(pool);
     const notificationPreferencesRepository = new MockNotificationPreferencesRepository();
     const pushNotificationService = new MockPushNotificationService();
 
@@ -144,6 +153,9 @@ async function startServer() {
     app.use("/api/rooms", roomRoutes(roomRepository));
     app.use("/api/requests", requestRoutes(requestRepository));
     app.use("/api/canteen", canteenRoutes(canteenMenuRepository));
+    app.use("/api/grades", gradeRoutes(gradeRepository, userRepository));
+    app.use("/api/houses", houseRoutes(houseRepository));
+    app.use("/api/boarding", boardingRoutes(boardingRepository));
     app.use(
       "/api/admin",
       adminRoutes({
@@ -154,6 +166,8 @@ async function startServer() {
         subjectRepository,
         scheduleRepository,
         canteenMenuRepository,
+        gradeRepository,
+        boardingRepository,
       })
     );
 

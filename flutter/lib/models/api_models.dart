@@ -1,6 +1,8 @@
 /// API Models
 /// Converted from TypeScript types/api.ts
 
+import 'package:flutter/material.dart';
+
 class User {
   final String id;
   final String email;
@@ -16,6 +18,8 @@ class User {
   final String? phone;
   final String? telegram;
   final bool isBirthdayToday;
+  final String? house;
+  final bool isBoarding;
 
   User({
     required this.id,
@@ -32,6 +36,8 @@ class User {
     this.phone,
     this.telegram,
     this.isBirthdayToday = false,
+    this.house,
+    this.isBoarding = false,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -58,6 +64,8 @@ class User {
       phone: json['phone'] as String?,
       telegram: json['telegram'] as String?,
       isBirthdayToday: json['isBirthdayToday'] as bool? ?? false,
+      house: json['house'] as String?,
+      isBoarding: json['isBoarding'] as bool? ?? false,
     );
   }
 
@@ -76,6 +84,8 @@ class User {
     'phone': phone,
     'telegram': telegram,
     'isBirthdayToday': isBirthdayToday,
+    'house': house,
+    'isBoarding': isBoarding,
   };
 
   User copyWith({
@@ -93,6 +103,8 @@ class User {
     String? phone,
     String? telegram,
     bool? isBirthdayToday,
+    String? house,
+    bool? isBoarding,
   }) {
     return User(
       id: id ?? this.id,
@@ -109,6 +121,8 @@ class User {
       phone: phone ?? this.phone,
       telegram: telegram ?? this.telegram,
       isBirthdayToday: isBirthdayToday ?? this.isBirthdayToday,
+      house: house ?? this.house,
+      isBoarding: isBoarding ?? this.isBoarding,
     );
   }
 
@@ -921,5 +935,445 @@ class UserStats {
     'totalLessons': totalLessons,
     'completedDeadlines': completedDeadlines,
     'pendingDeadlines': pendingDeadlines,
+  };
+}
+
+// ==========================================
+// BLOCK 1: Academic Grades & GPA Simulator Models
+// ==========================================
+
+class GradeItem {
+  final String id;
+  final String studentId;
+  final String subjectId;
+  final String subjectName;
+  final int value;
+  final double weight;
+  final String date;
+  final String period;
+  final String? topic;
+
+  GradeItem({
+    required this.id,
+    required this.studentId,
+    required this.subjectId,
+    required this.subjectName,
+    required this.value,
+    this.weight = 1.0,
+    required this.date,
+    this.period = "1 триместр",
+    this.topic,
+  });
+
+  factory GradeItem.fromJson(Map<String, dynamic> json) {
+    return GradeItem(
+      id: json['id'] as String? ?? '',
+      studentId: json['studentId'] as String? ?? '',
+      subjectId: json['subjectId'] as String? ?? '',
+      subjectName: json['subjectName'] as String? ?? '',
+      value: (json['value'] as num?)?.toInt() ?? 5,
+      weight: (json['weight'] as num?)?.toDouble() ?? 1.0,
+      date: json['date'] as String? ?? DateTime.now().toIso8601String(),
+      period: json['period'] as String? ?? '1 триместр',
+      topic: json['topic'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'studentId': studentId,
+    'subjectId': subjectId,
+    'subjectName': subjectName,
+    'value': value,
+    'weight': weight,
+    'date': date,
+    'period': period,
+    'topic': topic,
+  };
+}
+
+class SubjectGradeSummary {
+  final String subjectName;
+  final List<GradeItem> grades;
+  final double averageScore;
+  final int? periodMark;
+
+  SubjectGradeSummary({
+    required this.subjectName,
+    required this.grades,
+    required this.averageScore,
+    this.periodMark,
+  });
+
+  factory SubjectGradeSummary.fromJson(Map<String, dynamic> json) {
+    final gradesRaw = json['grades'] as List<dynamic>? ?? [];
+    final parsedGrades = gradesRaw
+        .map((e) => GradeItem.fromJson(e as Map<String, dynamic>))
+        .toList();
+
+    return SubjectGradeSummary(
+      subjectName: json['subjectName'] as String? ?? '',
+      grades: parsedGrades,
+      averageScore: (json['averageScore'] as num?)?.toDouble() ?? 0.0,
+      periodMark: (json['periodMark'] as num?)?.toInt(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'subjectName': subjectName,
+    'grades': grades.map((g) => g.toJson()).toList(),
+    'averageScore': averageScore,
+    'periodMark': periodMark,
+  };
+}
+
+class HypotheticalGrade {
+  final int value;
+  final double weight;
+  final String label;
+
+  HypotheticalGrade({
+    required this.value,
+    required this.weight,
+    required this.label,
+  });
+}
+
+class GpaSimulator {
+  final SubjectGradeSummary summary;
+  final List<HypotheticalGrade> hypotheticalGrades = [];
+
+  GpaSimulator({required this.summary});
+
+  double get currentScore => summary.averageScore;
+
+  void addHypotheticalGrade({
+    required int value,
+    required double weight,
+    String? label,
+  }) {
+    hypotheticalGrades.add(
+      HypotheticalGrade(
+        value: value,
+        weight: weight,
+        label: label ?? '+$value (вес ${weight == 1.0 ? "1" : weight})',
+      ),
+    );
+  }
+
+  void removeHypotheticalGrade(int index) {
+    if (index >= 0 && index < hypotheticalGrades.length) {
+      hypotheticalGrades.removeAt(index);
+    }
+  }
+
+  void reset() {
+    hypotheticalGrades.clear();
+  }
+
+  double get simulatedScore {
+    double totalWeighted = 0;
+    double totalWeight = 0;
+
+    for (final g in summary.grades) {
+      totalWeighted += g.value * g.weight;
+      totalWeight += g.weight;
+    }
+
+    for (final h in hypotheticalGrades) {
+      totalWeighted += h.value * h.weight;
+      totalWeight += h.weight;
+    }
+
+    if (totalWeight == 0) return 0.0;
+    final avg = totalWeighted / totalWeight;
+    return (avg * 100).round() / 100.0;
+  }
+
+  bool willAchieveTarget(double target) {
+    return simulatedScore >= target;
+  }
+}
+
+// ==========================================
+// BLOCK 2: House System (Лига Домов Примакова)
+// ==========================================
+
+class HouseStanding {
+  final String house;
+  final int totalPoints;
+  final int rank;
+
+  HouseStanding({
+    required this.house,
+    required this.totalPoints,
+    required this.rank,
+  });
+
+  factory HouseStanding.fromJson(Map<String, dynamic> json) {
+    return HouseStanding(
+      house: json['house'] as String? ?? 'NORTH',
+      totalPoints: (json['totalPoints'] as num?)?.toInt() ?? 0,
+      rank: (json['rank'] as num?)?.toInt() ?? 1,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'house': house,
+    'totalPoints': totalPoints,
+    'rank': rank,
+  };
+}
+
+class HouseTransaction {
+  final String id;
+  final String house;
+  final int points;
+  final String category;
+  final String reason;
+  final String awardedBy;
+  final String? studentId;
+  final String createdAt;
+
+  HouseTransaction({
+    required this.id,
+    required this.house,
+    required this.points,
+    required this.category,
+    required this.reason,
+    required this.awardedBy,
+    this.studentId,
+    required this.createdAt,
+  });
+
+  factory HouseTransaction.fromJson(Map<String, dynamic> json) {
+    return HouseTransaction(
+      id: json['id'] as String? ?? '',
+      house: json['house'] as String? ?? 'NORTH',
+      points: (json['points'] as num?)?.toInt() ?? 0,
+      category: json['category'] as String? ?? 'ACADEMIC',
+      reason: json['reason'] as String? ?? '',
+      awardedBy: json['awardedBy'] as String? ?? '',
+      studentId: json['studentId'] as String?,
+      createdAt: json['createdAt'] as String? ?? DateTime.now().toIso8601String(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'house': house,
+    'points': points,
+    'category': category,
+    'reason': reason,
+    'awardedBy': awardedBy,
+    'studentId': studentId,
+    'createdAt': createdAt,
+  };
+}
+
+class HouseCupData {
+  final List<HouseStanding> standings;
+  final List<HouseTransaction> recentTransactions;
+
+  HouseCupData({
+    required this.standings,
+    required this.recentTransactions,
+  });
+
+  factory HouseCupData.fromJson(Map<String, dynamic> json) {
+    final standingsRaw = json['standings'] as List<dynamic>? ?? [];
+    final txRaw = json['recentTransactions'] as List<dynamic>? ?? [];
+
+    return HouseCupData(
+      standings: standingsRaw
+          .map((e) => HouseStanding.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      recentTransactions: txRaw
+          .map((e) => HouseTransaction.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'standings': standings.map((s) => s.toJson()).toList(),
+    'recentTransactions': recentTransactions.map((t) => t.toJson()).toList(),
+  };
+}
+
+class HouseConfig {
+  final String house;
+  final String displayName;
+  final String totem;
+  final String motto;
+  final Color color;
+  final IconData icon;
+
+  const HouseConfig({
+    required this.house,
+    required this.displayName,
+    required this.totem,
+    required this.motto,
+    required this.color,
+    required this.icon,
+  });
+
+  static HouseConfig fromHouseName(String? house) {
+    switch ((house ?? '').toUpperCase()) {
+      case 'NORTH':
+        return const HouseConfig(
+          house: 'NORTH',
+          displayName: 'Север',
+          totem: 'Белый медведь',
+          motto: 'Мудрость и стойкость',
+          color: Color(0xFF1E88E5),
+          icon: Icons.ac_unit_rounded,
+        );
+      case 'SOUTH':
+        return const HouseConfig(
+          house: 'SOUTH',
+          displayName: 'Юг',
+          totem: 'Тигр',
+          motto: 'Всегда начинай с себя!',
+          color: Color(0xFFF57C00),
+          icon: Icons.local_fire_department_rounded,
+        );
+      case 'EAST':
+        return const HouseConfig(
+          house: 'EAST',
+          displayName: 'Восток',
+          totem: 'Дракон и Панда',
+          motto: 'Гармония и баланс',
+          color: Color(0xFF2E7D32),
+          icon: Icons.eco_rounded,
+        );
+      case 'WEST':
+      default:
+        return const HouseConfig(
+          house: 'WEST',
+          displayName: 'Запад',
+          totem: 'Крылатый лев',
+          motto: 'Свобода и благородство',
+          color: Color(0xFF8B0000),
+          icon: Icons.shield_rounded,
+        );
+    }
+  }
+}
+
+// ==========================================
+// BLOCK 3: Boarding Life (Школа-пансион) Models
+// ==========================================
+
+class BoardingCheckInItem {
+  final String id;
+  final String studentId;
+  final String checkInTime;
+  final String status;
+  final String? notes;
+
+  BoardingCheckInItem({
+    required this.id,
+    required this.studentId,
+    required this.checkInTime,
+    required this.status,
+    this.notes,
+  });
+
+  factory BoardingCheckInItem.fromJson(Map<String, dynamic> json) {
+    return BoardingCheckInItem(
+      id: json['id'] as String? ?? '',
+      studentId: json['studentId'] as String? ?? '',
+      checkInTime: json['checkInTime'] as String? ?? DateTime.now().toIso8601String(),
+      status: json['status'] as String? ?? 'PRESENT',
+      notes: json['notes'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'studentId': studentId,
+    'checkInTime': checkInTime,
+    'status': status,
+    'notes': notes,
+  };
+}
+
+class WeekendLeaveRequestItem {
+  final String id;
+  final String studentId;
+  final String departureDate;
+  final String returnDate;
+  final String transportType;
+  final String status;
+  final bool guardianConfirmed;
+  final String? createdAt;
+
+  WeekendLeaveRequestItem({
+    required this.id,
+    required this.studentId,
+    required this.departureDate,
+    required this.returnDate,
+    required this.transportType,
+    required this.status,
+    required this.guardianConfirmed,
+    this.createdAt,
+  });
+
+  factory WeekendLeaveRequestItem.fromJson(Map<String, dynamic> json) {
+    return WeekendLeaveRequestItem(
+      id: json['id'] as String? ?? '',
+      studentId: json['studentId'] as String? ?? '',
+      departureDate: json['departureDate'] as String? ?? '',
+      returnDate: json['returnDate'] as String? ?? '',
+      transportType: json['transportType'] as String? ?? 'SHUTTLE',
+      status: json['status'] as String? ?? 'PENDING',
+      guardianConfirmed: json['guardianConfirmed'] as bool? ?? false,
+      createdAt: json['createdAt'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'studentId': studentId,
+    'departureDate': departureDate,
+    'returnDate': returnDate,
+    'transportType': transportType,
+    'status': status,
+    'guardianConfirmed': guardianConfirmed,
+    'createdAt': createdAt,
+  };
+}
+
+class BoardingStatusResponse {
+  final BoardingCheckInItem? lastCheckIn;
+  final WeekendLeaveRequestItem? activeLeave;
+  final List<BoardingCheckInItem> recentCheckIns;
+
+  BoardingStatusResponse({
+    this.lastCheckIn,
+    this.activeLeave,
+    this.recentCheckIns = const [],
+  });
+
+  factory BoardingStatusResponse.fromJson(Map<String, dynamic> json) {
+    final checkInsRaw = json['recentCheckIns'] as List<dynamic>? ?? [];
+
+    return BoardingStatusResponse(
+      lastCheckIn: json['lastCheckIn'] != null
+          ? BoardingCheckInItem.fromJson(json['lastCheckIn'] as Map<String, dynamic>)
+          : null,
+      activeLeave: json['activeLeave'] != null
+          ? WeekendLeaveRequestItem.fromJson(json['activeLeave'] as Map<String, dynamic>)
+          : null,
+      recentCheckIns: checkInsRaw
+          .map((e) => BoardingCheckInItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'lastCheckIn': lastCheckIn?.toJson(),
+    'activeLeave': activeLeave?.toJson(),
+    'recentCheckIns': recentCheckIns.map((c) => c.toJson()).toList(),
   };
 }

@@ -28,6 +28,7 @@ export interface ScheduleViewProps {
   onAssignTeacher: (teacherId: string, subjectId: string) => Promise<void>;
   onRemoveAssignment: (teacherId: string, subjectId: string) => Promise<void>;
   onTriggerPushAlerts: () => Promise<{ sentCount: number; checkedCount: number }>;
+  onOpenImportMeshModal?: () => void;
 }
 
 export interface ClassDefinition {
@@ -115,6 +116,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   onAssignTeacher,
   onRemoveAssignment,
   onTriggerPushAlerts,
+  onOpenImportMeshModal,
 }) => {
   // Main Navigation Tabs
   const [activeTab, setActiveTab] = useState<"schedules" | "subjects" | "assignments">("schedules");
@@ -638,6 +640,17 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             <span className="material-symbols-outlined text-amber-500 text-sm">notifications_active</span>
             {isProcessingPush ? "Рассылка..." : "Запустить Push-алерты"}
           </button>
+
+          {onOpenImportMeshModal && (
+            <button
+              onClick={onOpenImportMeshModal}
+              className="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 text-red-900 rounded-xl text-xs font-bold hover:bg-red-100 transition-all cursor-pointer shadow-sm"
+              title="Импорт ведомостей оценок МЭШ (CSV)"
+            >
+              <span className="material-symbols-outlined text-primary text-sm">grade</span>
+              Импорт МЭШ
+            </button>
+          )}
         </div>
       </div>
 

@@ -6,14 +6,19 @@ import '../../models/api_models.dart';
 class OfflineCacheService {
   static const String scheduleBoxName = 'schedule_box';
   static const String canteenBoxName = 'canteen_box';
+  static const String gradesBoxName = 'grades_cache_box';
   static const String metaBoxName = 'cache_meta_box';
 
   Box? _scheduleBox;
   Box? _canteenBox;
+  Box? _gradesBox;
   Box? _metaBox;
 
   bool get isInitialized =>
-      _scheduleBox != null && _canteenBox != null && _metaBox != null;
+      _scheduleBox != null &&
+      _canteenBox != null &&
+      _gradesBox != null &&
+      _metaBox != null;
 
   Future<void> init() async {
     if (isInitialized) return;
@@ -28,6 +33,12 @@ class OfflineCacheService {
       _canteenBox = await Hive.openBox(canteenBoxName);
     } else {
       _canteenBox = Hive.box(canteenBoxName);
+    }
+
+    if (!Hive.isBoxOpen(gradesBoxName)) {
+      _gradesBox = await Hive.openBox(gradesBoxName);
+    } else {
+      _gradesBox = Hive.box(gradesBoxName);
     }
 
     if (!Hive.isBoxOpen(metaBoxName)) {
@@ -117,10 +128,40 @@ class OfflineCacheService {
     return DateTime.tryParse(raw as String);
   }
 
+  Future<void> saveCachedGrades(String period, List<SubjectGradeSummary> summaries) async {
+    await _ensureInit();
+    final listJson = summaries.map((s) => s.toJson()).toList();
+    await _gradesBox!.put(period, jsonEncode(listJson));
+    await _metaBox!.put('meta_grades_$period', DateTime.now().toIso8601String());
+  }
+
+  Future<List<SubjectGradeSummary>?> getCachedGrades(String period) async {
+    await _ensureInit();
+    final raw = _gradesBox!.get(period);
+    if (raw == null) return null;
+
+    try {
+      final decoded = jsonDecode(raw as String) as List<dynamic>;
+      return decoded
+          .map((e) => SubjectGradeSummary.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  DateTime? getGradesLastUpdated(String period) {
+    if (_metaBox == null) return null;
+    final raw = _metaBox!.get('meta_grades_$period');
+    if (raw == null) return null;
+    return DateTime.tryParse(raw as String);
+  }
+
   Future<void> clearAll() async {
     await _ensureInit();
     await _scheduleBox!.clear();
     await _canteenBox!.clear();
+    await _gradesBox!.clear();
     await _metaBox!.clear();
   }
 

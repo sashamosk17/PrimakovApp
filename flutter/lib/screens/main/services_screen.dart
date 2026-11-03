@@ -16,6 +16,9 @@ import '../teacher_ratings_screen.dart';
 import 'schedule_screen.dart';
 import 'people_directory_screen.dart';
 import 'user_profile_detail_screen.dart';
+import 'grades_screen.dart';
+import 'house_cup_screen.dart';
+import 'boarding_screen.dart';
 import '../../providers/user_provider.dart';
 import '../../services/api/user_service.dart';
 import '../../models/api_models.dart';
@@ -336,6 +339,48 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => const TeacherRatingsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _InteractiveBentoTile(
+                        icon: Icons.grade_rounded,
+                        title: 'Успеваемость',
+                        subtitle: 'Оценки и GPA симулятор',
+                        pastelBg: isDark ? AppColors.darkPastelAmber : const Color(0xFFFFF3E0),
+                        iconColor: const Color(0xFFE65100),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const GradesScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _InteractiveBentoTile(
+                        icon: Icons.shield_rounded,
+                        title: 'Кубок Домов',
+                        subtitle: 'Лига Домов Примакова',
+                        pastelBg: isDark ? AppColors.darkPastelRed : AppColors.pastelRed,
+                        iconColor: AppColors.primary,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const HouseCupScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _InteractiveBentoTile(
+                        icon: Icons.hotel_rounded,
+                        title: 'Пансион',
+                        subtitle: 'Школа-пансион Раздоры',
+                        pastelBg: isDark ? AppColors.darkPastelIndigo : AppColors.pastelIndigo,
+                        iconColor: const Color(0xFF3F51B5),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const BoardingScreen(),
                             ),
                           );
                         },

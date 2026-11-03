@@ -15,4 +15,7 @@ export { PostgresRequestRepository } from "./PostgresRequestRepository";
 export { PostgresCanteenMenuRepository } from "./PostgresCanteenMenuRepository";
 export { PostgresSubjectRepository } from "./PostgresSubjectRepository";
 export { PostgresDeadlineNotificationLogRepository } from "./PostgresDeadlineNotificationLogRepository";
+export { PostgresGradeRepository } from "./PostgresGradeRepository";
+export { PostgresHouseRepository } from "./PostgresHouseRepository";
+export { PostgresBoardingRepository } from "./PostgresBoardingRepository";
 export { getPool, closePool, testConnection, query, getClient } from "./connection";

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/app_colors.dart';
+import '../../config/app_spacing.dart';
 import '../../models/api_models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/ui_provider.dart';
@@ -951,6 +952,8 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                 userClass: userClass,
                 avatarUrl: currentUser?.avatarUrl,
                 onEditAvatar: () => _showAvatarSelectionSheet(currentUser),
+                house: currentUser?.house,
+                isBoarding: currentUser?.isBoarding ?? false,
               ),
 
               // Academic Stats Grid (only for students)
@@ -1350,13 +1353,15 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
   }
 }
 
-// Profile Header Widget with Avatar click support
+// Profile Header Widget with Avatar click support and House Identity
 class _ProfileHeader extends StatelessWidget {
   final String userName;
   final UserRole userRole;
   final String userClass;
   final String? avatarUrl;
   final VoidCallback onEditAvatar;
+  final String? house;
+  final bool isBoarding;
 
   const _ProfileHeader({
     required this.userName,
@@ -1364,6 +1369,8 @@ class _ProfileHeader extends StatelessWidget {
     required this.userClass,
     this.avatarUrl,
     required this.onEditAvatar,
+    this.house,
+    this.isBoarding = false,
   });
 
   @override
@@ -1373,11 +1380,15 @@ class _ProfileHeader extends StatelessWidget {
     final surfaceColor = isDark ? AppColors.darkBackgroundSecondary : AppColors.backgroundSecondary;
     final primaryColor = theme.colorScheme.primary;
 
+    final houseConfig = house != null ? HouseConfig.fromHouseName(house) : null;
+    final borderColor = houseConfig != null ? houseConfig.color : surfaceColor;
+
     return Column(
       children: [
         GestureDetector(
           onTap: onEditAvatar,
           child: Stack(
+            clipBehavior: Clip.none,
             children: [
               Container(
                 width: 128,
@@ -1387,14 +1398,14 @@ class _ProfileHeader extends StatelessWidget {
                   color: surfaceColor,
                   boxShadow: [
                     BoxShadow(
-                      color: primaryColor.withAlpha((0.15 * 255).round()),
+                      color: (houseConfig?.color ?? primaryColor).withAlpha((0.25 * 255).round()),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
                   ],
                   border: Border.all(
-                    color: surfaceColor,
-                    width: 4,
+                    color: borderColor,
+                    width: houseConfig != null ? 3.5 : 4,
                   ),
                 ),
                 child: ClipRRect(
@@ -1406,7 +1417,7 @@ class _ProfileHeader extends StatelessWidget {
                           errorBuilder: (_, __, ___) => Icon(
                             Icons.person,
                             size: 64,
-                            color: primaryColor,
+                            color: houseConfig?.color ?? primaryColor,
                           ),
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
@@ -1424,7 +1435,7 @@ class _ProfileHeader extends StatelessWidget {
                       : Icon(
                           Icons.person,
                           size: 64,
-                          color: primaryColor,
+                          color: houseConfig?.color ?? primaryColor,
                         ),
                 ),
               ),
@@ -1434,7 +1445,7 @@ class _ProfileHeader extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: primaryColor,
+                    color: houseConfig?.color ?? primaryColor,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
@@ -1451,10 +1462,34 @@ class _ProfileHeader extends StatelessWidget {
                   ),
                 ),
               ),
+              if (houseConfig != null)
+                Positioned(
+                  top: -6,
+                  right: -6,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: houseConfig.color,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: houseConfig.color.withOpacity(0.4),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      houseConfig.icon,
+                      size: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 18),
         Text(
           userName,
           textAlign: TextAlign.center,
@@ -1477,6 +1512,68 @@ class _ProfileHeader extends StatelessWidget {
             letterSpacing: 1.5,
           ),
         ),
+
+        // House Badge & Boarding Badge
+        if (houseConfig != null || isBoarding) ...[
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            alignment: WrapAlignment.center,
+            children: [
+              if (houseConfig != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: houseConfig.color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                    border: Border.all(color: houseConfig.color.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(houseConfig.icon, size: 14, color: houseConfig.color),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Дом ${houseConfig.displayName} • «${houseConfig.motto}»',
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: houseConfig.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (isBoarding)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E88E5).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                    border: Border.all(color: const Color(0xFF1E88E5).withOpacity(0.3)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.hotel_rounded, size: 14, color: Color(0xFF1E88E5)),
+                      SizedBox(width: 4),
+                      Text(
+                        'Пансион Раздоры',
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1E88E5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ],
       ],
     );
   }

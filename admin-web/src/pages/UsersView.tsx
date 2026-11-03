@@ -19,6 +19,7 @@ interface UsersViewProps {
   onUpdateUser?: (id: string, updatedData: any) => Promise<void>;
   onOpenAddModal: () => void;
   onOpenImportModal: () => void;
+  onOpenImportMeshModal?: () => void;
   selectedRole?: Role;
 }
 
@@ -35,6 +36,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
   onUpdateUser,
   onOpenAddModal,
   onOpenImportModal,
+  onOpenImportMeshModal,
   selectedRole,
 }) => {
   const { t } = useLanguage();
@@ -120,6 +122,17 @@ export const UsersView: React.FC<UsersViewProps> = ({
             <span className="material-symbols-outlined text-sm text-primary">upload_file</span>
             {t("users.importCsv")}
           </button>
+
+          {onOpenImportMeshModal && (
+            <button
+              onClick={onOpenImportMeshModal}
+              className="px-4 py-2.5 bg-red-50 border border-red-200 rounded-xl text-xs font-bold text-red-900 hover:bg-red-100 transition-colors flex items-center gap-2 shadow-xs cursor-pointer"
+              title="Импорт оценок и ведомостей МЭШ"
+            >
+              <span className="material-symbols-outlined text-sm text-primary">grade</span>
+              Импорт МЭШ
+            </button>
+          )}
 
           <button
             onClick={onOpenAddModal}

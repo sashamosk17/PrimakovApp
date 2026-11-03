@@ -7,4 +7,7 @@ export * from "./MockStoryRepository";
 export * from "./MockRoomRepository";
 export * from "./MockRequestRepository";
 export * from "./MockCanteenMenuRepository";
+export * from "./MockGradeRepository";
+export * from "./MockHouseRepository";
+export * from "./MockBoardingRepository";
 
