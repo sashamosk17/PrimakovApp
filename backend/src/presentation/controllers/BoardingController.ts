@@ -5,6 +5,7 @@ import { BoardingCheckInUseCase } from "../../application/boarding/BoardingCheck
 import { GetStudentBoardingStatusUseCase } from "../../application/boarding/GetStudentBoardingStatusUseCase";
 import { CreateWeekendLeaveRequestUseCase } from "../../application/boarding/CreateWeekendLeaveRequestUseCase";
 import { GetBoardingRosterUseCase } from "../../application/boarding/GetBoardingRosterUseCase";
+import { UpdateLeaveRequestStatusUseCase } from "../../application/boarding/UpdateLeaveRequestStatusUseCase";
 
 export class BoardingController {
   constructor(private readonly boardingRepository: IBoardingRepository) {}
@@ -115,6 +116,43 @@ export class BoardingController {
     return res.json({
       status: "success",
       data: result.value,
+    });
+  };
+
+  getLeaveRequests = async (_req: AuthenticatedRequest, res: Response) => {
+    try {
+      const requests = await this.boardingRepository.getLeaveRequests();
+      return res.json({
+        status: "success",
+        data: requests.map((r) => r.toJSON()),
+      });
+    } catch (error: any) {
+      return res.status(400).json({
+        status: "error",
+        error: { message: error.message || "Failed to load leave requests" },
+      });
+    }
+  };
+
+  updateLeaveRequestStatus = async (req: AuthenticatedRequest, res: Response) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    const useCase = new UpdateLeaveRequestStatusUseCase(this.boardingRepository);
+    const result = await useCase.execute({
+      requestId: id,
+      status,
+    });
+
+    if (result.isFailure) {
+      return res.status(400).json({
+        status: "error",
+        error: { message: result.error },
+      });
+    }
+
+    return res.json({
+      status: "success",
+      message: `Leave request ${status.toLowerCase()} successfully`,
     });
   };
 }

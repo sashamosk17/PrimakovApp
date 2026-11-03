@@ -43,6 +43,7 @@ import { ModerateRatingUseCase } from "../../application/admin/ModerateRatingUse
 import { DeleteRatingUseCase } from "../../application/admin/DeleteRatingUseCase";
 import { CreateAnnouncementUseCase } from "../../application/announcement/CreateAnnouncementUseCase";
 import { DeleteAnnouncementUseCase } from "../../application/announcement/DeleteAnnouncementUseCase";
+import { UpdateAnnouncementUseCase } from "../../application/announcement/UpdateAnnouncementUseCase";
 import { GetUserProfileUseCase } from "../../application/user/GetUserProfileUseCase";
 import { Role } from "../../shared/types";
 
@@ -81,6 +82,7 @@ export class AdminController {
   private deleteRatingUseCase: DeleteRatingUseCase;
   private createAnnouncementUseCase?: CreateAnnouncementUseCase;
   private deleteAnnouncementUseCase?: DeleteAnnouncementUseCase;
+  private updateAnnouncementUseCase?: UpdateAnnouncementUseCase;
 
   private subjectRepo: ISubjectRepository;
   private scheduleRepo: IScheduleRepository;
@@ -142,6 +144,7 @@ export class AdminController {
     if (this.announcementRepo) {
       this.createAnnouncementUseCase = new CreateAnnouncementUseCase(this.announcementRepo);
       this.deleteAnnouncementUseCase = new DeleteAnnouncementUseCase(this.announcementRepo);
+      this.updateAnnouncementUseCase = new UpdateAnnouncementUseCase(this.announcementRepo);
     }
   }
 
@@ -803,6 +806,30 @@ export class AdminController {
         return res.status(400).json({ status: "error", error: { message: result.error } });
       }
       return res.status(201).json({ status: "success", data: result.value });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateAnnouncement = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!this.updateAnnouncementUseCase) {
+        return res.status(500).json({ status: "error", error: { message: "Announcement repository not initialized" } });
+      }
+      const { id } = req.params;
+      const { title, category, content, description, imageUrl } = req.body;
+      const result = await this.updateAnnouncementUseCase.execute({
+        id,
+        title,
+        category,
+        content,
+        description,
+        imageUrl,
+      });
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+      return res.status(200).json({ status: "success", data: result.value });
     } catch (error) {
       next(error);
     }

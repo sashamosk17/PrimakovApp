@@ -5,6 +5,7 @@ import { MockUserRepository } from "../../src/infrastructure/database/memory/Moc
 import { BoardingCheckInUseCase } from "../../src/application/boarding/BoardingCheckInUseCase";
 import { GetStudentBoardingStatusUseCase } from "../../src/application/boarding/GetStudentBoardingStatusUseCase";
 import { CreateWeekendLeaveRequestUseCase } from "../../src/application/boarding/CreateWeekendLeaveRequestUseCase";
+import { UpdateLeaveRequestStatusUseCase } from "../../src/application/boarding/UpdateLeaveRequestStatusUseCase";
 import { User } from "../../src/domain/entities/User";
 import { Email } from "../../src/domain/value-objects/Email";
 import { Password } from "../../src/domain/value-objects/Password";
@@ -128,6 +129,32 @@ describe("Boarding Life Domain & Use Cases", () => {
       expect(result.isSuccess).toBe(true);
       expect(result.value.lastCheckIn).toBeDefined();
       expect(result.value.lastCheckIn?.status).toBe("PRESENT");
+    });
+  });
+
+  describe("UpdateLeaveRequestStatusUseCase", () => {
+    it("should approve or reject weekend leave request", async () => {
+      const leaveRequest = new WeekendLeaveRequest(
+        "leave-1",
+        boardingStudent.id,
+        "2026-10-30T18:00:00Z",
+        "2026-11-01T20:00:00Z",
+        "PARENTS",
+        "PENDING",
+        true,
+        new Date()
+      );
+      await boardingRepo.createLeaveRequest(leaveRequest);
+
+      const updateUseCase = new UpdateLeaveRequestStatusUseCase(boardingRepo);
+      const approveRes = await updateUseCase.execute({
+        requestId: "leave-1",
+        status: "APPROVED",
+      });
+
+      expect(approveRes.isSuccess).toBe(true);
+      const requests = await boardingRepo.getLeaveRequests(boardingStudent.id);
+      expect(requests.find((r) => r.id === "leave-1")?.status).toBe("APPROVED");
     });
   });
 });

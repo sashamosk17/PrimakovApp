@@ -42,6 +42,13 @@ export class MockBoardingRepository implements IBoardingRepository {
     return [...list].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
+  async updateLeaveRequestStatus(requestId: string, status: "APPROVED" | "REJECTED"): Promise<void> {
+    const req = this.leaveRequests.find((r) => r.id === requestId);
+    if (req) {
+      (req as any).status = status;
+    }
+  }
+
   async getBoardingRoster(_date?: string): Promise<BoardingRosterItem[]> {
     const studentMap = new Map<string, BoardingRosterItem>();
 

@@ -174,3 +174,57 @@ export interface CanteenMenu {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface Story {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  author?: string;
+  createdAt: string;
+  expiresAt: string;
+  viewedBy?: string[];
+  linkUrl?: string;
+  linkText?: string;
+}
+
+export interface HouseStanding {
+  house: string;
+  totalPoints: number;
+  rank: number;
+}
+
+export interface HouseTransaction {
+  id: string;
+  house: string;
+  points: number;
+  category: string;
+  reason: string;
+  awardedBy: string;
+  studentId?: string;
+  createdAt: string;
+}
+
+export interface BoardingRosterItem {
+  studentId: string;
+  studentName: string;
+  groupName: string;
+  roomNumber?: string;
+  status: string;
+  lastCheckInTime?: string;
+  hasActiveLeave: boolean;
+  transportType?: string;
+}
+
+export interface WeekendLeaveRequest {
+  id: string;
+  studentId: string;
+  studentName?: string;
+  departureDate: string;
+  returnDate: string;
+  transportType: string;
+  status: string;
+  guardianConfirmed: boolean;
+  createdAt: string;
+}

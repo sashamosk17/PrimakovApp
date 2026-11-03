@@ -25,6 +25,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: "requests", label: t("nav.requests"), icon: "pending_actions" },
     { id: "ratings", label: t("nav.ratings"), icon: "badge" },
     { id: "announcements", label: t("nav.announcements"), icon: "campaign" },
+    { id: "stories", label: t("nav.stories"), icon: "auto_stories" },
+    { id: "houses", label: t("nav.houses"), icon: "shield" },
+    { id: "boarding", label: t("nav.boarding"), icon: "hotel" },
   ];
 
   return (

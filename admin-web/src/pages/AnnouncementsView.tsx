@@ -6,12 +6,14 @@ import { useToast } from "../context/ToastContext";
 interface AnnouncementsViewProps {
   announcements: Announcement[];
   onCreateAnnouncement: (title: string, category: string, content: string) => void;
+  onUpdateAnnouncement?: (id: string, title: string, category: string, content: string) => Promise<void>;
   onDeleteAnnouncement?: (id: string) => Promise<void>;
 }
 
 export const AnnouncementsView: React.FC<AnnouncementsViewProps> = ({
   announcements,
   onCreateAnnouncement,
+  onUpdateAnnouncement,
   onDeleteAnnouncement,
 }) => {
   const { t } = useLanguage();
@@ -21,6 +23,13 @@ export const AnnouncementsView: React.FC<AnnouncementsViewProps> = ({
   const [targetAudience, setTargetAudience] = useState("Всем учащимся и учителям");
   const [content, setContent] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Editing state
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +41,28 @@ export const AnnouncementsView: React.FC<AnnouncementsViewProps> = ({
     showToast("Объявление успешно опубликовано", "success");
     setTitle("");
     setContent("");
+  };
+
+  const openEditModal = (a: Announcement) => {
+    setEditingAnnouncement(a);
+    setEditTitle(a.title);
+    setEditCategory(a.category);
+    setEditContent(a.content);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAnnouncement || !onUpdateAnnouncement) return;
+    try {
+      setIsUpdating(true);
+      await onUpdateAnnouncement(editingAnnouncement.id, editTitle, editCategory, editContent);
+      showToast("Объявление успешно обновлено", "success");
+      setEditingAnnouncement(null);
+    } catch (err: any) {
+      showToast(err.message || "Ошибка обновления", "error");
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleDelete = async (id: string, annTitle: string) => {
@@ -57,7 +88,8 @@ export const AnnouncementsView: React.FC<AnnouncementsViewProps> = ({
   return (
     <div className="space-y-8 pb-12">
       <div>
-        <h3 className="text-3xl font-extrabold text-on-surface font-display tracking-tight">
+        <h3 className="text-3xl font-extrabold text-on-surface font-display tracking-tight flex items-center gap-3">
+          <span className="material-symbols-outlined text-primary text-3xl">campaign</span>
           {t("ann.title")}
         </h3>
         <p className="text-xs text-secondary mt-0.5">
@@ -162,7 +194,7 @@ export const AnnouncementsView: React.FC<AnnouncementsViewProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Поиск по объявлениям..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary font-medium"
               />
               <span className="material-symbols-outlined absolute left-2 top-2 text-slate-400 text-sm">
                 search
@@ -192,6 +224,16 @@ export const AnnouncementsView: React.FC<AnnouncementsViewProps> = ({
                       {new Date(a.publishedAt).toLocaleDateString("ru-RU")}
                     </span>
 
+                    {onUpdateAnnouncement && (
+                      <button
+                        onClick={() => openEditModal(a)}
+                        title="Редактировать объявление"
+                        className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-800 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-sm">edit</span>
+                      </button>
+                    )}
+
                     {onDeleteAnnouncement && (
                       <button
                         onClick={() => handleDelete(a.id, a.title)}
@@ -211,6 +253,88 @@ export const AnnouncementsView: React.FC<AnnouncementsViewProps> = ({
           )}
         </div>
       </div>
+
+      {/* Edit Announcement Modal */}
+      {editingAnnouncement && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-lg p-6 md:p-8 shadow-2xl space-y-6">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+              <h4 className="text-lg font-bold font-headline text-slate-900">
+                Редактировать объявление
+              </h4>
+              <button
+                onClick={() => setEditingAnnouncement(null)}
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
+                  Заголовок
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-primary font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
+                  Категория
+                </label>
+                <select
+                  value={editCategory}
+                  onChange={(e) => setEditCategory(e.target.value)}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-primary font-medium"
+                >
+                  <option value="Кампус">Кампус</option>
+                  <option value="Учеба">Учеба</option>
+                  <option value="Персонал">Персонал</option>
+                  <option value="Мероприятия">Мероприятия</option>
+                  <option value="Олимпиады">Олимпиады</option>
+                  <option value="IB World School">IB World School</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
+                  Содержание
+                </label>
+                <textarea
+                  required
+                  rows={5}
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-primary font-body leading-relaxed"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingAnnouncement(null)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdating}
+                  className="px-5 py-2 bg-primary hover:bg-primary-container text-white font-bold text-xs rounded-xl shadow-md shadow-primary/20 cursor-pointer disabled:opacity-50"
+                >
+                  {isUpdating ? "Сохранение..." : "Сохранить изменения"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -88,7 +88,9 @@ export class PostgresStoryRepository implements IStoryRepository {
               image_url = $4,
               video_url = $5,
               author_id = $6,
-              expires_at = $7
+              expires_at = $7,
+              link_url = $8,
+              link_text = $9
           WHERE id = $1
         `;
 
@@ -100,6 +102,8 @@ export class PostgresStoryRepository implements IStoryRepository {
           story.videoUrl || null,
           story.author || null,
           story.expiresAt,
+          story.linkUrl || null,
+          story.linkText || null,
         ]);
 
         // Delete existing views
@@ -107,8 +111,8 @@ export class PostgresStoryRepository implements IStoryRepository {
       } else {
         // Insert new story
         const insertQuery = `
-          INSERT INTO stories (id, title, description, image_url, video_url, author_id, created_at, expires_at)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          INSERT INTO stories (id, title, description, image_url, video_url, author_id, created_at, expires_at, link_url, link_text)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         `;
 
         await client.query(insertQuery, [
@@ -120,6 +124,8 @@ export class PostgresStoryRepository implements IStoryRepository {
           story.author || null,
           story.createdAt,
           story.expiresAt,
+          story.linkUrl || null,
+          story.linkText || null,
         ]);
       }
 
@@ -152,6 +158,16 @@ export class PostgresStoryRepository implements IStoryRepository {
     } catch (error) {
       console.error("Error marking story as viewed:", error);
       return Result.fail("Failed to mark story as viewed");
+    }
+  }
+
+  async delete(id: string): Promise<Result<void>> {
+    try {
+      await this.pool.query("UPDATE stories SET deleted_at = NOW() WHERE id = $1", [id]);
+      return Result.ok();
+    } catch (error) {
+      console.error("Error deleting story:", error);
+      return Result.fail("Failed to delete story");
     }
   }
 

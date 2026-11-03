@@ -218,6 +218,7 @@ export function adminRoutes(deps: AdminRoutesDependencies): Router {
     validate(AdminCreateAnnouncementSchema),
     controller.createAnnouncement
   );
+  router.put("/announcements/:id", controller.updateAnnouncement);
   router.delete("/announcements/:id", controller.deleteAnnouncement);
 
   // Canteen Menu Management (Sprint 2 - ADM-01)

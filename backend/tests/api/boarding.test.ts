@@ -110,5 +110,41 @@ describe("Boarding API", () => {
       expect(Array.isArray(res.body.data)).toBe(true);
     });
   });
+
+  describe("Admin Leave Requests Management", () => {
+    it("allows staff to list and update leave request status", async () => {
+      const { app, studentToken, adminToken } = createApp();
+
+      // Create request first
+      const createRes = await request(app)
+        .post("/api/boarding/leave-request")
+        .set("Authorization", `Bearer ${studentToken}`)
+        .send({
+          departureDate: "2026-10-30T17:00:00Z",
+          returnDate: "2026-11-01T21:00:00Z",
+          transportType: "PARENTS",
+          guardianConfirmed: true,
+        });
+
+      const requestId = createRes.body.data.id;
+
+      // Staff gets leave requests
+      const listRes = await request(app)
+        .get("/api/boarding/admin/leave-requests")
+        .set("Authorization", `Bearer ${adminToken}`);
+
+      expect(listRes.status).toBe(200);
+      expect(listRes.body.data.some((r: any) => r.id === requestId)).toBe(true);
+
+      // Staff approves leave request
+      const updateRes = await request(app)
+        .patch(`/api/boarding/admin/leave-requests/${requestId}/status`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ status: "APPROVED" });
+
+      expect(updateRes.status).toBe(200);
+      expect(updateRes.body.status).toBe("success");
+    });
+  });
 });
 

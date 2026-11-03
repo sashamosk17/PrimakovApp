@@ -33,6 +33,32 @@ export function boardingRoutes(boardingRepository: IBoardingRepository): Router 
     controller.getRoster
   );
 
+  // GET /api/boarding/admin/leave-requests (Admins and teachers)
+  router.get(
+    "/admin/leave-requests",
+    (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
+      const allowedRoles = ["ADMIN", "SUPERADMIN", "TEACHER"];
+      if (!req.user || !allowedRoles.includes(req.user.role)) {
+        return next(new AuthorizationError("Staff access required"));
+      }
+      next();
+    },
+    controller.getLeaveRequests
+  );
+
+  // PATCH /api/boarding/admin/leave-requests/:id/status (Admins and teachers)
+  router.patch(
+    "/admin/leave-requests/:id/status",
+    (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
+      const allowedRoles = ["ADMIN", "SUPERADMIN", "TEACHER"];
+      if (!req.user || !allowedRoles.includes(req.user.role)) {
+        return next(new AuthorizationError("Staff access required"));
+      }
+      next();
+    },
+    controller.updateLeaveRequestStatus
+  );
+
   return router;
 }
 

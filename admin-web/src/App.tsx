@@ -7,6 +7,9 @@ import { UsersView } from "./pages/UsersView";
 import { RequestsView } from "./pages/RequestsView";
 import { RatingsView } from "./pages/RatingsView";
 import { AnnouncementsView } from "./pages/AnnouncementsView";
+import { StoriesView } from "./pages/StoriesView";
+import { HousesView } from "./pages/HousesView";
+import { BoardingView } from "./pages/BoardingView";
 import { ScheduleView } from "./pages/ScheduleView";
 import { CanteenView } from "./pages/CanteenView";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -23,6 +26,11 @@ import {
   MOCK_ANNOUNCEMENTS,
   MOCK_SUBJECTS,
   MOCK_SCHEDULES,
+  MOCK_STORIES,
+  MOCK_HOUSES_STANDINGS,
+  MOCK_HOUSE_TRANSACTIONS,
+  MOCK_BOARDING_ROSTER,
+  MOCK_LEAVE_REQUESTS,
 } from "./data/mockData";
 import type {
   User,
@@ -35,6 +43,11 @@ import type {
   Schedule,
   TeacherAssignment,
   Role,
+  Story,
+  HouseStanding,
+  HouseTransaction,
+  BoardingRosterItem,
+  WeekendLeaveRequest,
 } from "./types";
 
 export function App() {
@@ -77,6 +90,17 @@ export function App() {
   const [assignments, setAssignments] = useState<TeacherAssignment[]>([]);
   const [scheduleTeachers, setScheduleTeachers] = useState<User[]>([]);
   const [allGymnasiumUsers, setAllGymnasiumUsers] = useState<User[]>([]);
+
+  // Stories Data
+  const [stories, setStories] = useState<Story[]>(MOCK_STORIES);
+
+  // House Cup Data
+  const [houseStandings, setHouseStandings] = useState<HouseStanding[]>(MOCK_HOUSES_STANDINGS);
+  const [houseTransactions, setHouseTransactions] = useState<HouseTransaction[]>(MOCK_HOUSE_TRANSACTIONS);
+
+  // Boarding Life Data
+  const [boardingRoster, setBoardingRoster] = useState<BoardingRosterItem[]>(MOCK_BOARDING_ROSTER);
+  const [boardingLeaves, setBoardingLeaves] = useState<WeekendLeaveRequest[]>(MOCK_LEAVE_REQUESTS);
 
   // Modals
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
@@ -287,6 +311,68 @@ export function App() {
     }
   }, [isDemoMode]);
 
+  // Fetch Stories
+  const loadStoriesData = useCallback(async () => {
+    if (isDemoMode) {
+      setStories(MOCK_STORIES);
+      return;
+    }
+    try {
+      const res = await apiClient.get("/stories");
+      if (res.data.status === "success" && Array.isArray(res.data.data)) {
+        setStories(res.data.data);
+      }
+    } catch (err) {
+      console.warn("Failed to load stories from API, using mock fallback", err);
+      setStories(MOCK_STORIES);
+    }
+  }, [isDemoMode]);
+
+  // Fetch Houses Data
+  const loadHousesData = useCallback(async () => {
+    if (isDemoMode) {
+      setHouseStandings(MOCK_HOUSES_STANDINGS);
+      setHouseTransactions(MOCK_HOUSE_TRANSACTIONS);
+      return;
+    }
+    try {
+      const res = await apiClient.get("/houses/standings");
+      if (res.data.status === "success" && res.data.data) {
+        setHouseStandings(res.data.data.standings || []);
+        setHouseTransactions(res.data.data.recentTransactions || []);
+      }
+    } catch (err) {
+      console.warn("Failed to load houses from API, using mock fallback", err);
+      setHouseStandings(MOCK_HOUSES_STANDINGS);
+      setHouseTransactions(MOCK_HOUSE_TRANSACTIONS);
+    }
+  }, [isDemoMode]);
+
+  // Fetch Boarding Data
+  const loadBoardingData = useCallback(async () => {
+    if (isDemoMode) {
+      setBoardingRoster(MOCK_BOARDING_ROSTER);
+      setBoardingLeaves(MOCK_LEAVE_REQUESTS);
+      return;
+    }
+    try {
+      const [rosterRes, leavesRes] = await Promise.allSettled([
+        apiClient.get("/boarding/admin/roster"),
+        apiClient.get("/boarding/admin/leave-requests"),
+      ]);
+      if (rosterRes.status === "fulfilled" && rosterRes.value.data.data) {
+        setBoardingRoster(rosterRes.value.data.data);
+      }
+      if (leavesRes.status === "fulfilled" && leavesRes.value.data.data) {
+        setBoardingLeaves(leavesRes.value.data.data);
+      }
+    } catch (err) {
+      console.warn("Failed to load boarding data from API, using mock fallback", err);
+      setBoardingRoster(MOCK_BOARDING_ROSTER);
+      setBoardingLeaves(MOCK_LEAVE_REQUESTS);
+    }
+  }, [isDemoMode]);
+
   // Initial load when token is present
   useEffect(() => {
     if (token) {
@@ -295,8 +381,22 @@ export function App() {
       loadRequestsData();
       loadRatingsData();
       loadScheduleData();
+      loadStoriesData();
+      loadHousesData();
+      loadBoardingData();
     }
-  }, [token, loadDashboardData, loadUsersData, loadRequestsData, loadRatingsData, loadScheduleData, selectedRole]);
+  }, [
+    token,
+    loadDashboardData,
+    loadUsersData,
+    loadRequestsData,
+    loadRatingsData,
+    loadScheduleData,
+    loadStoriesData,
+    loadHousesData,
+    loadBoardingData,
+    selectedRole,
+  ]);
 
   // Actions
   const handleAddUser = async (data: any) => {
@@ -441,6 +541,127 @@ export function App() {
     }
     await apiClient.delete(`/admin/announcements/${id}`);
     loadDashboardData();
+  };
+
+  const handleUpdateAnnouncement = async (
+    id: string,
+    title: string,
+    category: string,
+    content: string
+  ) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      setAnnouncements((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, title, category, content } : a))
+      );
+      return;
+    }
+    await apiClient.put(`/admin/announcements/${id}`, { title, category, content });
+    loadDashboardData();
+  };
+
+  // Story Management Actions
+  const handleCreateStory = async (dto: {
+    title: string;
+    description: string;
+    imageUrl?: string;
+    linkUrl?: string;
+    linkText?: string;
+    expiresInDays?: number;
+  }) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      const newStory: Story = {
+        id: `story-${Date.now()}`,
+        title: dto.title,
+        description: dto.description,
+        imageUrl: dto.imageUrl,
+        linkUrl: dto.linkUrl,
+        linkText: dto.linkText,
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + (dto.expiresInDays || 7) * 86400000).toISOString(),
+        viewedBy: [],
+      };
+      setStories((prev) => [newStory, ...prev]);
+      return;
+    }
+    await apiClient.post("/stories", dto);
+    await loadStoriesData();
+  };
+
+  const handleUpdateStory = async (
+    id: string,
+    dto: {
+      title: string;
+      description: string;
+      imageUrl?: string;
+      linkUrl?: string;
+      linkText?: string;
+      expiresInDays?: number;
+    }
+  ) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      setStories((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, ...dto } : s))
+      );
+      return;
+    }
+    await apiClient.put(`/stories/${id}`, dto);
+    await loadStoriesData();
+  };
+
+  const handleDeleteStory = async (id: string) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      setStories((prev) => prev.filter((s) => s.id !== id));
+      return;
+    }
+    await apiClient.delete(`/stories/${id}`);
+    await loadStoriesData();
+  };
+
+  // House Points Action
+  const handleAwardHousePoints = async (data: {
+    house: string;
+    points: number;
+    category: string;
+    reason: string;
+    studentId?: string;
+  }) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      setHouseStandings((prev) =>
+        prev.map((s) =>
+          s.house.toUpperCase() === data.house.toUpperCase()
+            ? { ...s, totalPoints: s.totalPoints + data.points }
+            : s
+        )
+      );
+      const newTx: HouseTransaction = {
+        id: `tx-${Date.now()}`,
+        house: data.house,
+        points: data.points,
+        category: data.category,
+        reason: data.reason,
+        awardedBy: currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "Администратор",
+        createdAt: new Date().toISOString(),
+      };
+      setHouseTransactions((prev) => [newTx, ...prev]);
+      return;
+    }
+    await apiClient.post("/houses/award", data);
+    await loadHousesData();
+  };
+
+  // Boarding Leave Status Action
+  const handleUpdateLeaveStatus = async (
+    requestId: string,
+    status: "APPROVED" | "REJECTED"
+  ) => {
+    if (isDemoMode || serverUnavailableWarning) {
+      setBoardingLeaves((prev) =>
+        prev.map((l) => (l.id === requestId ? { ...l, status } : l))
+      );
+      return;
+    }
+    await apiClient.patch(`/boarding/admin/leave-requests/${requestId}/status`, { status });
+    await loadBoardingData();
   };
 
   const handleModerateRating = async (id: string, status: "APPROVED" | "HIDDEN") => {
@@ -637,6 +858,9 @@ export function App() {
           if (tab === "schedule") loadScheduleData();
           if (tab === "requests") loadRequestsData();
           if (tab === "ratings") loadRatingsData();
+          if (tab === "stories") loadStoriesData();
+          if (tab === "houses") loadHousesData();
+          if (tab === "boarding") loadBoardingData();
         }}
         onOpenAddUser={() => setIsAddUserOpen(true)}
         onLogout={handleLogout}
@@ -773,7 +997,34 @@ export function App() {
               <AnnouncementsView
                 announcements={announcements}
                 onCreateAnnouncement={handleCreateAnnouncement}
+                onUpdateAnnouncement={handleUpdateAnnouncement}
                 onDeleteAnnouncement={handleDeleteAnnouncement}
+              />
+            )}
+
+            {currentTab === "stories" && (
+              <StoriesView
+                stories={stories}
+                onCreateStory={handleCreateStory}
+                onUpdateStory={handleUpdateStory}
+                onDeleteStory={handleDeleteStory}
+              />
+            )}
+
+            {currentTab === "houses" && (
+              <HousesView
+                standings={houseStandings}
+                transactions={houseTransactions}
+                onAwardPoints={handleAwardHousePoints}
+              />
+            )}
+
+            {currentTab === "boarding" && (
+              <BoardingView
+                roster={boardingRoster}
+                leaveRequests={boardingLeaves}
+                onUpdateLeaveStatus={handleUpdateLeaveStatus}
+                onRefresh={loadBoardingData}
               />
             )}
           </ErrorBoundary>

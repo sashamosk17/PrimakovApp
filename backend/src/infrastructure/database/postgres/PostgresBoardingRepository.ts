@@ -92,6 +92,13 @@ export class PostgresBoardingRepository implements IBoardingRepository {
     return res.rows.map(this.mapRowToLeave);
   }
 
+  async updateLeaveRequestStatus(requestId: string, status: "APPROVED" | "REJECTED"): Promise<void> {
+    await this.pool.query(
+      `UPDATE weekend_leave_requests SET status = $1 WHERE id = $2`,
+      [status, requestId]
+    );
+  }
+
   async getBoardingRoster(_date?: string): Promise<BoardingRosterItem[]> {
     const query = `
       SELECT 

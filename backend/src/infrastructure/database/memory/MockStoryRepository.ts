@@ -102,7 +102,17 @@ export class MockStoryRepository implements IStoryRepository {
   }
 
   async save(story: Story): Promise<Result<void>> {
-    this.stories.push(story);
+    const index = this.stories.findIndex((s) => s.id === story.id);
+    if (index >= 0) {
+      this.stories[index] = story;
+    } else {
+      this.stories.push(story);
+    }
+    return Result.ok();
+  }
+
+  async delete(id: string): Promise<Result<void>> {
+    this.stories = this.stories.filter((s) => s.id !== id);
     return Result.ok();
   }
 

@@ -23,6 +23,7 @@ export interface IBoardingRepository {
   getStudentStatus(studentId: string): Promise<StudentBoardingStatus>;
   createLeaveRequest(request: WeekendLeaveRequest): Promise<void>;
   getLeaveRequests(studentId?: string): Promise<WeekendLeaveRequest[]>;
+  updateLeaveRequestStatus(requestId: string, status: "APPROVED" | "REJECTED"): Promise<void>;
   getBoardingRoster(date?: string): Promise<BoardingRosterItem[]>;
 }
 

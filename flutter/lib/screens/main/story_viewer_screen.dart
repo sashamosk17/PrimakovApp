@@ -1,13 +1,15 @@
-/// Story Viewer Screen - Instagram-style story viewer
-import '../../config/app_colors.dart';
-/// Swipe left/right to navigate between stories, tap to pause/resume
+/// Story Viewer Screen - Modern Instagram/Telegram style story viewer
+/// Immersive fullscreen canvas, frosted glass details card, interactive links, and gesture navigation.
 
+import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../config/app_colors.dart';
 import '../../models/api_models.dart';
 import '../../providers/story_provider.dart';
-import 'dart:async';
-import 'package:url_launcher/url_launcher.dart';
 
 class StoryViewerScreen extends ConsumerStatefulWidget {
   final List<Story> stories;
@@ -29,7 +31,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
   Timer? _progressTimer;
   double _progress = 0.0;
   bool _isPaused = false;
-  static const _storyDuration = 5; // seconds
+  static const _storyDuration = 6; // seconds per story
 
   @override
   void initState() {
@@ -64,7 +66,6 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
 
         if (_progress >= 1.0) {
           timer.cancel();
-          // Отложенный вызов навигации после завершения текущего фрейма
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               _nextStory();
@@ -107,71 +108,184 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
   }
 
   void _markCurrentAsViewed() {
+    if (widget.stories.isEmpty) return;
     final story = widget.stories[_currentIndex];
     ref.read(storyProvider.notifier).markAsViewed(story.id);
   }
 
-  void _togglePause() {
-    setState(() {
-      _isPaused = !_isPaused;
-    });
+  void _pause() {
+    if (!_isPaused) {
+      setState(() {
+        _isPaused = true;
+      });
+    }
+  }
+
+  void _resume() {
+    if (_isPaused) {
+      setState(() {
+        _isPaused = false;
+      });
+    }
+  }
+
+  Future<void> _launchURL(String url) async {
+    _pause();
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Не удалось открыть ссылку'),
+              backgroundColor: AppColors.primaryRed,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Некорректный адрес ссылки'),
+            backgroundColor: AppColors.primaryRed,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) _resume();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.stories.isEmpty) {
+      return const Scaffold(backgroundColor: Colors.black);
+    }
+
     final story = widget.stories[_currentIndex];
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
-        onTapDown: (details) {
+        onLongPressStart: (_) => _pause(),
+        onLongPressEnd: (_) => _resume(),
+        onVerticalDragEnd: (details) {
+          // Swipe down to dismiss
+          if (details.primaryVelocity != null && details.primaryVelocity! > 300) {
+            HapticFeedback.lightImpact();
+            Navigator.of(context).pop();
+          }
+        },
+        onTapUp: (details) {
           final screenWidth = MediaQuery.of(context).size.width;
-          if (details.globalPosition.dx < screenWidth / 3) {
+          final dx = details.globalPosition.dx;
+          if (dx < screenWidth * 0.3) {
             _previousStory();
-          } else if (details.globalPosition.dx > screenWidth * 2 / 3) {
+          } else if (dx > screenWidth * 0.7) {
             _nextStory();
           } else {
-            _togglePause();
+            // Tap middle toggles pause
+            if (_isPaused) {
+              _resume();
+            } else {
+              _pause();
+            }
           }
         },
         child: Stack(
+          fit: StackFit.expand,
           children: [
-            // Story Content
+            // PageView Background Images / Content
             PageView.builder(
               controller: _pageController,
               onPageChanged: _onPageChanged,
+              physics: const NeverScrollableScrollPhysics(), // Managed via tap & controller
               itemCount: widget.stories.length,
               itemBuilder: (context, index) {
-                return _buildStoryContent(widget.stories[index]);
+                return _buildStoryVisual(widget.stories[index]);
               },
             ),
 
-            // Progress Bars
+            // Subtle dark gradients top & bottom for readability
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 160,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.75),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 240,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.85),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Top Header: Progress bars & School brand pill
             SafeArea(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Progress Bars
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     child: Row(
                       children: List.generate(
                         widget.stories.length,
                         (index) => Expanded(
                           child: Container(
-                            height: 3,
-                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                            height: 3.5,
+                            margin: const EdgeInsets.symmetric(horizontal: 2.5),
                             decoration: BoxDecoration(
-                              color: AppColors.backgroundSecondary.withAlpha((0.3 * 255).round()),
-                              borderRadius: BorderRadius.circular(2),
+                              color: Colors.white.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(3),
                             ),
                             child: FractionallySizedBox(
                               alignment: Alignment.centerLeft,
                               widthFactor: index == _currentIndex
-                                  ? _progress
+                                  ? _progress.clamp(0.0, 1.0)
                                   : (index < _currentIndex ? 1.0 : 0.0),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: AppColors.backgroundSecondary,
-                                  borderRadius: BorderRadius.circular(2),
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(3),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.white.withOpacity(0.5),
+                                      blurRadius: 4,
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
@@ -181,50 +295,66 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                     ),
                   ),
 
-                  // Header
+                  // Header Info & Close
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
                       children: [
                         Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.primaryRed,
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFBA1A1A), Color(0xFF6B0000)],
+                            ),
+                            border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
                           ),
                           child: const Icon(
-                            Icons.school,
-                            color: AppColors.backgroundSecondary,
-                            size: 24,
+                            Icons.school_rounded,
+                            color: Colors.white,
+                            size: 20,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                story.title,
-                                style: const TextStyle(
-                                  color: AppColors.backgroundSecondary,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                              const Text(
+                                'Гимназия им. Е. М. Примакова',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.2,
                                 ),
                               ),
                               Text(
-                                'Гимназия Примакова',
+                                'Официальные истории',
                                 style: TextStyle(
-                                  color: AppColors.textPrimary.withAlpha((0.7 * 255).round()),
-                                  fontSize: 12,
+                                  color: Colors.white.withOpacity(0.75),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w400,
                                 ),
                               ),
                             ],
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: AppColors.backgroundSecondary),
-                          onPressed: () => Navigator.of(context).pop(),
+                          icon: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.4),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white.withOpacity(0.2)),
+                            ),
+                            child: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
+                          ),
+                          onPressed: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.of(context).pop();
+                          },
                         ),
                       ],
                     ),
@@ -233,19 +363,117 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
               ),
             ),
 
-            // Pause indicator
+            // Frosted Glass Bottom Overlay Card (Modern Instagram/Apple UI)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 28,
+              child: SafeArea(
+                top: false,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.55),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.18),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Story Title
+                          Text(
+                            story.title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.3,
+                              height: 1.25,
+                            ),
+                          ),
+                          if (story.description.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              story.description,
+                              maxLines: 4,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.88),
+                                fontSize: 13.5,
+                                height: 1.45,
+                                letterSpacing: -0.1,
+                              ),
+                            ),
+                          ],
+
+                          // Interactive Link Button (if link present)
+                          if (story.linkUrl != null && story.linkUrl!.trim().isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () => _launchURL(story.linkUrl!.trim()),
+                                icon: const Icon(Icons.arrow_outward_rounded, size: 16),
+                                label: Text(
+                                  story.linkText?.trim().isNotEmpty == true
+                                      ? story.linkText!.trim()
+                                      : 'Узнать подробнее',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -0.1,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFBA1A1A),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 16),
+                                  elevation: 4,
+                                  shadowColor: const Color(0xFFBA1A1A).withOpacity(0.4),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Pause Indicator overlay
             if (_isPaused)
               Center(
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.black.withOpacity(0.6),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withOpacity(0.25)),
                   ),
                   child: const Icon(
-                    Icons.pause,
-                    color: AppColors.backgroundSecondary,
-                    size: 48,
+                    Icons.pause_rounded,
+                    color: Colors.white,
+                    size: 36,
                   ),
                 ),
               ),
@@ -255,170 +483,64 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
     );
   }
 
-  Widget _buildStoryContent(Story story) {
+  Widget _buildStoryVisual(Story story) {
+    if (story.imageUrl != null && story.imageUrl!.isNotEmpty) {
+      final imgUrl = story.imageUrl!;
+      if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://')) {
+        return Image.network(
+          imgUrl,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return _buildDefaultBackground(story.title);
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return _buildDefaultBackground(story.title);
+          },
+        );
+      } else {
+        return Image.asset(
+          imgUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildDefaultBackground(story.title);
+          },
+        );
+      }
+    }
+
+    return _buildDefaultBackground(story.title);
+  }
+
+  Widget _buildDefaultBackground(String title) {
     return Container(
-      color: Colors.black,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF8B0000), // Primakov Deep Red
+            Color(0xFF38000A), // Rich Bordeaux Dark
+            Color(0xFF1A0005), // Night
+          ],
+        ),
+      ),
       child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(flex: 1),
-              // Image or Icon
-              if (story.imageUrl != null)
-                Container(
-                  width: 280,
-                  height: 280,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha((0.3 * 255).round()),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.asset(
-                      story.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.primaryRed,
-                          ),
-                          child: Icon(
-                            _getStoryIcon(story.title),
-                            color: AppColors.backgroundSecondary,
-                            size: 60,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                )
-              else
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.primaryRed,
-                  ),
-                  child: Icon(
-                    _getStoryIcon(story.title),
-                    color: AppColors.backgroundSecondary,
-                    size: 60,
-                  ),
-                ),
-              const SizedBox(height: 32),
-
-              // Title
-              Text(
-                story.title,
-                style: const TextStyle(
-                  color: AppColors.backgroundSecondary,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-
-              // Description
-              Text(
-                story.description,
-                style: TextStyle(
-                  color: AppColors.textPrimary.withAlpha((0.7 * 255).round()),
-                  fontSize: 16,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              // Link button
-              if (story.linkUrl != null && story.linkText != null) ...[
-                const SizedBox(height: 24),
-                GestureDetector(
-                  onTap: () => _launchURL(story.linkUrl!),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryRed,
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primaryRed.withAlpha((0.3 * 255).round()),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Подробнее',
-                          style: const TextStyle(
-                            color: AppColors.backgroundSecondary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.arrow_forward,
-                          color: AppColors.backgroundSecondary,
-                          size: 16,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ],
+        child: Container(
+          width: 140,
+          height: 140,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withOpacity(0.06),
+            border: Border.all(color: Colors.white.withOpacity(0.15)),
+          ),
+          child: const Icon(
+            Icons.school_rounded,
+            size: 64,
+            color: Colors.white38,
           ),
         ),
       ),
     );
   }
-
-  Future<void> _launchURL(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Не удалось открыть ссылку'),
-            backgroundColor: AppColors.primaryRed,
-          ),
-        );
-      }
-    }
-  }
-
-  IconData _getStoryIcon(String title) {
-    final lowerTitle = title.toLowerCase();
-    if (lowerTitle.contains('событ') || lowerTitle.contains('новост')) {
-      return Icons.event;
-    } else if (lowerTitle.contains('приказ') || lowerTitle.contains('объявл')) {
-      return Icons.campaign;
-    } else if (lowerTitle.contains('меню') || lowerTitle.contains('столов')) {
-      return Icons.restaurant_menu;
-    } else if (lowerTitle.contains('оценк') || lowerTitle.contains('успева')) {
-      return Icons.grade;
-    } else if (lowerTitle.contains('расписан')) {
-      return Icons.calendar_today;
-    } else {
-      return Icons.info;
-    }
-  }
 }
-
-

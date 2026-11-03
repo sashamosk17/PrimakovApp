@@ -84,7 +84,12 @@ export class MockAnnouncementRepository implements IAnnouncementRepository {
   }
 
   async save(announcement: Announcement): Promise<Result<void>> {
-    this.announcements.push(announcement);
+    const index = this.announcements.findIndex((a) => a.id === announcement.id);
+    if (index >= 0) {
+      this.announcements[index] = announcement;
+    } else {
+      this.announcements.push(announcement);
+    }
     return Result.ok();
   }
 

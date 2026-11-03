@@ -7,6 +7,11 @@ import type {
   Announcement,
   Subject,
   Schedule,
+  Story,
+  HouseStanding,
+  HouseTransaction,
+  BoardingRosterItem,
+  WeekendLeaveRequest,
 } from "../types";
 
 export const MOCK_METRICS: DashboardMetrics = {
@@ -267,5 +272,141 @@ export const MOCK_SCHEDULES: Schedule[] = [
       { id: "les-10", subject: "Физика", teacherId: "usr-teach-11", teacherName: "Дмитрий Смирнов", startTime: "09:00", endTime: "09:45", room: "102", floor: 1, hasHomework: false },
       { id: "les-11", subject: "Информатика", teacherId: "usr-teach-22", teacherName: "Глеб Николаев", startTime: "10:00", endTime: "10:45", room: "502", floor: 5, hasHomework: true },
     ],
+  },
+];
+
+export const MOCK_STORIES: Story[] = [
+  {
+    id: "story-1",
+    title: "30-я юбилейная конференция Модель ООН",
+    description: "Торжественное мероприятие, посвященное 30-летию конференции в Гимназии Примакова.",
+    imageUrl: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=600&q=80",
+    linkUrl: "https://primakov.school/news/model-oon",
+    linkText: "Подробнее о конференции",
+    createdAt: "2026-11-01T10:00:00Z",
+    expiresAt: "2026-11-08T10:00:00Z",
+    viewedBy: ["usr-1", "usr-2", "usr-3"],
+  },
+  {
+    id: "story-2",
+    title: "Встреча с космонавтами Роскосмоса",
+    description: "Уникальная встреча с представителями космической отрасли в нашем атриуме.",
+    imageUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80",
+    linkUrl: "https://primakov.school/news/space-meeting",
+    linkText: "Смотреть фотоотчет",
+    createdAt: "2026-11-02T12:00:00Z",
+    expiresAt: "2026-11-09T12:00:00Z",
+    viewedBy: ["usr-1"],
+  },
+  {
+    id: "story-3",
+    title: "Хакатон Primakov Digital 2026",
+    description: "Регистрация команд открыта! Успейте подать заявку до 10 ноября.",
+    imageUrl: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&q=80",
+    linkUrl: "https://primakov.school/hackathon",
+    linkText: "Подать заявку",
+    createdAt: "2026-11-03T09:00:00Z",
+    expiresAt: "2026-11-10T09:00:00Z",
+    viewedBy: [],
+  },
+];
+
+export const MOCK_HOUSES_STANDINGS: HouseStanding[] = [
+  { house: "NORTH", totalPoints: 1450, rank: 1 },
+  { house: "WEST", totalPoints: 1380, rank: 2 },
+  { house: "EAST", totalPoints: 1290, rank: 3 },
+  { house: "SOUTH", totalPoints: 1210, rank: 4 },
+];
+
+export const MOCK_HOUSE_TRANSACTIONS: HouseTransaction[] = [
+  {
+    id: "tx-1",
+    house: "NORTH",
+    points: 50,
+    category: "OLYMPIAD",
+    reason: "1 место в региональном этапе ВсОШ по физике",
+    awardedBy: "Елена Смирнова",
+    createdAt: "2026-11-02T14:30:00Z",
+  },
+  {
+    id: "tx-2",
+    house: "WEST",
+    points: 40,
+    category: "SPORTS",
+    reason: "Победа в первенстве гимназии по баскетболу",
+    awardedBy: "Алексей Волков",
+    createdAt: "2026-11-01T16:15:00Z",
+  },
+  {
+    id: "tx-3",
+    house: "EAST",
+    points: 30,
+    category: "CHARITY",
+    reason: "Организация осенней благотворительной ярмарки",
+    awardedBy: "Ольга Морозова",
+    createdAt: "2026-10-31T11:00:00Z",
+  },
+];
+
+export const MOCK_BOARDING_ROSTER: BoardingRosterItem[] = [
+  {
+    studentId: "student-b-1",
+    studentName: "Даниил Смирнов",
+    groupName: "11-Б",
+    roomNumber: "304",
+    status: "PRESENT",
+    lastCheckInTime: "2026-11-02T21:05:00Z",
+    hasActiveLeave: false,
+  },
+  {
+    studentId: "student-b-2",
+    studentName: "София Орлова",
+    groupName: "10-А",
+    roomNumber: "212",
+    status: "PRESENT",
+    lastCheckInTime: "2026-11-02T21:12:00Z",
+    hasActiveLeave: false,
+  },
+  {
+    studentId: "student-b-3",
+    studentName: "Артем Кузнецов",
+    groupName: "9-А",
+    roomNumber: "108",
+    status: "LATE",
+    lastCheckInTime: "2026-11-02T21:40:00Z",
+    hasActiveLeave: false,
+  },
+  {
+    studentId: "student-b-4",
+    studentName: "Екатерина Попова",
+    groupName: "11-А",
+    roomNumber: "306",
+    status: "ABSENT",
+    hasActiveLeave: true,
+  },
+];
+
+export const MOCK_LEAVE_REQUESTS: WeekendLeaveRequest[] = [
+  {
+    id: "leave-1",
+    studentId: "student-b-4",
+    studentName: "Екатерина Попова (11-А)",
+    departureDate: "2026-11-06T17:00:00Z",
+    returnDate: "2026-11-08T20:00:00Z",
+    transportType: "Родители",
+    status: "APPROVED",
+    guardianConfirmed: true,
+    createdAt: "2026-11-02T15:00:00Z",
+  },
+  {
+    id: "leave-2",
+    studentId: "student-b-1",
+    studentName: "Даниил Смирнов (11-Б)",
+    departureDate: "2026-11-06T18:00:00Z",
+    returnDate: "2026-11-08T21:00:00Z",
+    transportType: "Шаттл кампуса",
+    status: "PENDING",
+    guardianConfirmed: true,
+    createdAt: "2026-11-03T09:30:00Z",
   },
 ];
