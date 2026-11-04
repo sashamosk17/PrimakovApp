@@ -12,35 +12,109 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram VARCHAR(100);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date DATE;
 
--- 2. Stories schema
+-- 2. Lessons schema
+ALTER TABLE lessons ADD COLUMN IF NOT EXISTS homework_description TEXT;
+ALTER TABLE lessons ADD COLUMN IF NOT EXISTS floor INTEGER;
+ALTER TABLE lessons ADD COLUMN IF NOT EXISTS room_building VARCHAR(100);
+ALTER TABLE lessons ADD COLUMN IF NOT EXISTS has_homework BOOLEAN DEFAULT FALSE;
+
+-- 3. Stories schema & view alignment
+DROP VIEW IF EXISTS active_stories CASCADE;
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS author VARCHAR(255);
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS author_id UUID REFERENCES users(id) ON DELETE SET NULL;
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS link_url TEXT;
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS link_text TEXT;
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+CREATE OR REPLACE VIEW active_stories AS
+SELECT id, title, description, image_url, video_url, author_id, created_at, expires_at
+FROM stories
+WHERE expires_at > NOW() AND deleted_at IS NULL;
 
--- 3. Announcements category type alignment
+-- 4. Announcements schema & view alignment
+DROP VIEW IF EXISTS active_announcements CASCADE;
 DO $$
+DECLARE
+  r RECORD;
 BEGIN
-  ALTER TABLE announcements ALTER COLUMN category TYPE VARCHAR(100) USING category::text;
-EXCEPTION WHEN OTHERS THEN
-  NULL;
+  FOR r IN (
+    SELECT tc.constraint_name
+    FROM information_schema.table_constraints tc
+    JOIN information_schema.key_column_usage kcu
+      ON tc.constraint_name = kcu.constraint_name
+      AND tc.table_schema = kcu.table_schema
+    WHERE tc.table_name = 'announcements'
+      AND tc.constraint_type = 'FOREIGN KEY'
+      AND kcu.column_name = 'category'
+  ) LOOP
+    EXECUTE 'ALTER TABLE announcements DROP CONSTRAINT IF EXISTS ' || quote_ident(r.constraint_name);
+  END LOOP;
+END $$;
+ALTER TABLE announcements ALTER COLUMN category TYPE VARCHAR(100) USING category::text;
+ALTER TABLE announcements ADD COLUMN IF NOT EXISTS content TEXT;
+ALTER TABLE announcements ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE announcements ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE announcements ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+CREATE OR REPLACE VIEW active_announcements AS
+SELECT id, title, description, content, image_url, date, category, author_id, created_at
+FROM announcements
+WHERE deleted_at IS NULL;
+
+-- 5. Requests schema & view alignment (Crucial: drop views before altering column types)
+DROP VIEW IF EXISTS active_requests CASCADE;
+DROP VIEW IF EXISTS service_requests CASCADE;
+
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN (
+    SELECT tc.constraint_name
+    FROM information_schema.table_constraints tc
+    JOIN information_schema.key_column_usage kcu
+      ON tc.constraint_name = kcu.constraint_name
+      AND tc.table_schema = kcu.table_schema
+    WHERE tc.table_name = 'requests'
+      AND tc.constraint_type = 'FOREIGN KEY'
+      AND kcu.column_name = 'room_id'
+  ) LOOP
+    EXECUTE 'ALTER TABLE requests DROP CONSTRAINT IF EXISTS ' || quote_ident(r.constraint_name);
+  END LOOP;
 END $$;
 
--- 4. Requests schema
+ALTER TABLE requests DROP CONSTRAINT IF EXISTS requests_room_id_fkey;
+ALTER TABLE requests DROP CONSTRAINT IF EXISTS fk_requests_room;
+DROP INDEX IF EXISTS idx_requests_room;
+
+ALTER TABLE requests ALTER COLUMN room_id TYPE VARCHAR(100) USING room_id::text;
+ALTER TABLE requests ALTER COLUMN type TYPE VARCHAR(30) USING type::text;
+ALTER TABLE requests ALTER COLUMN status TYPE VARCHAR(30) USING status::text;
+ALTER TABLE requests ALTER COLUMN priority TYPE VARCHAR(20) USING priority::text;
+
 ALTER TABLE requests ADD COLUMN IF NOT EXISTS sla_deadline_at TIMESTAMPTZ;
 ALTER TABLE requests ADD COLUMN IF NOT EXISTS sla_breached BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE requests ADD COLUMN IF NOT EXISTS notes TEXT;
-DO $$
-BEGIN
-  ALTER TABLE requests DROP CONSTRAINT IF EXISTS requests_room_id_fkey;
-  ALTER TABLE requests ALTER COLUMN room_id TYPE VARCHAR(100) USING room_id::text;
-  ALTER TABLE requests ALTER COLUMN type TYPE VARCHAR(30) USING type::text;
-  ALTER TABLE requests ALTER COLUMN status TYPE VARCHAR(30) USING status::text;
-  ALTER TABLE requests ALTER COLUMN priority TYPE VARCHAR(20) USING priority::text;
-EXCEPTION WHEN OTHERS THEN
-  NULL;
-END $$;
+
+CREATE INDEX IF NOT EXISTS idx_requests_room ON requests(room_id);
+CREATE INDEX IF NOT EXISTS idx_requests_status ON requests(status);
+CREATE INDEX IF NOT EXISTS idx_requests_priority ON requests(priority);
+CREATE INDEX IF NOT EXISTS idx_requests_creator ON requests(creator_id);
+CREATE INDEX IF NOT EXISTS idx_requests_assignee ON requests(assignee_id);
+CREATE INDEX IF NOT EXISTS idx_requests_created_at ON requests(created_at DESC);
+
+CREATE OR REPLACE VIEW active_requests AS
+SELECT id, type, title, description, status, priority, creator_id, assignee_id, room_id, created_at, updated_at
+FROM requests
+WHERE status NOT IN ('COMPLETED', 'CANCELLED')
+ORDER BY priority DESC, created_at ASC;
+
+DROP TABLE IF EXISTS service_requests CASCADE;
+CREATE OR REPLACE VIEW service_requests AS SELECT * FROM requests;
+
+-- 6. Ratings schema alignment
+ALTER TABLE ratings ADD COLUMN IF NOT EXISTS comment TEXT DEFAULT '';
+ALTER TABLE ratings ADD COLUMN IF NOT EXISTS ip_hash VARCHAR(255);
+ALTER TABLE ratings ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 0;
 
 -- 1. Enrich Users: Houses, Boarding Status, Rooms, Contacts
 UPDATE users SET
@@ -177,6 +251,8 @@ BEGIN
 END $$;
 
 -- 3. Academic Grades for 10-А, 10-Б, 11-А
+DELETE FROM grades WHERE period = '1-й триместр 2026';
+
 DO $$
 DECLARE
   v_student RECORD;
@@ -210,6 +286,21 @@ BEGIN
 END $$;
 
 -- 4. House Cup Point Transactions (Лига Домов)
+DELETE FROM house_point_transactions WHERE reason IN (
+  '1-е место на Всероссийской олимпиаде по математике (региональный этап)',
+  'Призерство в олимпиаде по робототехнике и ИИ',
+  'Активное участие в благотворительной ярмарке "Подари тепло"',
+  'Победа в первенстве гимназии по волейболу среди старших классов',
+  'Гран-при театрального фестиваля на английском языке',
+  'Публикация исследовательской статьи в сборнике Юных исследователей',
+  'Победа в заключительном туре Московской олимпиады школьников по физике',
+  'Безупречный результат триместрового тестирования по естественным наукам',
+  'Организация шефской помощи младшим классам',
+  'Золотой кубок межшкольного легкоатлетического кросса',
+  '1-е место в конкурсе ораторского искусства Primakov Talks',
+  'Победа в командном хакатоне Primakov Digital'
+);
+
 DO $$
 DECLARE
   v_awarded_by UUID;
@@ -252,6 +343,9 @@ BEGIN
 END $$;
 
 -- 5. Boarding Checkins & Weekend Leave Requests
+DELETE FROM boarding_checkins WHERE notes IN ('Вечерняя перекличка в корпусе', 'В кампусе, комната осмотрена');
+DELETE FROM weekend_leave_requests WHERE transport_type IN ('PARENTS', 'SHUTTLE') AND (departure_date LIKE '% 17:00' OR departure_date LIKE '% 18:00');
+
 DO $$
 DECLARE
   v_student RECORD;
@@ -291,6 +385,15 @@ WHERE is_boarding = true
 OFFSET 5 LIMIT 3;
 
 -- 6. Service Desk Requests
+DELETE FROM requests WHERE title IN (
+  'Не работает проектор в 305',
+  'Сломан доводчик двери в 201',
+  'Влажная уборка кабинета химии 404',
+  'Замена кабеля HDMI в Атриуме',
+  'Не работает кондиционер в серверной 502',
+  'Пополнение антисептиков и мыла на 3 этаже'
+);
+
 DO $$
 DECLARE
   v_teacher_1 UUID;
@@ -303,6 +406,8 @@ BEGIN
   IF v_teacher_2 IS NULL THEN v_teacher_2 := v_teacher_1; END IF;
 
   SELECT id INTO v_student_1 FROM users WHERE role = 'STUDENT' LIMIT 1;
+  IF v_student_1 IS NULL THEN v_student_1 := v_teacher_1; END IF;
+
   SELECT id INTO v_admin FROM users WHERE role = 'ADMIN' LIMIT 1;
   IF v_admin IS NULL THEN v_admin := v_teacher_1; END IF;
 
@@ -392,6 +497,14 @@ BEGIN
   IF v_student_6 IS NULL THEN v_student_6 := v_student_1; END IF;
 
   IF v_teacher_1 IS NOT NULL AND v_student_1 IS NOT NULL THEN
+    -- Delete existing ratings for these exact teacher/student pairs to guarantee idempotency without constraint name assumptions
+    DELETE FROM ratings
+    WHERE (teacher_id = v_teacher_1 AND user_id IN (v_student_1, v_student_2))
+       OR (teacher_id = v_teacher_2 AND user_id = v_student_3)
+       OR (teacher_id = v_teacher_3 AND user_id = v_student_4)
+       OR (teacher_id = v_teacher_4 AND user_id = v_student_5)
+       OR (teacher_id = v_teacher_5 AND user_id = v_student_6);
+
     INSERT INTO ratings (id, teacher_id, user_id, value, comment, version, ip_hash, created_at, updated_at)
     VALUES
       (
@@ -423,8 +536,7 @@ BEGIN
         gen_random_uuid(), v_teacher_5, v_student_6,
         5, 'Иван Сергеевич учит реальной разработке на Python и алгоритмам, а не просто теории из учебников.',
         1, 'ip-hash-6', NOW() - INTERVAL '7 days', NOW() - INTERVAL '7 days'
-      )
-    ON CONFLICT (teacher_id, user_id) DO NOTHING;
+      );
   END IF;
 END $$;
 
@@ -503,26 +615,38 @@ BEGIN
 END $$;
 
 -- 9. Announcements & Stories
+DELETE FROM announcements WHERE title IN (
+  'День открытых дверей и олимпиада Primakov Digital',
+  'Открытый лекторий: Встреча с летчиком-космонавтом в Атриуме',
+  'Финал Междомовского турнира по шахматам и дебатам'
+);
+
 INSERT INTO announcements (id, title, description, content, date, category, author_id, created_at, updated_at)
 VALUES
   (
     gen_random_uuid(), 'День открытых дверей и олимпиада Primakov Digital',
     'Приглашаем родителей и гимназистов на презентацию инновационных IT-направлений.',
     'В программе мероприятия: мастер-классы по искусственному интеллекту, презентация лаборатории беспилотных систем, открытый диалог с ведущими экспертами отрасли и подведение итогов хакатона.',
-    NOW(), 'Кампус', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), NOW(), NOW()
+    NOW(), 'Кампус', COALESCE((SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), (SELECT id FROM users LIMIT 1)), NOW(), NOW()
   ),
   (
     gen_random_uuid(), 'Открытый лекторий: Встреча с летчиком-космонавтом в Атриуме',
     'В пятницу в 15:30 состоится вдохновляющая встреча с Героем России.',
     'Гимназисты смогут задать вопросы об исследовании дальнего космоса, подготовке к длительным полетам и научных экспериментах на борту орбитальной станции.',
-    NOW() + INTERVAL '2 days', 'События', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), NOW(), NOW()
+    NOW() + INTERVAL '2 days', 'События', COALESCE((SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), (SELECT id FROM users LIMIT 1)), NOW(), NOW()
   ),
   (
     gen_random_uuid(), 'Финал Междомовского турнира по шахматам и дебатам',
     'Борьба за Кубок Лиги Домов выходит на финишную прямую!',
     'Решающие поединки между сборными командами Домов Север, Юг, Восток и Запад пройдут в зеркальном зале гимназии. Приглашаем болельщиков поддержать свои Дома.',
-    NOW() + INTERVAL '4 days', 'Лига Домов', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), NOW(), NOW()
+    NOW() + INTERVAL '4 days', 'Лига Домов', COALESCE((SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), (SELECT id FROM users LIMIT 1)), NOW(), NOW()
   );
+
+DELETE FROM stories WHERE title IN (
+  'Лаборатория робототехники 2.0',
+  'Победа Дома Север в волейболе',
+  'Зимнее меню в ресторане гимназии'
+);
 
 INSERT INTO stories (id, title, description, image_url, link_url, link_text, author, author_id, expires_at, created_at, updated_at)
 VALUES
@@ -531,7 +655,7 @@ VALUES
     'Новые наборы манипуляторов и датчиков машинного зрения поступили в кампус!',
     'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800',
     'https://primakov.school/robotics', 'Записаться в группу', 'Кафедра IT',
-    (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1),
+    COALESCE((SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), (SELECT id FROM users LIMIT 1)),
     NOW() + INTERVAL '30 days', NOW(), NOW()
   ),
   (
@@ -539,7 +663,7 @@ VALUES
     'Яркие моменты финального матча и награждение победителей',
     'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=800',
     'https://primakov.school/house-cup', 'Турнирная таблица', 'Спортклуб',
-    (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1),
+    COALESCE((SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), (SELECT id FROM users LIMIT 1)),
     NOW() + INTERVAL '30 days', NOW(), NOW()
   ),
   (
@@ -547,7 +671,7 @@ VALUES
     'Шеф-повар подготовил согревающие тыквенные супы и десерты из рикотты',
     'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800',
     'https://primakov.school/canteen', 'Посмотреть меню', 'Служба питания',
-    (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1),
+    COALESCE((SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), (SELECT id FROM users LIMIT 1)),
     NOW() + INTERVAL '30 days', NOW(), NOW()
   );
 

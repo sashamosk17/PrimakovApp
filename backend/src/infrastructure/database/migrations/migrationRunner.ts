@@ -212,7 +212,14 @@ export async function runMigrations(pool: Pool): Promise<void> {
 
           for (let i = 0; i < statements.length; i++) {
             console.log(`    → Statement ${i + 1}/${statements.length}...`);
-            await migrationClient.query(statements[i]);
+            try {
+              await migrationClient.query(statements[i]);
+            } catch (stmtError: any) {
+              console.error(`    ❌ Failed on statement ${i + 1}/${statements.length}:`);
+              console.error(`       Error: ${stmtError?.message || stmtError}`);
+              console.error(`       Snippet: ${statements[i].slice(0, 200).replace(/\s+/g, " ")}...`);
+              throw stmtError;
+            }
           }
 
           await migrationClient.query("INSERT INTO migrations (name) VALUES ($1)", [file]);
