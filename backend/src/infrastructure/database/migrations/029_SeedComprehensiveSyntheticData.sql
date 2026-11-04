@@ -1,6 +1,47 @@
 -- Migration 029: Comprehensive Synthetic Data Seeding for PrimakovApp
 -- Enriches users, schedules, lessons, grades, house transactions, boarding, requests, ratings, canteen menus, announcements, and stories.
 
+-- ============================================================================
+-- 0. Defensive Schema Preparation (Self-healing idempotency)
+-- ============================================================================
+-- 1. Users schema
+ALTER TABLE users ADD COLUMN IF NOT EXISTS house VARCHAR(20);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_boarding BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS room_number VARCHAR(50);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram VARCHAR(100);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date DATE;
+
+-- 2. Stories schema
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS author VARCHAR(255);
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS author_id UUID REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS link_url TEXT;
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS link_text TEXT;
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+
+-- 3. Announcements category type alignment
+DO $$
+BEGIN
+  ALTER TABLE announcements ALTER COLUMN category TYPE VARCHAR(100) USING category::text;
+EXCEPTION WHEN OTHERS THEN
+  NULL;
+END $$;
+
+-- 4. Requests schema
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS sla_deadline_at TIMESTAMPTZ;
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS sla_breached BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS notes TEXT;
+DO $$
+BEGIN
+  ALTER TABLE requests DROP CONSTRAINT IF EXISTS requests_room_id_fkey;
+  ALTER TABLE requests ALTER COLUMN room_id TYPE VARCHAR(100) USING room_id::text;
+  ALTER TABLE requests ALTER COLUMN type TYPE VARCHAR(30) USING type::text;
+  ALTER TABLE requests ALTER COLUMN status TYPE VARCHAR(30) USING status::text;
+  ALTER TABLE requests ALTER COLUMN priority TYPE VARCHAR(20) USING priority::text;
+EXCEPTION WHEN OTHERS THEN
+  NULL;
+END $$;
+
 -- 1. Enrich Users: Houses, Boarding Status, Rooms, Contacts
 UPDATE users SET
   house = CASE
@@ -44,7 +85,7 @@ WHERE users.id = numbered_contacts.id;
 
 UPDATE users SET
   birth_date = '2009-05-18'
-WHERE role = 'STUDENT' AND (birth_date IS NULL OR birth_date = '');
+WHERE role = 'STUDENT' AND birth_date IS NULL;
 
 -- 2. Clear out any previous schedules/lessons for 10-А, 10-Б, 11-А, 11-Б so we insert clean cohesive data
 DELETE FROM lessons WHERE schedule_id IN (
@@ -297,6 +338,11 @@ VALUES
 ON CONFLICT (teacher_id, user_id) DO NOTHING;
 
 -- 8. Canteen Menus & Items for Current & Next Week
+DELETE FROM menu_items WHERE menu_id IN (
+  SELECT id FROM canteen_menu WHERE date BETWEEN CURRENT_DATE - INTERVAL '3 days' AND CURRENT_DATE + INTERVAL '12 days'
+);
+DELETE FROM canteen_menu WHERE date BETWEEN CURRENT_DATE - INTERVAL '3 days' AND CURRENT_DATE + INTERVAL '12 days';
+
 DO $$
 DECLARE
   v_offset INT;
@@ -387,13 +433,14 @@ VALUES
     NOW() + INTERVAL '4 days', 'Лига Домов', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), NOW(), NOW()
   );
 
-INSERT INTO stories (id, title, description, image_url, link_url, link_text, author, expires_at, created_at, updated_at)
+INSERT INTO stories (id, title, description, image_url, link_url, link_text, author, author_id, expires_at, created_at, updated_at)
 VALUES
   (
     gen_random_uuid(), 'Лаборатория робототехники 2.0',
     'Новые наборы манипуляторов и датчиков машинного зрения поступили в кампус!',
     'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800',
     'https://primakov.school/robotics', 'Записаться в группу', 'Кафедра IT',
+    (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1),
     NOW() + INTERVAL '30 days', NOW(), NOW()
   ),
   (
@@ -401,6 +448,7 @@ VALUES
     'Яркие моменты финального матча и награждение победителей',
     'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=800',
     'https://primakov.school/house-cup', 'Турнирная таблица', 'Спортклуб',
+    (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1),
     NOW() + INTERVAL '30 days', NOW(), NOW()
   ),
   (
@@ -408,6 +456,7 @@ VALUES
     'Шеф-повар подготовил согревающие тыквенные супы и десерты из рикотты',
     'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800',
     'https://primakov.school/canteen', 'Посмотреть меню', 'Служба питания',
+    (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1),
     NOW() + INTERVAL '30 days', NOW(), NOW()
   );
 

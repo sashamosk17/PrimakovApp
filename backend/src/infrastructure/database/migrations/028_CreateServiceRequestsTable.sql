@@ -1,6 +1,11 @@
 -- Migration: 028_CreateServiceRequestsTable.sql
 -- Create requests table for persistent Campus Helpdesk with SLA tracking
 
+-- Ensure users columns for boarding and houses exist
+ALTER TABLE users ADD COLUMN IF NOT EXISTS house VARCHAR(20);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_boarding BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS room_number VARCHAR(50);
+
 CREATE TABLE IF NOT EXISTS requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   type VARCHAR(30) NOT NULL,
@@ -39,5 +44,11 @@ CREATE INDEX IF NOT EXISTS idx_requests_assignee ON requests(assignee_id);
 CREATE INDEX IF NOT EXISTS idx_requests_created_at ON requests(created_at DESC);
 
 -- View alias for service_requests
-DROP VIEW IF EXISTS service_requests;
-CREATE OR REPLACE VIEW service_requests AS SELECT * FROM requests;
+DO $$
+BEGIN
+  DROP TABLE IF EXISTS service_requests CASCADE;
+  DROP VIEW IF EXISTS service_requests CASCADE;
+  CREATE OR REPLACE VIEW service_requests AS SELECT * FROM requests;
+EXCEPTION WHEN OTHERS THEN
+  NULL;
+END $$;

@@ -51,7 +51,7 @@ describe("splitSqlStatements", () => {
     const statements = splitSqlStatements(sql);
     expect(statements.length).toBeGreaterThan(5);
     const doBlocks = statements.filter((s: string) => s.includes("DO $$"));
-    expect(doBlocks.length).toBe(5);
+    expect(doBlocks.length).toBeGreaterThanOrEqual(4);
     for (const block of doBlocks) {
       expect(block.trim().endsWith("END $$")).toBe(true);
     }

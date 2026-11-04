@@ -1,8 +1,9 @@
 -- Migration: 027_CreateHouseAndBoardingTables.sql
--- Add house and is_boarding columns to users table, create house_point_transactions, boarding_checkins, and weekend_leave_requests tables.
+-- Add house, is_boarding, and room_number columns to users table, create house_point_transactions, boarding_checkins, and weekend_leave_requests tables.
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS house VARCHAR(20);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_boarding BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS room_number VARCHAR(50);
 
 -- House system point transactions
 CREATE TABLE IF NOT EXISTS house_point_transactions (

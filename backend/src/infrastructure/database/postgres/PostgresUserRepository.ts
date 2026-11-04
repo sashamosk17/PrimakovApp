@@ -345,7 +345,10 @@ export class PostgresUserRepository implements IUserRepository {
       row.group_name || undefined,
       row.birth_date ? (typeof row.birth_date === 'string' ? row.birth_date : row.birth_date.toISOString().slice(0, 10)) : undefined,
       row.phone || undefined,
-      row.telegram || undefined
+      row.telegram || undefined,
+      row.house || undefined,
+      row.is_boarding ?? false,
+      row.room_number || undefined
     );
   }
 }
