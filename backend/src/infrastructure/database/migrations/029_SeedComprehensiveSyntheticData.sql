@@ -20,7 +20,11 @@ ALTER TABLE lessons ADD COLUMN IF NOT EXISTS has_homework BOOLEAN DEFAULT FALSE;
 
 -- 3. Stories schema & view alignment
 DROP VIEW IF EXISTS active_stories CASCADE;
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS content TEXT;
+ALTER TABLE stories ALTER COLUMN content DROP NOT NULL;
+ALTER TABLE stories ALTER COLUMN description DROP NOT NULL;
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS author VARCHAR(255);
+ALTER TABLE stories ALTER COLUMN author DROP NOT NULL;
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS author_id UUID REFERENCES users(id) ON DELETE SET NULL;
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS link_url TEXT;
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS link_text TEXT;
@@ -648,10 +652,11 @@ DELETE FROM stories WHERE title IN (
   'Зимнее меню в ресторане гимназии'
 );
 
-INSERT INTO stories (id, title, description, image_url, link_url, link_text, author, author_id, expires_at, created_at, updated_at)
+INSERT INTO stories (id, title, description, content, image_url, link_url, link_text, author, author_id, expires_at, created_at, updated_at)
 VALUES
   (
     gen_random_uuid(), 'Лаборатория робототехники 2.0',
+    'Новые наборы манипуляторов и датчиков машинного зрения поступили в кампус!',
     'Новые наборы манипуляторов и датчиков машинного зрения поступили в кампус!',
     'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800',
     'https://primakov.school/robotics', 'Записаться в группу', 'Кафедра IT',
@@ -661,6 +666,7 @@ VALUES
   (
     gen_random_uuid(), 'Победа Дома Север в волейболе',
     'Яркие моменты финального матча и награждение победителей',
+    'Яркие моменты финального матча и награждение победителей',
     'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=800',
     'https://primakov.school/house-cup', 'Турнирная таблица', 'Спортклуб',
     COALESCE((SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), (SELECT id FROM users LIMIT 1)),
@@ -668,6 +674,7 @@ VALUES
   ),
   (
     gen_random_uuid(), 'Зимнее меню в ресторане гимназии',
+    'Шеф-повар подготовил согревающие тыквенные супы и десерты из рикотты',
     'Шеф-повар подготовил согревающие тыквенные супы и десерты из рикотты',
     'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800',
     'https://primakov.school/canteen', 'Посмотреть меню', 'Служба питания',
