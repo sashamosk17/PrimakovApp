@@ -55,6 +55,18 @@ export interface DashboardMetrics {
   activeRequests: number;
   csiIndex: number;
   attendanceRate: number;
+  // Product Health & Operational Metrics
+  dauCount?: number;
+  dauPercentage?: number;
+  slaComplianceRate?: number;
+  urgentRequestsCount?: number;
+  meshSyncStatus?: "SYNCED" | "PENDING" | "ERROR";
+  meshLastSyncTime?: string;
+  apiLatencyMs?: number;
+  systemUptime?: string;
+  canteenOrdersToday?: number;
+  scheduleCoverageRate?: number;
+  boardingPresentRate?: number;
 }
 
 export interface ActivityPoint {
@@ -226,5 +238,18 @@ export interface WeekendLeaveRequest {
   transportType: string;
   status: string;
   guardianConfirmed: boolean;
+  createdAt: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  userId: string | null;
+  userEmail?: string;
+  userName?: string;
+  action: string;
+  entity: string;
+  entityId?: string;
+  details?: Record<string, any>;
+  ipAddress?: string;
   createdAt: string;
 }

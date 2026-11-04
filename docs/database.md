@@ -429,3 +429,5 @@
 | `025` | `025_AddUserProfileFields.sql` | Добавление полей профиля `birth_date`, `phone`, `telegram` в таблицу `users`, сидирование ДР и контактов тестовых пользователей. |
 | `026` | `026_CreateGradesTable.sql` | Создание таблицы успеваемости `grades` с поддержкой весов оценок, периодов и тем работ. |
 | `027` | `027_CreateHouseAndBoardingTables.sql` | Создание таблиц `house_point_transactions`, `boarding_checkins`, `weekend_leave_requests` и добавление колонок `house`, `is_boarding`, `room_number` в `users`. |
+| `028` | `028_CreateServiceRequestsTable.sql` | Создание таблицы `requests` для заявок Service Desk (IT, АХО, клининг) со статусами, приоритетами, исполнителями и SLA-контролем. |
+| `029` | `029_SeedComprehensiveSyntheticData.sql` | Комплексное сидирование реалистичных данных: двухнедельное расписание уроков с ДЗ и кабинетами, триместровые оценки, транзакции факультетов, меню столовой с КБЖУ, заявки Service Desk, рейтинги и отзывы учителей, статусы пансиона. |

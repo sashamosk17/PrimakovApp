@@ -12,6 +12,7 @@ import { HousesView } from "./pages/HousesView";
 import { BoardingView } from "./pages/BoardingView";
 import { ScheduleView } from "./pages/ScheduleView";
 import { CanteenView } from "./pages/CanteenView";
+import { AuditLogView } from "./pages/AuditLogView";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AddUserModal } from "./components/AddUserModal";
 import { ImportCsvModal } from "./components/ImportCsvModal";
@@ -31,6 +32,7 @@ import {
   MOCK_HOUSE_TRANSACTIONS,
   MOCK_BOARDING_ROSTER,
   MOCK_LEAVE_REQUESTS,
+  MOCK_AUDIT_LOGS,
 } from "./data/mockData";
 import type {
   User,
@@ -48,7 +50,28 @@ import type {
   HouseTransaction,
   BoardingRosterItem,
   WeekendLeaveRequest,
+  AuditLogEntry,
 } from "./types";
+
+const EMPTY_METRICS: DashboardMetrics = {
+  totalStudents: 0,
+  totalTeachers: 0,
+  totalAdmins: 0,
+  activeRequests: 0,
+  csiIndex: 0,
+  attendanceRate: 0,
+  dauCount: 0,
+  dauPercentage: 0,
+  slaComplianceRate: 0,
+  urgentRequestsCount: 0,
+  meshSyncStatus: "SYNCED",
+  meshLastSyncTime: "—",
+  apiLatencyMs: 0,
+  systemUptime: "100%",
+  canteenOrdersToday: 0,
+  scheduleCoverageRate: 0,
+  boardingPresentRate: 0,
+};
 
 export function App() {
   const [token, setToken] = useState<string | null>(
@@ -64,43 +87,48 @@ export function App() {
 
   const [currentTab, setCurrentTab] = useState<string>("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Dashboard Data
-  const [metrics, setMetrics] = useState<DashboardMetrics>(MOCK_METRICS);
-  const [weeklyActivity, setWeeklyActivity] = useState<ActivityPoint[]>(MOCK_WEEKLY_ACTIVITY);
-  const [recentRequests, setRecentRequests] = useState<ServiceRequest[]>(MOCK_REQUESTS);
-  const [announcements, setAnnouncements] = useState<Announcement[]>(MOCK_ANNOUNCEMENTS);
+  // Dashboard Data (loaded from real backend)
+  const [metrics, setMetrics] = useState<DashboardMetrics>(() => isDemoMode ? MOCK_METRICS : EMPTY_METRICS);
+  const [weeklyActivity, setWeeklyActivity] = useState<ActivityPoint[]>(() => isDemoMode ? MOCK_WEEKLY_ACTIVITY : []);
+  const [recentRequests, setRecentRequests] = useState<ServiceRequest[]>(() => isDemoMode ? MOCK_REQUESTS : []);
+  const [announcements, setAnnouncements] = useState<Announcement[]>(() => isDemoMode ? MOCK_ANNOUNCEMENTS : []);
 
   // Users Data
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
-  const [totalUsers, setTotalUsers] = useState(MOCK_USERS.length);
+  const [users, setUsers] = useState<User[]>(() => isDemoMode ? MOCK_USERS : []);
+  const [totalUsers, setTotalUsers] = useState<number>(() => isDemoMode ? MOCK_USERS.length : 0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedRole, setSelectedRole] = useState<Role | undefined>(undefined);
 
   // Requests Data
-  const [allRequests, setAllRequests] = useState<ServiceRequest[]>(MOCK_REQUESTS);
+  const [allRequests, setAllRequests] = useState<ServiceRequest[]>(() => isDemoMode ? MOCK_REQUESTS : []);
 
   // Ratings Data
-  const [ratings, setRatings] = useState<TeacherRating[]>(MOCK_RATINGS);
+  const [ratings, setRatings] = useState<TeacherRating[]>(() => isDemoMode ? MOCK_RATINGS : []);
 
-  // Schedules & Subjects Data (Sprint 1 - Feature 3)
-  const [schedules, setSchedules] = useState<Schedule[]>(MOCK_SCHEDULES as Schedule[]);
-  const [subjects, setSubjects] = useState<Subject[]>(MOCK_SUBJECTS as Subject[]);
+  // Schedules & Subjects Data
+  const [schedules, setSchedules] = useState<Schedule[]>(() => isDemoMode ? (MOCK_SCHEDULES as Schedule[]) : []);
+  const [subjects, setSubjects] = useState<Subject[]>(() => isDemoMode ? (MOCK_SUBJECTS as Subject[]) : []);
   const [assignments, setAssignments] = useState<TeacherAssignment[]>([]);
   const [scheduleTeachers, setScheduleTeachers] = useState<User[]>([]);
   const [allGymnasiumUsers, setAllGymnasiumUsers] = useState<User[]>([]);
 
   // Stories Data
-  const [stories, setStories] = useState<Story[]>(MOCK_STORIES);
+  const [stories, setStories] = useState<Story[]>(() => isDemoMode ? MOCK_STORIES : []);
 
   // House Cup Data
-  const [houseStandings, setHouseStandings] = useState<HouseStanding[]>(MOCK_HOUSES_STANDINGS);
-  const [houseTransactions, setHouseTransactions] = useState<HouseTransaction[]>(MOCK_HOUSE_TRANSACTIONS);
+  const [houseStandings, setHouseStandings] = useState<HouseStanding[]>(() => isDemoMode ? MOCK_HOUSES_STANDINGS : []);
+  const [houseTransactions, setHouseTransactions] = useState<HouseTransaction[]>(() => isDemoMode ? MOCK_HOUSE_TRANSACTIONS : []);
 
   // Boarding Life Data
-  const [boardingRoster, setBoardingRoster] = useState<BoardingRosterItem[]>(MOCK_BOARDING_ROSTER);
-  const [boardingLeaves, setBoardingLeaves] = useState<WeekendLeaveRequest[]>(MOCK_LEAVE_REQUESTS);
+  const [boardingRoster, setBoardingRoster] = useState<BoardingRosterItem[]>(() => isDemoMode ? MOCK_BOARDING_ROSTER : []);
+  const [boardingLeaves, setBoardingLeaves] = useState<WeekendLeaveRequest[]>(() => isDemoMode ? MOCK_LEAVE_REQUESTS : []);
+
+  // Audit Logs Data
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(() => isDemoMode ? MOCK_AUDIT_LOGS : []);
+  const [isAuditLoading, setIsAuditLoading] = useState(false);
 
   // Modals
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
@@ -173,14 +201,16 @@ export function App() {
         setServerUnavailableWarning(null);
       }
     } catch (err: any) {
-      console.warn("Failed to load dashboard stats from API, using mock fallback", err);
-      setMetrics(MOCK_METRICS);
-      setWeeklyActivity(MOCK_WEEKLY_ACTIVITY);
-      setRecentRequests(MOCK_REQUESTS);
-      setAnnouncements(MOCK_ANNOUNCEMENTS);
+      console.warn("Failed to load dashboard stats from API", err);
+      if (isDemoMode) {
+        setMetrics(MOCK_METRICS);
+        setWeeklyActivity(MOCK_WEEKLY_ACTIVITY);
+        setRecentRequests(MOCK_REQUESTS);
+        setAnnouncements(MOCK_ANNOUNCEMENTS);
+      }
       if (err?.response?.status === 404) {
         setServerUnavailableWarning(
-          "Сервер ответил 404: маршруты админ-панели еще не задеплоены на удаленном VPS. Включен режим демонстрации UI."
+          "Сервер ответил 404: маршруты админ-панели еще не задеплоены на удаленном сервере. Включите демо-режим для предпросмотра."
         );
       }
     }
@@ -220,22 +250,7 @@ export function App() {
           setTotalPages(res.data.data.totalPages);
         }
       } catch (err: any) {
-        console.warn("Failed to load users from API, using mock fallback", err);
-        let filtered = [...MOCK_USERS];
-        if (role) filtered = filtered.filter((u) => u.role === role);
-        if (search) {
-          const s = search.toLowerCase();
-          filtered = filtered.filter(
-            (u) =>
-              u.firstName.toLowerCase().includes(s) ||
-              u.lastName.toLowerCase().includes(s) ||
-              u.email.toLowerCase().includes(s)
-          );
-        }
-        setUsers(filtered);
-        setTotalUsers(filtered.length);
-        setCurrentPage(page);
-        setTotalPages(1);
+        console.warn("Failed to load users from API", err);
       }
     },
     [isDemoMode]
@@ -253,8 +268,7 @@ export function App() {
         setAllRequests(res.data.data);
       }
     } catch (err) {
-      console.warn("Failed to load requests from API, using mock fallback", err);
-      setAllRequests(MOCK_REQUESTS);
+      console.warn("Failed to load requests from API", err);
     }
   }, [isDemoMode]);
 
@@ -270,8 +284,7 @@ export function App() {
         setRatings(res.data.data);
       }
     } catch (err) {
-      console.warn("Failed to load ratings from API, using mock fallback", err);
-      setRatings(MOCK_RATINGS);
+      console.warn("Failed to load ratings from API", err);
     }
   }, [isDemoMode]);
 
@@ -307,7 +320,7 @@ export function App() {
         setAllGymnasiumUsers(allUsersRes.value.data.data.users);
       }
     } catch (err) {
-      console.warn("Failed to load schedule data from API, using mock fallback", err);
+      console.warn("Failed to load schedule data from API", err);
     }
   }, [isDemoMode]);
 
@@ -323,8 +336,7 @@ export function App() {
         setStories(res.data.data);
       }
     } catch (err) {
-      console.warn("Failed to load stories from API, using mock fallback", err);
-      setStories(MOCK_STORIES);
+      console.warn("Failed to load stories from API", err);
     }
   }, [isDemoMode]);
 
@@ -342,9 +354,7 @@ export function App() {
         setHouseTransactions(res.data.data.recentTransactions || []);
       }
     } catch (err) {
-      console.warn("Failed to load houses from API, using mock fallback", err);
-      setHouseStandings(MOCK_HOUSES_STANDINGS);
-      setHouseTransactions(MOCK_HOUSE_TRANSACTIONS);
+      console.warn("Failed to load houses from API", err);
     }
   }, [isDemoMode]);
 
@@ -367,9 +377,42 @@ export function App() {
         setBoardingLeaves(leavesRes.value.data.data);
       }
     } catch (err) {
-      console.warn("Failed to load boarding data from API, using mock fallback", err);
-      setBoardingRoster(MOCK_BOARDING_ROSTER);
-      setBoardingLeaves(MOCK_LEAVE_REQUESTS);
+      console.warn("Failed to load boarding data from API", err);
+    }
+  }, [isDemoMode]);
+
+  // Fetch Announcements Data
+  const loadAnnouncementsData = useCallback(async () => {
+    if (isDemoMode) {
+      setAnnouncements(MOCK_ANNOUNCEMENTS);
+      return;
+    }
+    try {
+      const res = await apiClient.get("/announcements");
+      if (res.data.status === "success" && Array.isArray(res.data.data)) {
+        setAnnouncements(res.data.data);
+      }
+    } catch (err) {
+      console.warn("Failed to load announcements from API", err);
+    }
+  }, [isDemoMode]);
+
+  // Fetch Audit Logs Data
+  const loadAuditLogsData = useCallback(async () => {
+    if (isDemoMode) {
+      setAuditLogs(MOCK_AUDIT_LOGS);
+      return;
+    }
+    setIsAuditLoading(true);
+    try {
+      const res = await apiClient.get("/admin/audit-logs", { params: { limit: 100 } });
+      if (res.data.status === "success" && res.data.data?.logs) {
+        setAuditLogs(res.data.data.logs);
+      }
+    } catch (err) {
+      console.warn("Failed to load audit logs from API", err);
+    } finally {
+      setIsAuditLoading(false);
     }
   }, [isDemoMode]);
 
@@ -382,8 +425,10 @@ export function App() {
       loadRatingsData();
       loadScheduleData();
       loadStoriesData();
+      loadAnnouncementsData();
       loadHousesData();
       loadBoardingData();
+      loadAuditLogsData();
     }
   }, [
     token,
@@ -393,8 +438,10 @@ export function App() {
     loadRatingsData,
     loadScheduleData,
     loadStoriesData,
+    loadAnnouncementsData,
     loadHousesData,
     loadBoardingData,
+    loadAuditLogsData,
     selectedRole,
   ]);
 
@@ -849,7 +896,7 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-surface">
-      {/* Sidebar */}
+      {/* Sidebar (Responsive drawer on mobile, static on desktop) */}
       <Sidebar
         currentTab={currentTab}
         onTabChange={(tab) => {
@@ -865,10 +912,12 @@ export function App() {
         onOpenAddUser={() => setIsAddUserOpen(true)}
         onLogout={handleLogout}
         userEmail={currentUser?.email}
+        isMobileOpen={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
 
       {/* Main Content Area */}
-      <main className="ml-72 min-h-screen flex flex-col transition-all">
+      <main className="lg:ml-72 ml-0 min-h-screen flex flex-col transition-all pb-20 lg:pb-0">
         {/* Top Header */}
         <Header
           searchQuery={searchQuery}
@@ -884,11 +933,12 @@ export function App() {
             (r) => (r.priority === "URGENT" || r.priority === "HIGH") && r.status !== "COMPLETED"
           )}
           onNavigateTab={(tab) => setCurrentTab(tab)}
+          onToggleMobileMenu={() => setIsMobileMenuOpen((prev) => !prev)}
         />
 
         {/* Informational Banner if in Demo or Fallback mode */}
         {(serverUnavailableWarning || isDemoMode) && (
-          <div className="mx-8 mt-4 p-4 bg-amber-50 border border-amber-200/80 rounded-2xl flex items-center justify-between text-xs text-amber-900 shadow-sm animate-in fade-in">
+          <div className="mx-4 sm:mx-8 mt-4 p-4 bg-amber-50 border border-amber-200/80 rounded-2xl flex items-center justify-between text-xs text-amber-900 shadow-sm animate-in fade-in">
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-amber-600 text-xl">
                 {isDemoMode ? "visibility" : "cloud_sync"}
@@ -913,7 +963,7 @@ export function App() {
         )}
 
         {/* View Routing Canvas */}
-        <div className="flex-1 px-8 py-6">
+        <div className="flex-1 px-4 sm:px-8 py-6">
           <ErrorBoundary fallbackMessage="Произошла ошибка при отрисовке раздела. Нажмите кнопку, чтобы повторить попытку.">
             {currentTab === "dashboard" && (
               <DashboardView
@@ -1027,6 +1077,14 @@ export function App() {
                 onRefresh={loadBoardingData}
               />
             )}
+
+            {currentTab === "audit" && (
+              <AuditLogView
+                logs={auditLogs}
+                onRefresh={loadAuditLogsData}
+                isLoading={isAuditLoading}
+              />
+            )}
           </ErrorBoundary>
         </div>
       </main>
@@ -1051,6 +1109,74 @@ export function App() {
           loadUsersData(currentPage, selectedRole, searchQuery);
         }}
       />
+
+      {/* Mobile Bottom Navigation Bar (Visible only on mobile lg:hidden) */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200/80 dark:border-slate-800 z-30 px-3 py-1.5 flex items-center justify-around shadow-lg">
+        <button
+          onClick={() => setCurrentTab("dashboard")}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-colors cursor-pointer ${
+            currentTab === "dashboard"
+              ? "text-red-900 dark:text-red-400 font-bold"
+              : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+          }`}
+        >
+          <span className="material-symbols-outlined text-xl">dashboard</span>
+          <span className="text-[10px] leading-tight">Дашборд</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setCurrentTab("requests");
+            loadRequestsData();
+          }}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-colors cursor-pointer ${
+            currentTab === "requests"
+              ? "text-red-900 dark:text-red-400 font-bold"
+              : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+          }`}
+        >
+          <span className="material-symbols-outlined text-xl">pending_actions</span>
+          <span className="text-[10px] leading-tight">Заявки</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setCurrentTab("schedule");
+            loadScheduleData();
+          }}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-colors cursor-pointer ${
+            currentTab === "schedule"
+              ? "text-red-900 dark:text-red-400 font-bold"
+              : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+          }`}
+        >
+          <span className="material-symbols-outlined text-xl">calendar_month</span>
+          <span className="text-[10px] leading-tight">Расписание</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setCurrentTab("users");
+            loadUsersData(1, selectedRole);
+          }}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-colors cursor-pointer ${
+            currentTab === "users"
+              ? "text-red-900 dark:text-red-400 font-bold"
+              : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+          }`}
+        >
+          <span className="material-symbols-outlined text-xl">school</span>
+          <span className="text-[10px] leading-tight">Ученики</span>
+        </button>
+
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-xl">menu</span>
+          <span className="text-[10px] leading-tight">Еще</span>
+        </button>
+      </nav>
     </div>
   );
 }

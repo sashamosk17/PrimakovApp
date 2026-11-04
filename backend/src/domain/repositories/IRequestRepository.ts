@@ -18,6 +18,8 @@ export interface Request {
   updatedAt: Date;
   completedAt?: Date;
   notes?: string;
+  slaDeadlineAt?: Date;
+  slaBreached?: boolean;
 }
 
 export interface IRequestRepository {

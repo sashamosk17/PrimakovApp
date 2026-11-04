@@ -52,13 +52,19 @@
 | **Полный контроль Историй (Stories CRUD)** | Web / Backend | `StoriesView.tsx` / `CreateStoryUseCase.ts`, `UpdateStoryUseCase.ts`, `DeleteStoryUseCase.ts` | Публикация историй с медиа, коротким текстом, интерактивной ссылкой и текстом кнопки, готовые пресеты, редактирование, удаление | ✅ Готово (v0.6.0) |
 | **Интерактивные Объявления (Detail Sheet)** | Mobile / Web | `announcements_screen.dart` / `AnnouncementsView.tsx` | Apple-style всплывающее контекстное окно с полным текстом и копированием по тапу на карточку, модальное редактирование в Web Admin | ✅ Готово (v0.6.0) |
 | **Современный плеер Stories** | Mobile | `story_viewer_screen.dart` | Полноэкранный плеер в стиле Telegram/Instagram: Frosted Glass плашка снизу, кнопка перехода по ссылке (url_launcher), tap-and-hold пауза, смахивание вниз | ✅ Готово (v0.6.0) |
+| **Тотальный журнал аудита (Audit Trail & Security Log)** | Web / Backend | `AuditLogView.tsx` / `auditMiddleware.ts`, `PostgresAuditRepository.ts` | Перехват всех мутирующих запросов (POST/PUT/DELETE/PATCH), маскирование паролей, асинхронная запись в `audit_logs`, фильтрация и инспекция в веб-панели | ✅ Готово (v0.7.0) |
+| **Контроль коллизий расписания (Schedule Collision Guard)** | Web / Backend | `ScheduleCollisionGuard.ts`, `AddLessonToScheduleUseCase.ts`, `SubstituteTeacherUseCase.ts` | Тройная проверка при составлении и замене: доступность учителя, незанятость аудитории, отсутствие накладок у учебной группы | ✅ Готово (v0.7.0) |
+| **Автосинхронизация ДЗ в Дедлайны (Auto Homework Sync)** | Backend | `AutoHomeworkSyncUseCase.ts` | Автоматическое создание учебных дедлайнов ученикам класса при назначении ДЗ к уроку, умный расчет даты сдачи к следующему уроку предмета | ✅ Готово (v0.7.0) |
+| **Сторожевой таймер заявок (SLA Watchdog & Auto-Routing)** | Backend | `ServiceDeskSLAWorker.ts`, `TicketAutoRouter.ts` | Фоновый воркер контроля регламентных сроков техподдержки (2ч URGENT, 4ч HIGH, 24ч MEDIUM, 48ч LOW), автофиксация просрочки и маршрутизация по службам | ✅ Готово (v0.7.0) |
+| **Контроль пансиона и аллергий (Curfew & Allergen Safety)** | Backend | `BoardingCurfewWorker.ts`, `AllergenSafetyGuard.ts` | Вечерний сторож комендантского часа пансиона (21:30) с алертом о несанкционированном отсутствии, стоп-фильтр аллергенов в столовой | ✅ Готово (v0.7.0) |
 
 ---
 
 ### 2.2. Серверная архитектура и база данных (Clean Architecture)
 
 - **Ядро и сценарии (Use Cases)**:
-  - 17 изолированных контекстов в `backend/src/application/`.
+  - 22 изолированных контекста в `backend/src/application/`.
+  - Модуль автоматизации и контроля: `ServiceDeskSLAWorker`, `BoardingCurfewWorker`, `AllergenSafetyGuard`, `ScheduleCollisionGuard`, `AutoHomeworkSyncUseCase`, `GetAuditLogsUseCase`.
   - Модуль успеваемости: `AdminImportMeshGradesUseCase`, `GetStudentGradesUseCase`.
   - Модуль Лиги Домов: `GetHouseCupStandingsUseCase`, `AwardHousePointsUseCase`.
   - Модуль пансиона: `BoardingCheckInUseCase`, `GetStudentBoardingStatusUseCase`, `CreateWeekendLeaveRequestUseCase`, `GetBoardingRosterUseCase`, `UpdateLeaveRequestStatusUseCase`.
@@ -70,13 +76,14 @@
   - Модуль пуш-нотификаций: `ProcessDeadlineNotificationsUseCase`, `DeadlineNotificationWorker`.
   - Модуль администрирования: `AdminGetDashboardStatsUseCase`, `AdminGetUsersUseCase`, `AdminCreateUserUseCase`, `AdminUpdateUserUseCase`, `AdminUpdateUserStatusUseCase`, `AdminDeleteUserUseCase`, `AdminBatchImportUsersUseCase`.
 - **База данных PostgreSQL**:
-  - 27 версионированных SQL-миграций (`001` – `027`).
+  - 30 версионированных SQL-миграций (`001` – `030`).
+  - Миграция `028`: таблица `requests` с полями `sla_deadline_at`, `sla_breached`, `priority`, `type`, `creator_id`, `assignee_id` и алиас `service_requests`.
+  - Миграция `019`: таблица `audit_logs` для сквозного аудита мутирующих операций.
   - Миграция `026`: модуль успеваемости (`grades` с полями student_id, subject_id, value, weight, period, topic, date).
   - Миграция `027`: Лига Домов и Пансион (`house_point_transactions`, `boarding_checkins`, `weekend_leave_requests`, колонки в `users`: `house`, `is_boarding`, `room_number`).
-  - Миграция `016`/`025`: расширение историй (`link_url`, `link_text`, `deleted_at`).
   - Мягкое удаление (`deleted_at`), аудит изменений (`audit_logs`), системные параметры (`system_settings`).
 - **Контроль качества**:
-  - **341 автоматизированный тест Jest на бэкенде** (100% прохождение, 39 тестовых сьютов).
+  - **364 автоматизированных теста Jest на бэкенде** (100% прохождение, 43 тестовых сьюта).
   - **54 автоматизированных теста во Flutter** (14 сьютов: Unit, Widgets, Hive Offline Cache, Localization, Navigation, Primakov Design System).
   - Строгий TDD (Test-Driven Development) подход.
 
@@ -216,6 +223,9 @@ $$\text{RICE Score} = \frac{\text{Reach (Охват чел/мес)} \times \text
 
 | № | ID | Инициатива / Фича | Тип | Reach | Impact | Conf | Effort | RICE | MoSCoW | Спринт реализации |
 | :-: | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **—** | *ADM-HEALTH* | *[Реализовано] Product Health Dashboard: System Pulse, DAU, SLA заявок, CSI, Alerts* | Core/Admin | 200 | 5 | 95% | 1.5 | *633* | 🔴 *Must Have* | *Выполнено (v0.6.0)* |
+| **—** | *ADM-BRAND* | *[Реализовано] Брендинг Primakov School, логотип, чистка хедера и сайдбара* | Core/Admin | 200 | 4 | 100% | 0.5 | *800* | 🔴 *Must Have* | *Выполнено (v0.6.0)* |
+| **—** | *ADM-MOB-WEB*| *[Реализовано] Адаптивная мобильная веб-админка (Drawer + Bottom Nav Bar)* | UI/UX | 300 | 5 | 90% | 1.0 | *1350* | 🔴 *Must Have* | *Выполнено (v0.6.0)* |
 | **—** | *MOB-CLEAN* | *[Реализовано] Ликвидация хардкода во Flutter, 2x3 сетка и рабочие кнопки* | Core/Mobile | 1100 | 4 | 95% | 1.0 | *4180* | 🔴 *Must Have* | *Выполнено (v0.5.5)* |
 | **—** | *PROF-01* | *[Реализовано] Профиль пользователя (ДР, контакты, расписание)* | Core/Platform | 1200 | 5 | 95% | 1.5 | *3800* | 🔴 *Must Have* | *Выполнено (v0.5.5)* |
 | **—** | *DIR-01* | *[Реализовано] Campus Directory (Сквозной поиск учащихся и учителей)* | Core/UX | 1200 | 4 | 90% | 1.5 | *2880* | 🔴 *Must Have* | *Выполнено (v0.5.5)* |
@@ -261,6 +271,9 @@ timeline
         Идеальная Web-панель : UserProfileModal, билингвальность RU/EN
         Чистка Mobile UI : Симметричная 2x3 сетка сервисов, zero hardcode
     section v0.6.0 (Спринт 4 - В ФОКУСЕ)
+        Primakov School Admin Web : Логотип, брендинг, чистка хедера и сайдбара
+        Product Health Dashboard : Системный пульс, DAU, SLA заявок, CSI, Alerts
+        Адаптивный Mobile Admin : Off-canvas Drawer, Bottom Nav Bar, touch-UX
         Современный UI/UX : Glassmorphism, Fluid School Design, Bento v2
         Dynamic Day Glance : Адаптивный тайм-виджет дня на Главной
         Связка Урок-ДЗ : Контекстные дедлайны в карточке урока
@@ -304,6 +317,32 @@ timeline
    - Расширенный экран личного профиля `ProfileScreen` и форма `EditProfileScreen` с синхронизацией ДР, телефона и Telegram.
    - Безопасная обработка сбоев удаленного сервера без миграции (отсутствие raw DioException на экранах учителей и каталога).
    - 32 автоматизированных теста Flutter и 300 Jest тестов бэкенда подтверждают стабильность.
+
+#### Спринт 3.6 (Релиз v0.5.8 «Automation Engine, Real Synthetic Data & Complete Un-mocking») — ✅ Выполнен
+*Фокус: интеллектуальный контроль и автоматизация процессов, глубокое наполнение БД синтетическими данными, полная отвязка от моков.*
+1. ✅ **[AUTO-01] Движок автоматизации и фонового контроля (Backend Workers)**:
+   - `ScheduleCollisionGuard`: валидация наложений кабинетов и параллелей учителей в реальном времени (`[CLASSROOM_OCCUPIED]`, `[TEACHER_COLLISION]`).
+   - `AutoHomeworkSyncUseCase`: автоматическое создание задач и дедлайнов для всего класса при публикации ДЗ в расписании.
+   - `ServiceDeskSLAWorker` & `TicketAutoRouter`: автоматическая маршрутизация заявок по категориям, выставление SLA дедлайнов (2ч/6ч/24ч/72ч), эскалация просроченных заявок в статус `ESCALATED`.
+   - `BoardingCurfewWorker`: фоновый мониторинг комендантского часа пансиона в 22:00, автоматическая фиксация просрочки возврата `OVERDUE_CURFEW`.
+   - `AllergenSafetyGuard`: перекрестная проверка меню столовой со справочником аллергенов учащихся.
+   - `auditMiddleware` & `PostgresAuditRepository`: журнал безопасности административных действий (`IAuditRepository`).
+2. ✅ **[DATA-01] Масштабная миграция синтетических данных `029_SeedComprehensiveSyntheticData.sql`**:
+   - Обогащение профилей учеников и учителей домами (`NORTH`, `SOUTH`, `EAST`, `WEST`), статусом пансиона и комнатами (201-206).
+   - Полноценное динамическое расписание для параллелей 10 и 11 классов на 14 дней вокруг текущей даты с номерами аудиторий, учителями и темами ДЗ.
+   - Оценки триместра по алгебре, физике, литературе и английскому с весами контроля.
+   - Транзакции Кубка Домов по 5 категориям (`ACADEMIC`, `OLYMPIAD`, `SPORTS`, `CHARITY`, `CULTURE`).
+   - Реалистичные меню столовой на завтраки и обеды с полным КБЖУ, ценами и разметкой аллергенов.
+   - Заявки Service Desk (IT, АХО, клининг) с привязками к кабинетам и SLA.
+   - Отзывы и оценки учителей, актуальные объявления и интерактивные сторис.
+3. ✅ **[UNMOCK-01] Полная ликвидация мок-данных и API-First архитектура**:
+   - `AdminGetDashboardStatsUseCase`: переход на 100% динамический расчет метрик здоровья кампуса (CSI, покрытие расписания, SLA заявок, посещаемость пансиона, недельный пульс) из PostgreSQL.
+   - `admin-web`: очищены дефолтные моки во всех состояниях (`EMPTY_METRICS`, пустые массивы), данные запрашиваются с бэкенда, моки изолированы исключительно в тумблере демонстрационного режима (`isDemoMode`).
+   - `flutter`: удалены локальные заглушки новостей и цитат, прямая интеграция со сторис, расписанием, меню столовой, дедлайнами и объявлениями через Riverpod-провайдеры.
+4. ✅ **[QA-VERIFY] 100% Зеленая тестовая матрица**:
+   - 43/43 тестовых сьюта бэкенда, 364/364 теста пройдены успешно (Jest).
+   - 54/54 теста Flutter пройдены успешно (`flutter test`), 0 ошибок компиляции (`flutter analyze`).
+   - Чистая сборка TypeScript бэкенда (31 миграция скопирована) и Vite бандла веб-админки.
 
 #### Спринт 4 (Релиз v0.6.0 «Modern UI & Dynamic Glances») — 🚀 В ФОКУСЕ
 *Фокус: визуальный редизайн под стандарты Apple/Fluid School Design, Time-Aware баннеры и связка уроков с ДЗ.*

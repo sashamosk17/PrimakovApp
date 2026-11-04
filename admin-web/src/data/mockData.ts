@@ -12,6 +12,7 @@ import type {
   HouseTransaction,
   BoardingRosterItem,
   WeekendLeaveRequest,
+  AuditLogEntry,
 } from "../types";
 
 export const MOCK_METRICS: DashboardMetrics = {
@@ -21,6 +22,17 @@ export const MOCK_METRICS: DashboardMetrics = {
   activeRequests: 14,
   csiIndex: 4.88,
   attendanceRate: 96.4,
+  dauCount: 1120,
+  dauPercentage: 84.5,
+  slaComplianceRate: 94.8,
+  urgentRequestsCount: 2,
+  meshSyncStatus: "SYNCED",
+  meshLastSyncTime: "Сегодня, 08:30",
+  apiLatencyMs: 24,
+  systemUptime: "99.98%",
+  canteenOrdersToday: 840,
+  scheduleCoverageRate: 100,
+  boardingPresentRate: 98.6,
 };
 
 export const MOCK_WEEKLY_ACTIVITY: ActivityPoint[] = [
@@ -408,5 +420,87 @@ export const MOCK_LEAVE_REQUESTS: WeekendLeaveRequest[] = [
     status: "PENDING",
     guardianConfirmed: true,
     createdAt: "2026-11-03T09:30:00Z",
+  },
+];
+
+export const MOCK_AUDIT_LOGS: AuditLogEntry[] = [
+  {
+    id: "audit-1",
+    userId: "usr-admin-1",
+    userEmail: "admin@primakov.school",
+    userName: "Александр Москалевич",
+    action: "UPDATE_SCHEDULE",
+    entity: "SCHEDULE",
+    entityId: "lesson-302",
+    details: {
+      lesson: "Физика 10-А",
+      change: "Назначена замена: Соколова Е. -> Виноградов М.",
+      room: "Кабинет 302",
+    },
+    ipAddress: "185.221.198.242",
+    createdAt: "2026-11-04T07:45:12Z",
+  },
+  {
+    id: "audit-2",
+    userId: "usr-admin-1",
+    userEmail: "admin@primakov.school",
+    userName: "Александр Москалевич",
+    action: "UPDATE_REQUEST",
+    entity: "REQUEST",
+    entityId: "req-1",
+    details: {
+      title: "Не работает проектор в 101",
+      status: "IN_PROGRESS",
+      assignee: "Иван Иванов (IT)",
+    },
+    ipAddress: "185.221.198.242",
+    createdAt: "2026-11-04T08:15:30Z",
+  },
+  {
+    id: "audit-3",
+    userId: "usr-admin-1",
+    userEmail: "admin@primakov.school",
+    userName: "Александр Москалевич",
+    action: "CREATE_ANNOUNCEMENT",
+    entity: "ANNOUNCEMENT",
+    entityId: "ann-4",
+    details: {
+      title: "День открытых дверей и олимпиада Primakov Digital",
+      category: "Кампус",
+    },
+    ipAddress: "185.221.198.242",
+    createdAt: "2026-11-04T09:00:00Z",
+  },
+  {
+    id: "audit-4",
+    userId: "usr-admin-2",
+    userEmail: "dean@primakov.school",
+    userName: "Татьяна Воронина",
+    action: "APPROVE_LEAVE",
+    entity: "BOARDING",
+    entityId: "leave-1",
+    details: {
+      student: "Екатерина Попова (11-А)",
+      departure: "06.11.2026 17:00",
+      return: "08.11.2026 20:00",
+    },
+    ipAddress: "194.85.12.33",
+    createdAt: "2026-11-04T10:20:45Z",
+  },
+  {
+    id: "audit-5",
+    userId: "usr-admin-1",
+    userEmail: "admin@primakov.school",
+    userName: "Александр Москалевич",
+    action: "IMPORT_MESH_GRADES",
+    entity: "GRADE",
+    entityId: "batch-mesh-q1",
+    details: {
+      period: "1-й триместр 2026",
+      gradesCount: 340,
+      studentsCount: 85,
+    },
+    ipAddress: "185.221.198.242",
+    createdAt: "2026-11-04T11:10:00Z",
   },
 ];

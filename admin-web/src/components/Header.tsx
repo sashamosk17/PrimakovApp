@@ -10,6 +10,7 @@ interface HeaderProps {
   urgentRequests?: ServiceRequest[];
   onSelectRequest?: (req: ServiceRequest) => void;
   onNavigateTab?: (tab: string) => void;
+  onToggleMobileMenu?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -19,6 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
   adminEmail = "admin@primakov.school",
   urgentRequests = [],
   onNavigateTab,
+  onToggleMobileMenu,
 }) => {
   const { language, setLanguage, t } = useLanguage();
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
@@ -38,13 +40,21 @@ export const Header: React.FC<HeaderProps> = ({
   const urgentCount = urgentRequests.filter((r) => r.status !== "COMPLETED").length;
 
   return (
-    <header className="flex justify-between items-center w-full px-8 py-4 sticky top-0 bg-white/95 backdrop-blur-lg z-40 border-b border-slate-100 shadow-xs">
-      <div className="flex items-center gap-4">
-        <h2 className="text-base font-extrabold tracking-widest text-red-900 uppercase font-headline">
-          {t("header.title")}
-        </h2>
-        <div className="hidden md:flex bg-slate-100/70 rounded-full px-4 py-1.5 items-center gap-2 w-80 ml-4 border border-transparent focus-within:border-primary/40 focus-within:bg-white transition-all">
-          <span className="material-symbols-outlined text-slate-400 text-sm">
+    <header className="flex justify-between items-center w-full px-4 sm:px-8 py-3.5 sticky top-0 bg-white/95 backdrop-blur-lg z-40 border-b border-slate-100 shadow-xs">
+      {/* Search Input with Mobile Hamburger */}
+      <div className="flex items-center gap-2.5 flex-1 max-w-md">
+        {onToggleMobileMenu && (
+          <button
+            onClick={onToggleMobileMenu}
+            className="lg:hidden p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer shrink-0"
+            title="Меню навигации"
+            aria-label="Открыть меню"
+          >
+            <span className="material-symbols-outlined text-2xl">menu</span>
+          </button>
+        )}
+        <div className="flex bg-slate-100/80 dark:bg-slate-800/70 rounded-full px-4 py-2 items-center gap-2.5 w-full border border-slate-200/60 dark:border-slate-700/60 focus-within:border-red-900/40 dark:focus-within:border-red-500/40 focus-within:bg-white dark:focus-within:bg-slate-800 transition-all shadow-xs">
+          <span className="material-symbols-outlined text-slate-400 text-base">
             search
           </span>
           <input
@@ -52,15 +62,19 @@ export const Header: React.FC<HeaderProps> = ({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={t("header.searchPlaceholder")}
-            className="bg-transparent border-none text-xs focus:ring-0 focus:outline-none w-full placeholder:text-slate-400 font-body"
+            className="bg-transparent border-none text-xs text-slate-800 dark:text-slate-200 focus:ring-0 focus:outline-none w-full placeholder:text-slate-400 font-body"
           />
-          {searchQuery && (
+          {searchQuery ? (
             <button
               onClick={() => onSearchChange("")}
-              className="text-slate-400 hover:text-slate-600 text-xs"
+              className="text-slate-400 hover:text-slate-600 text-xs px-1 cursor-pointer"
             >
               ✕
             </button>
+          ) : (
+            <span className="text-[10px] font-semibold text-slate-400 bg-slate-200/70 dark:bg-slate-700 px-1.5 py-0.5 rounded font-mono">
+              ⌘K
+            </span>
           )}
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { IScheduleRepository } from "../../domain/repositories/IScheduleRepository";
 import { Lesson } from "../../domain/entities/Lesson";
 import { Result } from "../../shared/Result";
+import { ScheduleCollisionGuard } from "../../domain/services/ScheduleCollisionGuard";
 
 export interface SubstituteTeacherInput {
   scheduleId?: string;
@@ -10,7 +11,10 @@ export interface SubstituteTeacherInput {
 }
 
 export class SubstituteTeacherUseCase {
-  constructor(private readonly scheduleRepo: IScheduleRepository) {}
+  constructor(
+    private readonly scheduleRepo: IScheduleRepository,
+    private readonly collisionGuard: ScheduleCollisionGuard = new ScheduleCollisionGuard()
+  ) {}
 
   async execute(input: SubstituteTeacherInput): Promise<Result<Lesson>> {
     if (!input.lessonId || !input.newTeacherId) {
@@ -22,13 +26,13 @@ export class SubstituteTeacherUseCase {
       : undefined;
 
     // If schedule not found directly by scheduleId, scan all schedules
+    const allRes = await this.scheduleRepo.getAll();
+    const allSchedules = allRes.isSuccess && allRes.value ? allRes.value : [];
+
     if (!schedule) {
-      const allRes = await this.scheduleRepo.getAll();
-      if (allRes.isSuccess && allRes.value) {
-        schedule = allRes.value.find((s) =>
-          s.lessons.some((l) => l.id === input.lessonId)
-        );
-      }
+      schedule = allSchedules.find((s) =>
+        s.lessons.some((l) => l.id === input.lessonId)
+      );
     }
 
     if (!schedule) {
@@ -41,6 +45,24 @@ export class SubstituteTeacherUseCase {
     }
 
     const oldLesson = schedule.lessons[lessonIndex];
+
+    // Check collision guard for the new substitute teacher (checking teacher availability)
+    const collisionCheck = this.collisionGuard.validate({
+      date: schedule.date,
+      timeSlot: oldLesson.timeSlot,
+      teacherId: input.newTeacherId,
+      room: oldLesson.room,
+      groupId: schedule.groupId,
+      excludeLessonId: oldLesson.id,
+      checkGroup: false,
+      checkRoom: false,
+      allSchedules: allSchedules.length > 0 ? allSchedules : [schedule],
+    });
+
+    if (collisionCheck.isFailure) {
+      return Result.fail(collisionCheck.error || "Schedule collision detected");
+    }
+
     const updatedHomeworkDesc = input.comment
       ? `${oldLesson.homeworkDescription ? oldLesson.homeworkDescription + " | " : ""}[Замена: ${input.comment}]`
       : oldLesson.homeworkDescription;
@@ -67,4 +89,3 @@ export class SubstituteTeacherUseCase {
     return Result.ok(updatedLesson);
   }
 }
-

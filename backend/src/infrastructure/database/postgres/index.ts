@@ -18,4 +18,5 @@ export { PostgresDeadlineNotificationLogRepository } from "./PostgresDeadlineNot
 export { PostgresGradeRepository } from "./PostgresGradeRepository";
 export { PostgresHouseRepository } from "./PostgresHouseRepository";
 export { PostgresBoardingRepository } from "./PostgresBoardingRepository";
+export { PostgresAuditRepository } from "./PostgresAuditRepository";
 export { getPool, closePool, testConnection, query, getClient } from "./connection";

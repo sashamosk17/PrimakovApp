@@ -29,66 +29,11 @@ import '../../providers/locale_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-// Mock data providers
-final mockNewsListProvider = Provider<List<News>>((ref) {
-  return [
-    News(
-      id: '1',
-      title: 'Открытие новой лаборатории робототехники в следующую субботу',
-      description: 'Приглашаем родителей на торжественную презентацию инновационных проектов учащихся гимназии.',
-      imageUrl: null,
-      createdAt: DateTime.now().toIso8601String(),
-    ),
-    News(
-      id: '2',
-      title: 'Весенний концерт состоится 25 апреля',
-      description: 'Ученики представят музыкальные номера и театральные постановки. Начало в 18:00 в актовом зале.',
-      imageUrl: null,
-      createdAt: DateTime.now().toIso8601String(),
-    ),
-    News(
-      id: '3',
-      title: 'Экскурсия в музей космонавтики',
-      description: 'Для учеников 8-10 классов организована экскурсия. Запись у классных руководителей до 20 апреля.',
-      imageUrl: null,
-      createdAt: DateTime.now().toIso8601String(),
-    ),
-    News(
-      id: '4',
-      title: 'Спортивные соревнования между классами',
-      description: 'Приглашаем всех на межклассные соревнования по баскетболу и волейболу. Начало 22 апреля в 15:00.',
-      imageUrl: null,
-      createdAt: DateTime.now().toIso8601String(),
-    ),
-    News(
-      id: '5',
-      title: 'День открытых дверей для будущих первоклассников',
-      description: 'Родители будущих учеников могут познакомиться с гимназией и педагогами. Регистрация на сайте.',
-      imageUrl: null,
-      createdAt: DateTime.now().toIso8601String(),
-    ),
-    News(
-      id: '6',
-      title: 'Научная конференция "Молодые исследователи"',
-      description: 'Ученики 9-11 классов представят свои научные проекты. Лучшие работы будут отправлены на городской конкурс.',
-      imageUrl: null,
-      createdAt: DateTime.now().toIso8601String(),
-    ),
-  ];
-});
-
-final mockQuoteProvider = Provider<Quote>((ref) {
+final quoteProvider = Provider<Quote>((ref) {
   return Quote(
     id: '1',
-    text: 'Образование — это самое мощное оружие, которое вы можете использовать, чтобы изменить мир.',
-    author: 'Нельсон Мандела',
-  );
-});
-
-final mockCafeteriaProvider = Provider<CafeteriaInfo>((ref) {
-  return CafeteriaInfo(
-    balance: 1450.0,
-    todayMenu: 'Паста Болоньезе',
+    text: 'Учиться побеждать, оставаясь человеком — главная цель гимназиста.',
+    author: 'Гимназия им. Е.М. Примакова',
   );
 });
 
@@ -1337,7 +1282,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildQuoteCard() {
     final loc = AppLocalizations.of(context);
-    final quote = ref.watch(mockQuoteProvider);
+    final quote = ref.watch(quoteProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -1756,19 +1701,14 @@ class _NewsCarouselState extends ConsumerState<_NewsCarousel> {
   @override
   Widget build(BuildContext context) {
     final announcementState = ref.watch(announcementProvider);
-    final List<News> newsList;
-    if (announcementState.items.isNotEmpty) {
-      newsList = announcementState.items
-          .map((a) => News(
-                id: a.id,
-                title: a.title,
-                description: a.content,
-                createdAt: a.createdAt,
-              ))
-          .toList();
-    } else {
-      newsList = ref.watch(mockNewsListProvider);
-    }
+    final List<News> newsList = announcementState.items
+        .map((a) => News(
+              id: a.id,
+              title: a.title,
+              description: a.content,
+              createdAt: a.createdAt,
+            ))
+        .toList();
     final loc = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final safeIndex = newsList.isEmpty ? 0 : _currentPage.clamp(0, newsList.length - 1);

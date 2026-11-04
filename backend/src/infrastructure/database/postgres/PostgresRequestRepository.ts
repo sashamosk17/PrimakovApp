@@ -22,7 +22,7 @@ export class PostgresRequestRepository implements IRequestRepository {
     try {
       const query = `
         SELECT id, type, title, description, status, priority, creator_id, assignee_id,
-               room_id, created_at, updated_at, completed_at, notes
+               room_id, created_at, updated_at, completed_at, notes, sla_deadline_at, sla_breached
         FROM requests
         ORDER BY priority DESC, created_at DESC
       `;
@@ -41,7 +41,7 @@ export class PostgresRequestRepository implements IRequestRepository {
     try {
       const query = `
         SELECT id, type, title, description, status, priority, creator_id, assignee_id,
-               room_id, created_at, updated_at, completed_at, notes
+               room_id, created_at, updated_at, completed_at, notes, sla_deadline_at, sla_breached
         FROM requests
         WHERE id = $1
       `;
@@ -64,7 +64,7 @@ export class PostgresRequestRepository implements IRequestRepository {
     try {
       const query = `
         SELECT id, type, title, description, status, priority, creator_id, assignee_id,
-               room_id, created_at, updated_at, completed_at, notes
+               room_id, created_at, updated_at, completed_at, notes, sla_deadline_at, sla_breached
         FROM requests
         WHERE creator_id = $1
         ORDER BY created_at DESC
@@ -84,7 +84,7 @@ export class PostgresRequestRepository implements IRequestRepository {
     try {
       const query = `
         SELECT id, type, title, description, status, priority, creator_id, assignee_id,
-               room_id, created_at, updated_at, completed_at, notes
+               room_id, created_at, updated_at, completed_at, notes, sla_deadline_at, sla_breached
         FROM requests
         WHERE assignee_id = $1
         ORDER BY priority DESC, created_at ASC
@@ -104,7 +104,7 @@ export class PostgresRequestRepository implements IRequestRepository {
     try {
       const query = `
         SELECT id, type, title, description, status, priority, creator_id, assignee_id,
-               room_id, created_at, updated_at, completed_at, notes
+               room_id, created_at, updated_at, completed_at, notes, sla_deadline_at, sla_breached
         FROM requests
         WHERE status = $1
         ORDER BY priority DESC, created_at ASC
@@ -124,7 +124,7 @@ export class PostgresRequestRepository implements IRequestRepository {
     try {
       const query = `
         SELECT id, type, title, description, status, priority, creator_id, assignee_id,
-               room_id, created_at, updated_at, completed_at, notes
+               room_id, created_at, updated_at, completed_at, notes, sla_deadline_at, sla_breached
         FROM requests
         WHERE type = $1
         ORDER BY priority DESC, created_at DESC
@@ -144,7 +144,7 @@ export class PostgresRequestRepository implements IRequestRepository {
     try {
       const query = `
         SELECT id, type, title, description, status, priority, creator_id, assignee_id,
-               room_id, created_at, updated_at, completed_at, notes
+               room_id, created_at, updated_at, completed_at, notes, sla_deadline_at, sla_breached
         FROM requests
         WHERE room_id = $1
         ORDER BY created_at DESC
@@ -164,7 +164,7 @@ export class PostgresRequestRepository implements IRequestRepository {
     try {
       const query = `
         SELECT id, type, title, description, status, priority, creator_id, assignee_id,
-               room_id, created_at, updated_at, completed_at, notes
+               room_id, created_at, updated_at, completed_at, notes, sla_deadline_at, sla_breached
         FROM requests
         WHERE status NOT IN ('COMPLETED', 'CANCELLED')
         ORDER BY priority DESC, created_at ASC
@@ -184,8 +184,9 @@ export class PostgresRequestRepository implements IRequestRepository {
     try {
       const query = `
         INSERT INTO requests (id, type, title, description, status, priority, creator_id,
-                             assignee_id, room_id, created_at, updated_at, completed_at, notes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                             assignee_id, room_id, created_at, updated_at, completed_at, notes,
+                             sla_deadline_at, sla_breached)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       `;
 
       await this.pool.query(query, [
@@ -202,6 +203,8 @@ export class PostgresRequestRepository implements IRequestRepository {
         request.updatedAt,
         request.completedAt || null,
         request.notes || null,
+        request.slaDeadlineAt || null,
+        request.slaBreached ?? false,
       ]);
 
       return Result.ok();
@@ -224,6 +227,8 @@ export class PostgresRequestRepository implements IRequestRepository {
             room_id = $8,
             completed_at = $9,
             notes = $10,
+            sla_deadline_at = $11,
+            sla_breached = $12,
             updated_at = NOW()
         WHERE id = $1
       `;
@@ -239,6 +244,8 @@ export class PostgresRequestRepository implements IRequestRepository {
         request.roomId || null,
         request.completedAt || null,
         request.notes || null,
+        request.slaDeadlineAt || null,
+        request.slaBreached ?? false,
       ]);
 
       return Result.ok();
@@ -266,6 +273,8 @@ export class PostgresRequestRepository implements IRequestRepository {
       updatedAt: new Date(row.updated_at),
       completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
       notes: row.notes,
+      slaDeadlineAt: row.sla_deadline_at ? new Date(row.sla_deadline_at) : undefined,
+      slaBreached: Boolean(row.sla_breached),
     };
   }
 }

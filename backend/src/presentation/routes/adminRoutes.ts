@@ -10,7 +10,9 @@ import { IScheduleRepository } from "../../domain/repositories/IScheduleReposito
 import { ICanteenMenuRepository } from "../../domain/repositories/ICanteenMenuRepository";
 import { IGradeRepository } from "../../domain/repositories/IGradeRepository";
 import { IBoardingRepository } from "../../domain/repositories/IBoardingRepository";
+import { IAuditRepository } from "../../domain/repositories/IAuditRepository";
 import { authMiddleware } from "../middleware/authMiddleware";
+import { createAuditMiddleware } from "../middleware/auditMiddleware";
 import { validate } from "../middleware/validationMiddleware";
 import { AuthenticatedRequest } from "../types";
 import { AuthorizationError } from "../../shared/errors/AuthorizationError";
@@ -25,6 +27,7 @@ export interface AdminRoutesDependencies {
   canteenMenuRepository?: ICanteenMenuRepository;
   gradeRepository?: IGradeRepository;
   boardingRepository?: IBoardingRepository;
+  auditRepository?: IAuditRepository;
 }
 
 const CreateUserSchema = z.object({
@@ -150,7 +153,8 @@ export function adminRoutes(deps: AdminRoutesDependencies): Router {
     deps.scheduleRepository,
     deps.canteenMenuRepository,
     deps.gradeRepository,
-    deps.boardingRepository
+    deps.boardingRepository,
+    deps.auditRepository
   );
 
   // 1. Must be authenticated
@@ -164,8 +168,16 @@ export function adminRoutes(deps: AdminRoutesDependencies): Router {
     next();
   });
 
+  // 3. Universal Audit Middleware for all mutating admin actions
+  if (deps.auditRepository) {
+    router.use(createAuditMiddleware(deps.auditRepository));
+  }
+
   // Dashboard Overview
   router.get("/dashboard", controller.getDashboard);
+
+  // Audit Logs (Security & Compliance)
+  router.get("/audit-logs", controller.getAuditLogs);
 
   // Users Management
   router.get("/users", controller.getUsers);

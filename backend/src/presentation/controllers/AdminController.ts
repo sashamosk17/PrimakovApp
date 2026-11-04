@@ -45,6 +45,9 @@ import { CreateAnnouncementUseCase } from "../../application/announcement/Create
 import { DeleteAnnouncementUseCase } from "../../application/announcement/DeleteAnnouncementUseCase";
 import { UpdateAnnouncementUseCase } from "../../application/announcement/UpdateAnnouncementUseCase";
 import { GetUserProfileUseCase } from "../../application/user/GetUserProfileUseCase";
+import { IAuditRepository } from "../../domain/repositories/IAuditRepository";
+import { MockAuditRepository } from "../../infrastructure/database/memory/MockAuditRepository";
+import { GetAuditLogsUseCase } from "../../application/admin/GetAuditLogsUseCase";
 import { Role } from "../../shared/types";
 
 export class AdminController {
@@ -89,6 +92,8 @@ export class AdminController {
   private canteenMenuRepo: ICanteenMenuRepository;
   private gradeRepo: IGradeRepository;
   private boardingRepo: IBoardingRepository;
+  private auditRepo: IAuditRepository;
+  private getAuditLogsUseCase: GetAuditLogsUseCase;
 
   constructor(
     private readonly userRepo: IUserRepository,
@@ -99,25 +104,30 @@ export class AdminController {
     scheduleRepository?: IScheduleRepository,
     canteenMenuRepository?: ICanteenMenuRepository,
     gradeRepository?: IGradeRepository,
-    boardingRepository?: IBoardingRepository
+    boardingRepository?: IBoardingRepository,
+    auditRepository?: IAuditRepository
   ) {
+    this.subjectRepo = subjectRepository || new MockSubjectRepository();
+    this.scheduleRepo = scheduleRepository || new MockScheduleRepository();
+    this.canteenMenuRepo = canteenMenuRepository || new MockCanteenMenuRepository();
+    this.gradeRepo = gradeRepository || new MockGradeRepository();
+    this.boardingRepo = boardingRepository || new MockBoardingRepository();
+    this.auditRepo = auditRepository || new MockAuditRepository();
+    this.getAuditLogsUseCase = new GetAuditLogsUseCase(this.auditRepo);
+
     this.getDashboardStatsUseCase = new AdminGetDashboardStatsUseCase(
       userRepo,
       requestRepo,
       ratingRepo,
-      announcementRepo
+      announcementRepo,
+      this.scheduleRepo,
+      this.boardingRepo
     );
     this.getUsersUseCase = new AdminGetUsersUseCase(userRepo);
     this.createUserUseCase = new AdminCreateUserUseCase(userRepo);
     this.updateUserStatusUseCase = new AdminUpdateUserStatusUseCase(userRepo);
     this.deleteUserUseCase = new AdminDeleteUserUseCase(userRepo);
     this.batchImportUsersUseCase = new AdminBatchImportUsersUseCase(userRepo);
-
-    this.subjectRepo = subjectRepository || new MockSubjectRepository();
-    this.scheduleRepo = scheduleRepository || new MockScheduleRepository();
-    this.canteenMenuRepo = canteenMenuRepository || new MockCanteenMenuRepository();
-    this.gradeRepo = gradeRepository || new MockGradeRepository();
-    this.boardingRepo = boardingRepository || new MockBoardingRepository();
 
     this.getSubjectsUseCase = new GetSubjectsUseCase(this.subjectRepo);
     this.createSubjectUseCase = new CreateSubjectUseCase(this.subjectRepo);
@@ -151,6 +161,24 @@ export class AdminController {
   getDashboard = async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const result = await this.getDashboardStatsUseCase.execute();
+      if (result.isFailure) {
+        return res.status(400).json({ status: "error", error: { message: result.error } });
+      }
+      return res.status(200).json({ status: "success", data: result.value });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getAuditLogs = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+      const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
+      const entity = req.query.entity as string | undefined;
+      const action = req.query.action as string | undefined;
+      const userId = req.query.userId as string | undefined;
+
+      const result = await this.getAuditLogsUseCase.execute({ limit, offset, entity, action, userId });
       if (result.isFailure) {
         return res.status(400).json({ status: "error", error: { message: result.error } });
       }

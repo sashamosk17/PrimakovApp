@@ -46,11 +46,14 @@ import {
   PostgresGradeRepository,
   PostgresHouseRepository,
   PostgresBoardingRepository,
+  PostgresAuditRepository,
 } from "./infrastructure/database/postgres";
 import { MockNotificationPreferencesRepository } from "./infrastructure/database/memory/MockNotificationPreferencesRepository";
 import { MockPushNotificationService } from "./infrastructure/external-services/MockPushNotificationService";
 import { ProcessDeadlineNotificationsUseCase } from "./application/deadline/ProcessDeadlineNotificationsUseCase";
 import { DeadlineNotificationWorker } from "./application/deadline/DeadlineNotificationWorker";
+import { ServiceDeskSLAWorker } from "./application/request/ServiceDeskSLAWorker";
+import { BoardingCurfewWorker } from "./application/boarding/BoardingCurfewWorker";
 
 async function startServer() {
   try {
@@ -78,6 +81,7 @@ async function startServer() {
     const gradeRepository = new PostgresGradeRepository(pool);
     const houseRepository = new PostgresHouseRepository(pool);
     const boardingRepository = new PostgresBoardingRepository(pool);
+    const auditRepository = new PostgresAuditRepository(pool);
     const notificationPreferencesRepository = new MockNotificationPreferencesRepository();
     const pushNotificationService = new MockPushNotificationService();
 
@@ -90,6 +94,12 @@ async function startServer() {
 
     const deadlineNotificationWorker = new DeadlineNotificationWorker(processDeadlineNotificationsUseCase);
     deadlineNotificationWorker.start();
+
+    const slaWorker = new ServiceDeskSLAWorker(requestRepository, auditRepository);
+    slaWorker.start(60000);
+
+    const boardingCurfewWorker = new BoardingCurfewWorker(boardingRepository, auditRepository);
+    boardingCurfewWorker.start(300000); // Check every 5 minutes
 
     const app = express();
 
@@ -168,6 +178,7 @@ async function startServer() {
         canteenMenuRepository,
         gradeRepository,
         boardingRepository,
+        auditRepository,
       })
     );
 
@@ -195,6 +206,9 @@ async function startServer() {
     // Graceful shutdown
     const shutdown = async () => {
       console.log("\nShutting down gracefully...");
+      boardingCurfewWorker.stop();
+      slaWorker.stop();
+      deadlineNotificationWorker.stop();
       server.close(async () => {
         await closeDatabasePool();
         process.exit(0);

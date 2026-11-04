@@ -29,6 +29,79 @@ async function executeWithRetry<T>(
   throw new Error('Max retries exceeded');
 }
 
+export function splitSqlStatements(sql: string): string[] {
+  const statements: string[] = [];
+  let current = "";
+  let inString = false;
+  let inDollarQuote = false;
+  let dollarTag = "";
+
+  for (let i = 0; i < sql.length; i++) {
+    const char = sql[i];
+    const nextChar = sql[i + 1] || "";
+
+    // Handle single-line comment (-- comment\n)
+    if (!inString && !inDollarQuote && char === "-" && nextChar === "-") {
+      while (i < sql.length && sql[i] !== "\n") {
+        current += sql[i];
+        i++;
+      }
+      if (i < sql.length) current += sql[i];
+      continue;
+    }
+
+    // Handle dollar quoting ($$...$$ or $tag$...$tag$)
+    if (!inString && char === "$") {
+      const remaining = sql.slice(i);
+      const match = remaining.match(/^(\$[a-zA-Z0-9_]*\$)/);
+      if (match) {
+        const tag = match[1];
+        if (!inDollarQuote) {
+          inDollarQuote = true;
+          dollarTag = tag;
+        } else if (dollarTag === tag) {
+          inDollarQuote = false;
+          dollarTag = "";
+        }
+        current += tag;
+        i += tag.length - 1;
+        continue;
+      }
+    }
+
+    // Handle standard single quotes ('...')
+    if (!inDollarQuote && char === "'") {
+      if (inString && nextChar === "'") {
+        current += "''";
+        i++;
+        continue;
+      }
+      inString = !inString;
+      current += char;
+      continue;
+    }
+
+    // Handle semicolon delimiter outside quotes
+    if (!inString && !inDollarQuote && char === ";") {
+      const trimmed = current.trim();
+      if (trimmed.length > 0) {
+        statements.push(trimmed);
+      }
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  const trimmed = current.trim();
+  if (trimmed.length > 0) {
+    statements.push(trimmed);
+  }
+
+  return statements;
+}
+
 let migrationRunning = false;
 let lastMigrationAttempt = 0;
 
@@ -133,10 +206,7 @@ export async function runMigrations(pool: Pool): Promise<void> {
           await migrationClient.query("SET statement_timeout = '300000'"); // 5 minutes
           await migrationClient.query("BEGIN");
 
-          const statements = sql
-            .split(';')
-            .map(stmt => stmt.trim())
-            .filter(stmt => stmt.length > 0);
+          const statements = splitSqlStatements(sql);
 
           console.log(`  → Executing ${statements.length} statement(s)...`);
 

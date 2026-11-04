@@ -20,7 +20,8 @@
 - Навигация по кампусу (поиск аудиторий по корпусам, этажам и координатам).
 - Сервис внутренних заявок (IT-поддержка, хозяйственная служба, клининг).
 - Ролевая модель доступа (RBAC) с JWT-аутентификацией.
-- Веб-панель администратора на React 19 с полным контролем абсолютно всех разделов и поддержкой двуязычия (RU/EN).
+- Веб-панель администратора на React 19 (Primakov School Admin Web): дашборд здоровья продукта (System Pulse, DAU, посещаемость, SLA, CSI, Alerts), адаптивная мобильная версия (Drawer + Bottom Nav Bar) и поддержка двуязычия (RU/EN).
+- Архитектурная концепция мобильной админки (PWA + нативный Flutter модуль): см. [docs/mobile_admin_architecture_and_design.md](mobile_admin_architecture_and_design.md).
 
 ---
 
@@ -56,7 +57,7 @@
 | **Типографика** | Google Fonts Manrope & Inter | Локальные шрифты | Корпоративная типографика Гимназии им. Примакова |
 | **Внешние ссылки** | url_launcher | `^6.2.0` | Переход по ссылкам из Stories, контактов и регламентов |
 
-### 2.3. Frontend (Веб-панель администратора - Desktop Web)
+### 2.3. Frontend (Веб-панель администратора — Primakov School Admin Web: Desktop & Mobile)
 | Компонент / Слой | Технология | Версия / Требования | Назначение |
 | :--- | :--- | :--- | :--- |
 | **Фреймворк** | React | `^19.3.x` | Компонентный интерфейс панели управления |
@@ -210,6 +211,8 @@ Primakov_App/
 | Документ | Основное содержание | Целевая аудитория |
 | :--- | :--- | :--- |
 | [docs/README.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/README.md) | Назначение, стек технологий, инструкции сборки и развертывания, алгоритм навигации LLM | Разработчики, DevOps, LLM |
+| [docs/SERVER_UPDATE_GUIDE.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/SERVER_UPDATE_GUIDE.md) | Пошаговое руководство по обновлению сервера (v0.5.8), накат миграций 028/029, сидинг данных и проверка воркеров | DevOps, Backend Devs, QA |
+| [docs/DEPLOYMENT_GUIDE.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/DEPLOYMENT_GUIDE.md) | Инфраструктура VPS (185.221.198.242), Docker Compose, бэкапы, порты и SSL | DevOps, SysAdmins, LLM |
 | [docs/features.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/features.md) | Полный реестр готовых и планируемых фич, матрицы MoSCoW и RICE, релизная дорожная карта | Product Managers, Заказчик, LLM |
 | [docs/architecture.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/architecture.md) | Чистая архитектура (DDD), схемы взаимодействия, Mermaid C4/Sequence диаграммы, ERD базы данных, 13 Bounded Contexts, алгоритмические решения | Архитекторы, Senior Devs, LLM |
 | [docs/frontend.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/frontend.md) | Полная декомпозиция Flutter и Web Admin: 21 экран, 14 Riverpod-провайдеров, 10 кастомных виджетов, дизайн-система, полный веб-админ центр | Flutter Developers, UI/UX, LLM |
@@ -250,6 +253,7 @@ graph TD
 1. **Первичная загрузка контекста**: Нейросеть сначала считывает [docs/llm_context.xml](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/llm_context.xml). За счет машиночитаемого формата XML с высокой плотностью фактов LLM сразу получает ментальную модель всего репозитория: правила кодогенерации, архитектурные слои, ограничения, перечень компонентов и текущий статус разработки.
 2. **Маршрутизация**: Если задаче требуется детальный контекст, LLM обращается к `docs/README.md` (или карте документации) и точечно подгружает нужный специализированный файл:
    - При вопросах по Flutter, Riverpod, UI-багам или верстке $\rightarrow$ [docs/frontend.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/frontend.md).
+   - При вопросах по архитектуре мобильной панели администратора $\rightarrow$ [docs/mobile_admin_architecture_and_design.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/mobile_admin_architecture_and_design.md).
    - При вопросах по таблицам, внешним ключам, индексам или миграциям $\rightarrow$ [docs/database.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/database.md).
    - При добавлении или изменении эндпоинтов, DTO или кодов ошибок $\rightarrow$ [docs/api_and_interfaces.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/api_and_interfaces.md).
    - При проверке архитектурных границ и паттернов Clean Architecture $\rightarrow$ [docs/architecture.md](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/docs/architecture.md).
