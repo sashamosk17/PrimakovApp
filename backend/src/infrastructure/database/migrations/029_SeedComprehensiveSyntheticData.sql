@@ -12,9 +12,14 @@ UPDATE users SET
 WHERE role = 'STUDENT' AND (house IS NULL OR house = '');
 
 -- Boarding students cohort in 10-А and 11-А
+WITH numbered_boarding AS (
+  SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn
+  FROM users
+  WHERE group_name IN ('10-А', '11-А') AND role = 'STUDENT'
+)
 UPDATE users SET
   is_boarding = true,
-  room_number = CASE (ROW_NUMBER() OVER (ORDER BY id)) % 6
+  room_number = CASE numbered_boarding.rn % 6
     WHEN 0 THEN '201'
     WHEN 1 THEN '202'
     WHEN 2 THEN '203'
@@ -22,13 +27,20 @@ UPDATE users SET
     WHEN 4 THEN '205'
     ELSE '206'
   END
-WHERE group_name IN ('10-А', '11-А') AND role = 'STUDENT';
+FROM numbered_boarding
+WHERE users.id = numbered_boarding.id;
 
 -- Contacts for users
+WITH numbered_contacts AS (
+  SELECT id, email, ROW_NUMBER() OVER (ORDER BY id) as rn
+  FROM users
+  WHERE phone IS NULL OR phone = ''
+)
 UPDATE users SET
-  phone = '+7 (916) 789-' || LPAD(((ROW_NUMBER() OVER (ORDER BY id)) % 9000 + 1000)::text, 4, '0'),
-  telegram = '@' || LOWER(SPLIT_PART(email, '@', 1))
-WHERE phone IS NULL OR phone = '';
+  phone = '+7 (916) 789-' || LPAD((numbered_contacts.rn % 9000 + 1000)::text, 4, '0'),
+  telegram = '@' || LOWER(SPLIT_PART(numbered_contacts.email, '@', 1))
+FROM numbered_contacts
+WHERE users.id = numbered_contacts.id;
 
 UPDATE users SET
   birth_date = '2009-05-18'
@@ -167,8 +179,8 @@ END $$;
 INSERT INTO weekend_leave_requests (student_id, departure_date, return_date, transport_type, status, guardian_confirmed, created_at)
 SELECT
   id,
-  TO_CHAR(CURRENT_DATE + INTERVAL '2 days', 'YYYY-MM-DD 17:00'),
-  TO_CHAR(CURRENT_DATE + INTERVAL '4 days', 'YYYY-MM-DD 20:00'),
+  TO_CHAR(CURRENT_DATE + INTERVAL '2 days', 'YYYY-MM-DD') || ' 17:00',
+  TO_CHAR(CURRENT_DATE + INTERVAL '4 days', 'YYYY-MM-DD') || ' 20:00',
   'PARENTS',
   'APPROVED',
   true,
@@ -180,8 +192,8 @@ LIMIT 5;
 INSERT INTO weekend_leave_requests (student_id, departure_date, return_date, transport_type, status, guardian_confirmed, created_at)
 SELECT
   id,
-  TO_CHAR(CURRENT_DATE + INTERVAL '3 days', 'YYYY-MM-DD 18:00'),
-  TO_CHAR(CURRENT_DATE + INTERVAL '5 days', 'YYYY-MM-DD 19:30'),
+  TO_CHAR(CURRENT_DATE + INTERVAL '3 days', 'YYYY-MM-DD') || ' 18:00',
+  TO_CHAR(CURRENT_DATE + INTERVAL '5 days', 'YYYY-MM-DD') || ' 19:30',
   'SHUTTLE',
   'PENDING',
   true,

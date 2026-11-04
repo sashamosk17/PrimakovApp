@@ -27,9 +27,29 @@ echo "--> 4. Статус сервисов:"
 docker compose -f $COMPOSE_FILE ps
 
 # 5. Проверяем healthcheck
-echo "--> 5. Проверка ответа бэкенда..."
-sleep 5
-docker compose -f $COMPOSE_FILE exec -T backend wget -qO- http://127.0.0.1:3000/health || echo "Ожидание старта сервиса..."
+echo "--> 5. Проверка ответа бэкенда (ожидание инициализации и накатывания миграций)..."
+ATTEMPTS=0
+MAX_ATTEMPTS=15
+HEALTH_OK=0
 
-echo "=== Развертывание успешно завершено! ==="
+while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
+  sleep 2
+  ATTEMPTS=$((ATTEMPTS+1))
+  if docker compose -f $COMPOSE_FILE exec -T backend wget -qO- http://127.0.0.1:3000/health > /dev/null 2>&1; then
+    HEALTH_OK=1
+    break
+  fi
+  echo "    Попытка $ATTEMPTS/$MAX_ATTEMPTS: сервис запускается..."
+done
+
+if [ $HEALTH_OK -eq 1 ]; then
+  echo "✓ Бэкенд успешно запущен и отвечает на /health!"
+  docker compose -f $COMPOSE_FILE exec -T backend wget -qO- http://127.0.0.1:3000/health
+  echo ""
+  echo "=== Развертывание успешно завершено! ==="
+else
+  echo "❌ Ошибка: бэкенд не ответил на /health за 30 секунд. Последние логи:"
+  docker compose -f $COMPOSE_FILE logs --tail=50 backend
+  exit 1
+fi
 
