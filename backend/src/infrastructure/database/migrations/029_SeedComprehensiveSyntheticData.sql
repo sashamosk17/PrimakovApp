@@ -101,7 +101,31 @@ DECLARE
   v_schedule_id UUID;
   v_day_offset INT;
   v_day_of_week INT;
+  v_teacher_math UUID;
+  v_teacher_rus UUID;
+  v_teacher_phys UUID;
+  v_teacher_eng UUID;
+  v_teacher_cs UUID;
+  v_teacher_lit UUID;
 BEGIN
+  -- Resolve real teachers from users
+  SELECT id INTO v_teacher_math FROM users WHERE role = 'TEACHER' AND (last_name = 'Соколова' OR group_name LIKE '%математ%') LIMIT 1;
+  IF v_teacher_math IS NULL THEN SELECT id INTO v_teacher_math FROM users WHERE role = 'TEACHER' LIMIT 1; END IF;
+
+  SELECT id INTO v_teacher_rus FROM users WHERE role = 'TEACHER' AND (last_name = 'Ковалева' OR group_name LIKE '%словесн%') LIMIT 1;
+  IF v_teacher_rus IS NULL THEN v_teacher_rus := v_teacher_math; END IF;
+
+  SELECT id INTO v_teacher_phys FROM users WHERE role = 'TEACHER' AND (last_name = 'Смирнов' OR group_name LIKE '%естеств%') LIMIT 1;
+  IF v_teacher_phys IS NULL THEN v_teacher_phys := v_teacher_math; END IF;
+
+  SELECT id INTO v_teacher_eng FROM users WHERE role = 'TEACHER' AND (last_name = 'Морозова' OR group_name LIKE '%иностр%') LIMIT 1;
+  IF v_teacher_eng IS NULL THEN v_teacher_eng := v_teacher_math; END IF;
+
+  SELECT id INTO v_teacher_cs FROM users WHERE role = 'TEACHER' AND (last_name = 'Иванов' OR group_name LIKE '%IT%') LIMIT 1;
+  IF v_teacher_cs IS NULL THEN v_teacher_cs := v_teacher_math; END IF;
+
+  v_teacher_lit := v_teacher_rus;
+
   FOR v_group IN SELECT UNNEST(ARRAY['10-А', '10-Б', '11-А', '11-Б']) LOOP
     FOR v_day_offset IN -3..14 LOOP
       v_date := CURRENT_DATE + v_day_offset;
@@ -119,32 +143,32 @@ BEGIN
         VALUES
           (
             gen_random_uuid(), v_schedule_id, 'Алгебра и начала анализа',
-            'a1111111-0001-4000-8000-000000000001', '08:30', '09:15', '305', 'A', 3, true,
+            v_teacher_math, '08:30', '09:15', '305', 'A', 3, true,
             'Параграф 14, номера 14.1-14.8 в тетради', NOW(), NOW()
           ),
           (
             gen_random_uuid(), v_schedule_id, 'Русский язык',
-            'a1111111-0002-4000-8000-000000000002', '09:25', '10:10', '201', 'A', 2, false,
+            v_teacher_rus, '09:25', '10:10', '201', 'A', 2, false,
             NULL, NOW(), NOW()
           ),
           (
             gen_random_uuid(), v_schedule_id, 'Физика',
-            'a1111111-0003-4000-8000-000000000001', '10:20', '11:05', '404', 'A', 4, true,
+            v_teacher_phys, '10:20', '11:05', '404', 'A', 4, true,
             'Задачи 8.4-8.7 на закон сохранения импульса', NOW(), NOW()
           ),
           (
             gen_random_uuid(), v_schedule_id, 'Английский язык',
-            'a1111111-0004-4000-8000-000000000001', '11:25', '12:10', '303', 'A', 3, true,
+            v_teacher_eng, '11:25', '12:10', '303', 'A', 3, true,
             'Эссе: "The Role of AI in Modern Education" (250 слов)', NOW(), NOW()
           ),
           (
             gen_random_uuid(), v_schedule_id, 'Информатика и ИКТ',
-            'a1111111-0005-4000-8000-000000000001', '12:30', '13:15', '501', 'A', 5, false,
+            v_teacher_cs, '12:30', '13:15', '501', 'A', 5, false,
             NULL, NOW(), NOW()
           ),
           (
             gen_random_uuid(), v_schedule_id, 'Литература',
-            'a1111111-0002-4000-8000-000000000001', '13:25', '14:10', '202', 'A', 2, true,
+            v_teacher_lit, '13:25', '14:10', '202', 'A', 2, true,
             'Подготовить анализ поэмы "Двенадцать" А. Блока', NOW(), NOW()
           );
       END IF;
@@ -186,23 +210,46 @@ BEGIN
 END $$;
 
 -- 4. House Cup Point Transactions (Лига Домов)
-INSERT INTO house_point_transactions (house, points, category, reason, awarded_by, student_id, created_at)
-VALUES
-  ('NORTH', 50, 'ACADEMIC', '1-е место на Всероссийской олимпиаде по математике (региональный этап)', 'a1111111-0001-4000-8000-000000000001', 'b1000010-0001-4000-8000-000000000001', NOW() - INTERVAL '1 day'),
-  ('NORTH', 35, 'OLYMPIAD', 'Призерство в олимпиаде по робототехнике и ИИ', 'a1111111-0005-4000-8000-000000000001', 'b1000010-0001-4000-8000-000000000002', NOW() - INTERVAL '2 days'),
-  ('NORTH', 20, 'CHARITY', 'Активное участие в благотворительной ярмарке "Подари тепло"', 'a1111111-0002-4000-8000-000000000001', 'b1000010-0001-4000-8000-000000000003', NOW() - INTERVAL '3 days'),
+DO $$
+DECLARE
+  v_awarded_by UUID;
+  v_student_north UUID;
+  v_student_south UUID;
+  v_student_east UUID;
+  v_student_west UUID;
+BEGIN
+  SELECT id INTO v_awarded_by FROM users WHERE role IN ('TEACHER', 'ADMIN') LIMIT 1;
+  SELECT id INTO v_student_north FROM users WHERE role = 'STUDENT' AND house = 'NORTH' LIMIT 1;
+  SELECT id INTO v_student_south FROM users WHERE role = 'STUDENT' AND house = 'SOUTH' LIMIT 1;
+  SELECT id INTO v_student_east FROM users WHERE role = 'STUDENT' AND house = 'EAST' LIMIT 1;
+  SELECT id INTO v_student_west FROM users WHERE role = 'STUDENT' AND house = 'WEST' LIMIT 1;
 
-  ('SOUTH', 45, 'SPORTS', 'Победа в первенстве гимназии по волейболу среди старших классов', 'a1111111-0006-4000-8000-000000000001', 'b1000010-0001-4000-8000-000000000004', NOW() - INTERVAL '1 day'),
-  ('SOUTH', 30, 'CULTURE', 'Гран-при театрального фестиваля на английском языке', 'a1111111-0004-4000-8000-000000000001', 'b1000010-0001-4000-8000-000000000005', NOW() - INTERVAL '2 days'),
-  ('SOUTH', 25, 'ACADEMIC', 'Публикация исследовательской статьи в сборнике Юных исследователей', 'a1111111-0003-4000-8000-000000000001', 'b1000010-0001-4000-8000-000000000006', NOW() - INTERVAL '4 days'),
+  -- Fallbacks if house not set
+  IF v_student_north IS NULL THEN SELECT id INTO v_student_north FROM users WHERE role = 'STUDENT' LIMIT 1; END IF;
+  IF v_student_south IS NULL THEN v_student_south := v_student_north; END IF;
+  IF v_student_east IS NULL THEN v_student_east := v_student_north; END IF;
+  IF v_student_west IS NULL THEN v_student_west := v_student_north; END IF;
 
-  ('EAST', 60, 'OLYMPIAD', 'Победа в заключительном туре Московской олимпиады школьников по физике', 'a1111111-0003-4000-8000-000000000001', 'b1000011-0001-4000-8000-000000000001', NOW() - INTERVAL '1 day'),
-  ('EAST', 40, 'ACADEMIC', 'Безупречный результат триместрового тестирования по естественным наукам', 'a1111111-0003-4000-8000-000000000002', 'b1000011-0001-4000-8000-000000000002', NOW() - INTERVAL '3 days'),
-  ('EAST', 25, 'CHARITY', 'Организация шефской помощи младшим классам', 'a1111111-0002-4000-8000-000000000002', 'b1000011-0001-4000-8000-000000000003', NOW() - INTERVAL '5 days'),
+  IF v_awarded_by IS NOT NULL AND v_student_north IS NOT NULL THEN
+    INSERT INTO house_point_transactions (house, points, category, reason, awarded_by, student_id, created_at)
+    VALUES
+      ('NORTH', 50, 'ACADEMIC', '1-е место на Всероссийской олимпиаде по математике (региональный этап)', v_awarded_by, v_student_north, NOW() - INTERVAL '1 day'),
+      ('NORTH', 35, 'OLYMPIAD', 'Призерство в олимпиаде по робототехнике и ИИ', v_awarded_by, v_student_north, NOW() - INTERVAL '2 days'),
+      ('NORTH', 20, 'CHARITY', 'Активное участие в благотворительной ярмарке "Подари тепло"', v_awarded_by, v_student_north, NOW() - INTERVAL '3 days'),
 
-  ('WEST', 50, 'SPORTS', 'Золотой кубок межшкольного легкоатлетического кросса', 'a1111111-0006-4000-8000-000000000001', 'b1000011-0001-4000-8000-000000000004', NOW() - INTERVAL '2 days'),
-  ('WEST', 35, 'CULTURE', '1-е место в конкурсе ораторского искусства Primakov Talks', 'a1111111-0002-4000-8000-000000000001', 'b1000011-0001-4000-8000-000000000005', NOW() - INTERVAL '3 days'),
-  ('WEST', 20, 'ACADEMIC', 'Победа в командном хакатоне Primakov Digital', 'a1111111-0005-4000-8000-000000000001', 'b1000011-0001-4000-8000-000000000006', NOW() - INTERVAL '4 days');
+      ('SOUTH', 45, 'SPORTS', 'Победа в первенстве гимназии по волейболу среди старших классов', v_awarded_by, v_student_south, NOW() - INTERVAL '1 day'),
+      ('SOUTH', 30, 'CULTURE', 'Гран-при театрального фестиваля на английском языке', v_awarded_by, v_student_south, NOW() - INTERVAL '2 days'),
+      ('SOUTH', 25, 'ACADEMIC', 'Публикация исследовательской статьи в сборнике Юных исследователей', v_awarded_by, v_student_south, NOW() - INTERVAL '4 days'),
+
+      ('EAST', 60, 'OLYMPIAD', 'Победа в заключительном туре Московской олимпиады школьников по физике', v_awarded_by, v_student_east, NOW() - INTERVAL '1 day'),
+      ('EAST', 40, 'ACADEMIC', 'Безупречный результат триместрового тестирования по естественным наукам', v_awarded_by, v_student_east, NOW() - INTERVAL '3 days'),
+      ('EAST', 25, 'CHARITY', 'Организация шефской помощи младшим классам', v_awarded_by, v_student_east, NOW() - INTERVAL '5 days'),
+
+      ('WEST', 50, 'SPORTS', 'Золотой кубок межшкольного легкоатлетического кросса', v_awarded_by, v_student_west, NOW() - INTERVAL '2 days'),
+      ('WEST', 35, 'CULTURE', '1-е место в конкурсе ораторского искусства Primakov Talks', v_awarded_by, v_student_west, NOW() - INTERVAL '3 days'),
+      ('WEST', 20, 'ACADEMIC', 'Победа в командном хакатоне Primakov Digital', v_awarded_by, v_student_west, NOW() - INTERVAL '4 days');
+  END IF;
+END $$;
 
 -- 5. Boarding Checkins & Weekend Leave Requests
 DO $$
@@ -244,98 +291,142 @@ WHERE is_boarding = true
 OFFSET 5 LIMIT 3;
 
 -- 6. Service Desk Requests
--- Ensure requests table columns exist if 028 was skipped/already marked executed
-ALTER TABLE requests ADD COLUMN IF NOT EXISTS sla_deadline_at TIMESTAMPTZ;
-ALTER TABLE requests ADD COLUMN IF NOT EXISTS sla_breached BOOLEAN NOT NULL DEFAULT false;
-ALTER TABLE requests ADD COLUMN IF NOT EXISTS notes TEXT;
-
 DO $$
+DECLARE
+  v_teacher_1 UUID;
+  v_teacher_2 UUID;
+  v_student_1 UUID;
+  v_admin UUID;
 BEGIN
-  ALTER TABLE requests DROP CONSTRAINT IF EXISTS requests_room_id_fkey;
-  ALTER TABLE requests ALTER COLUMN room_id TYPE VARCHAR(100) USING room_id::text;
-EXCEPTION WHEN OTHERS THEN
-  NULL;
+  SELECT id INTO v_teacher_1 FROM users WHERE role = 'TEACHER' LIMIT 1;
+  SELECT id INTO v_teacher_2 FROM users WHERE role = 'TEACHER' OFFSET 1 LIMIT 1;
+  IF v_teacher_2 IS NULL THEN v_teacher_2 := v_teacher_1; END IF;
+
+  SELECT id INTO v_student_1 FROM users WHERE role = 'STUDENT' LIMIT 1;
+  SELECT id INTO v_admin FROM users WHERE role = 'ADMIN' LIMIT 1;
+  IF v_admin IS NULL THEN v_admin := v_teacher_1; END IF;
+
+  IF v_teacher_1 IS NOT NULL THEN
+    INSERT INTO requests (type, title, description, status, priority, creator_id, assignee_id, room_id, created_at, updated_at, sla_deadline_at, sla_breached, notes)
+    VALUES
+      (
+        'IT', 'Не работает проектор в 305',
+        'Проектор BenQ не реагирует на пульт управления, мигает красная лампа ошибки.',
+        'PENDING', 'HIGH',
+        v_teacher_1, v_admin, '305-A',
+        NOW() - INTERVAL '1 hour', NOW(), NOW() + INTERVAL '3 hours', false, 'Направлен дежурный инженер IT'
+      ),
+      (
+        'MAINTENANCE', 'Сломан доводчик двери в 201',
+        'Дверь громко хлопает при сквозняке, требуется регулировка гидродоводчика.',
+        'IN_PROGRESS', 'MEDIUM',
+        v_teacher_2, v_admin, '201-A',
+        NOW() - INTERVAL '3 hours', NOW(), NOW() + INTERVAL '21 hours', false, 'Запчасти получены со склада'
+      ),
+      (
+        'CLEANING', 'Влажная уборка кабинета химии 404',
+        'После проведения лабораторной работы требуется тщательная влажная уборка.',
+        'COMPLETED', 'MEDIUM',
+        v_teacher_1, v_admin, '404-A',
+        NOW() - INTERVAL '6 hours', NOW(), NOW() + INTERVAL '18 hours', false, 'Уборка выполнена, кабинет проветрен'
+      ),
+      (
+        'IT', 'Замена кабеля HDMI в Атриуме',
+        'Мерцает изображение на главной панели во время репетиции.',
+        'PENDING', 'URGENT',
+        v_student_1, NULL, 'Атриум',
+        NOW() - INTERVAL '30 minutes', NOW(), NOW() + INTERVAL '90 minutes', false, NULL
+      ),
+      (
+        'MAINTENANCE', 'Не работает кондиционер в серверной 502',
+        'Температура поднялась до 26C, требуется проверка внешнего блока.',
+        'IN_PROGRESS', 'URGENT',
+        v_teacher_2, v_admin, '502-A',
+        NOW() - INTERVAL '40 minutes', NOW(), NOW() + INTERVAL '80 minutes', false, 'Техник на объекте'
+      ),
+      (
+        'CLEANING', 'Пополнение антисептиков и мыла на 3 этаже',
+        'В санузлах 3 этажа корпуса А закончилось жидкое мыло.',
+        'COMPLETED', 'LOW',
+        v_student_1, v_admin, '3-й этаж',
+        NOW() - INTERVAL '12 hours', NOW(), NOW() + INTERVAL '36 hours', false, 'Диспенсеры заправлены'
+      );
+  END IF;
 END $$;
 
-INSERT INTO requests (type, title, description, status, priority, creator_id, assignee_id, room_id, created_at, updated_at, sla_deadline_at, sla_breached, notes)
-VALUES
-  (
-    'IT', 'Не работает проектор в 305',
-    'Проектор BenQ не реагирует на пульт управления, мигает красная лампа ошибки.',
-    'PENDING', 'HIGH',
-    'a1111111-0001-4000-8000-000000000001', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), '305-A',
-    NOW() - INTERVAL '1 hour', NOW(), NOW() + INTERVAL '3 hours', false, 'Направлен дежурный инженер IT'
-  ),
-  (
-    'MAINTENANCE', 'Сломан доводчик двери в 201',
-    'Дверь громко хлопает при сквозняке, требуется регулировка гидродоводчика.',
-    'IN_PROGRESS', 'MEDIUM',
-    'a1111111-0002-4000-8000-000000000002', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), '201-A',
-    NOW() - INTERVAL '3 hours', NOW(), NOW() + INTERVAL '21 hours', false, 'Запчасти получены со склада'
-  ),
-  (
-    'CLEANING', 'Влажная уборка кабинета химии 404',
-    'После проведения лабораторной работы требуется тщательная влажная уборка.',
-    'COMPLETED', 'MEDIUM',
-    'a1111111-0003-4000-8000-000000000002', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), '404-A',
-    NOW() - INTERVAL '6 hours', NOW(), NOW() + INTERVAL '18 hours', false, 'Уборка выполнена, кабинет проветрен'
-  ),
-  (
-    'IT', 'Замена кабеля HDMI в Атриуме',
-    'Мерцает изображение на главной панели во время репетиции.',
-    'PENDING', 'URGENT',
-    'a1111111-0004-4000-8000-000000000001', NULL, 'Атриум',
-    NOW() - INTERVAL '30 minutes', NOW(), NOW() + INTERVAL '90 minutes', false, NULL
-  ),
-  (
-    'MAINTENANCE', 'Не работает кондиционер в серверной 502',
-    'Температура поднялась до 26C, требуется проверка внешнего блока.',
-    'IN_PROGRESS', 'URGENT',
-    'a1111111-0005-4000-8000-000000000001', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), '502-A',
-    NOW() - INTERVAL '40 minutes', NOW(), NOW() + INTERVAL '80 minutes', false, 'Техник на объекте'
-  ),
-  (
-    'CLEANING', 'Пополнение антисептиков и мыла на 3 этаже',
-    'В санузлах 3 этажа корпуса А закончилось жидкое мыло.',
-    'COMPLETED', 'LOW',
-    'a1111111-0001-4000-8000-000000000003', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), '3-й этаж',
-    NOW() - INTERVAL '12 hours', NOW(), NOW() + INTERVAL '36 hours', false, 'Диспенсеры заправлены'
-  );
-
 -- 7. Teacher Ratings & Reviews
-INSERT INTO ratings (id, teacher_id, user_id, value, comment, version, ip_hash, created_at, updated_at)
-VALUES
-  (
-    gen_random_uuid(), 'a1111111-0001-4000-8000-000000000001', 'b1000010-0001-4000-8000-000000000001',
-    5, 'Прекрасный преподаватель! Объясняет самые трудные темы математического анализа на понятных жизненных примерах.',
-    1, 'ip-hash-1', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'
-  ),
-  (
-    gen_random_uuid(), 'a1111111-0001-4000-8000-000000000001', 'b1000010-0001-4000-8000-000000000002',
-    5, 'Благодаря Елене Николаевне перестала бояться сложных задач и смогла выиграть региональный этап.',
-    1, 'ip-hash-2', NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'
-  ),
-  (
-    gen_random_uuid(), 'a1111111-0002-4000-8000-000000000001', 'b1000010-0001-4000-8000-000000000003',
-    5, 'Уроки литературы проходят на одном дыхании. Всегда живые дискуссии и разборы произведений.',
-    1, 'ip-hash-3', NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'
-  ),
-  (
-    gen_random_uuid(), 'a1111111-0003-4000-8000-000000000001', 'b1000010-0001-4000-8000-000000000004',
-    5, 'Физика — мой любимый предмет. Лабораторные эксперименты потрясающие!',
-    1, 'ip-hash-4', NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'
-  ),
-  (
-    gen_random_uuid(), 'a1111111-0004-4000-8000-000000000001', 'b1000010-0001-4000-8000-000000000005',
-    4, 'Очень требовательный, но справедливый педагог. Уровень языка заметно вырос.',
-    1, 'ip-hash-5', NOW() - INTERVAL '6 days', NOW() - INTERVAL '6 days'
-  ),
-  (
-    gen_random_uuid(), 'a1111111-0005-4000-8000-000000000001', 'b1000010-0001-4000-8000-000000000006',
-    5, 'Иван Сергеевич учит реальной разработке на Python и алгоритмам, а не просто теории из учебников.',
-    1, 'ip-hash-6', NOW() - INTERVAL '7 days', NOW() - INTERVAL '7 days'
-  )
-ON CONFLICT (teacher_id, user_id) DO NOTHING;
+DO $$
+DECLARE
+  v_teacher_1 UUID;
+  v_teacher_2 UUID;
+  v_teacher_3 UUID;
+  v_teacher_4 UUID;
+  v_teacher_5 UUID;
+  v_student_1 UUID;
+  v_student_2 UUID;
+  v_student_3 UUID;
+  v_student_4 UUID;
+  v_student_5 UUID;
+  v_student_6 UUID;
+BEGIN
+  SELECT id INTO v_teacher_1 FROM users WHERE role = 'TEACHER' LIMIT 1;
+  SELECT id INTO v_teacher_2 FROM users WHERE role = 'TEACHER' OFFSET 1 LIMIT 1;
+  IF v_teacher_2 IS NULL THEN v_teacher_2 := v_teacher_1; END IF;
+  SELECT id INTO v_teacher_3 FROM users WHERE role = 'TEACHER' OFFSET 2 LIMIT 1;
+  IF v_teacher_3 IS NULL THEN v_teacher_3 := v_teacher_1; END IF;
+  SELECT id INTO v_teacher_4 FROM users WHERE role = 'TEACHER' OFFSET 3 LIMIT 1;
+  IF v_teacher_4 IS NULL THEN v_teacher_4 := v_teacher_1; END IF;
+  SELECT id INTO v_teacher_5 FROM users WHERE role = 'TEACHER' OFFSET 4 LIMIT 1;
+  IF v_teacher_5 IS NULL THEN v_teacher_5 := v_teacher_1; END IF;
+
+  SELECT id INTO v_student_1 FROM users WHERE role = 'STUDENT' LIMIT 1;
+  SELECT id INTO v_student_2 FROM users WHERE role = 'STUDENT' OFFSET 1 LIMIT 1;
+  IF v_student_2 IS NULL THEN v_student_2 := v_student_1; END IF;
+  SELECT id INTO v_student_3 FROM users WHERE role = 'STUDENT' OFFSET 2 LIMIT 1;
+  IF v_student_3 IS NULL THEN v_student_3 := v_student_1; END IF;
+  SELECT id INTO v_student_4 FROM users WHERE role = 'STUDENT' OFFSET 3 LIMIT 1;
+  IF v_student_4 IS NULL THEN v_student_4 := v_student_1; END IF;
+  SELECT id INTO v_student_5 FROM users WHERE role = 'STUDENT' OFFSET 4 LIMIT 1;
+  IF v_student_5 IS NULL THEN v_student_5 := v_student_1; END IF;
+  SELECT id INTO v_student_6 FROM users WHERE role = 'STUDENT' OFFSET 5 LIMIT 1;
+  IF v_student_6 IS NULL THEN v_student_6 := v_student_1; END IF;
+
+  IF v_teacher_1 IS NOT NULL AND v_student_1 IS NOT NULL THEN
+    INSERT INTO ratings (id, teacher_id, user_id, value, comment, version, ip_hash, created_at, updated_at)
+    VALUES
+      (
+        gen_random_uuid(), v_teacher_1, v_student_1,
+        5, 'Прекрасный преподаватель! Объясняет самые трудные темы математического анализа на понятных жизненных примерах.',
+        1, 'ip-hash-1', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'
+      ),
+      (
+        gen_random_uuid(), v_teacher_1, v_student_2,
+        5, 'Благодаря педагогу перестала бояться сложных задач и смогла выиграть региональный этап.',
+        1, 'ip-hash-2', NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'
+      ),
+      (
+        gen_random_uuid(), v_teacher_2, v_student_3,
+        5, 'Уроки литературы проходят на одном дыхании. Всегда живые дискуссии и разборы произведений.',
+        1, 'ip-hash-3', NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'
+      ),
+      (
+        gen_random_uuid(), v_teacher_3, v_student_4,
+        5, 'Физика — мой любимый предмет. Лабораторные эксперименты потрясающие!',
+        1, 'ip-hash-4', NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'
+      ),
+      (
+        gen_random_uuid(), v_teacher_4, v_student_5,
+        4, 'Очень требовательный, но справедливый педагог. Уровень языка заметно вырос.',
+        1, 'ip-hash-5', NOW() - INTERVAL '6 days', NOW() - INTERVAL '6 days'
+      ),
+      (
+        gen_random_uuid(), v_teacher_5, v_student_6,
+        5, 'Иван Сергеевич учит реальной разработке на Python и алгоритмам, а не просто теории из учебников.',
+        1, 'ip-hash-6', NOW() - INTERVAL '7 days', NOW() - INTERVAL '7 days'
+      )
+    ON CONFLICT (teacher_id, user_id) DO NOTHING;
+  END IF;
+END $$;
 
 -- 8. Canteen Menus & Items for Current & Next Week
 DELETE FROM menu_items WHERE menu_id IN (
