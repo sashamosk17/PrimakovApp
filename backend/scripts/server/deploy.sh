@@ -9,9 +9,13 @@ COMPOSE_FILE="docker-compose.prod.yml"
 
 echo "=== Запуск развертывания PrimakovApp ==="
 
-# 1. Подтягиваем свежие коммиты из Git
-echo "--> 1. Получение последних изменений из Git..."
-git pull origin main
+# 1. Подтягиваем свежие коммиты из Git и перезапускаем обновленный скрипт
+if [ -z "$DEPLOY_RELOADED" ]; then
+  echo "--> 1. Получение последних изменений из Git..."
+  git pull origin main
+  export DEPLOY_RELOADED=1
+  exec "$0" "$@"
+fi
 
 # 2. Пересобираем и запускаем контейнеры
 echo "--> 2. Сборка и запуск контейнеров..."

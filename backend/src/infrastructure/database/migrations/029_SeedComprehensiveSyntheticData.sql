@@ -203,27 +203,40 @@ WHERE is_boarding = true
 OFFSET 5 LIMIT 3;
 
 -- 6. Service Desk Requests
+-- Ensure requests table columns exist if 028 was skipped/already marked executed
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS sla_deadline_at TIMESTAMPTZ;
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS sla_breached BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS notes TEXT;
+
+DO $$
+BEGIN
+  ALTER TABLE requests DROP CONSTRAINT IF EXISTS requests_room_id_fkey;
+  ALTER TABLE requests ALTER COLUMN room_id TYPE VARCHAR(100) USING room_id::text;
+EXCEPTION WHEN OTHERS THEN
+  NULL;
+END $$;
+
 INSERT INTO requests (type, title, description, status, priority, creator_id, assignee_id, room_id, created_at, updated_at, sla_deadline_at, sla_breached, notes)
 VALUES
   (
     'IT', 'Не работает проектор в 305',
     'Проектор BenQ не реагирует на пульт управления, мигает красная лампа ошибки.',
     'PENDING', 'HIGH',
-    'a1111111-0001-4000-8000-000000000001', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31', '305-A',
+    'a1111111-0001-4000-8000-000000000001', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), '305-A',
     NOW() - INTERVAL '1 hour', NOW(), NOW() + INTERVAL '3 hours', false, 'Направлен дежурный инженер IT'
   ),
   (
     'MAINTENANCE', 'Сломан доводчик двери в 201',
     'Дверь громко хлопает при сквозняке, требуется регулировка гидродоводчика.',
     'IN_PROGRESS', 'MEDIUM',
-    'a1111111-0002-4000-8000-000000000002', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31', '201-A',
+    'a1111111-0002-4000-8000-000000000002', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), '201-A',
     NOW() - INTERVAL '3 hours', NOW(), NOW() + INTERVAL '21 hours', false, 'Запчасти получены со склада'
   ),
   (
     'CLEANING', 'Влажная уборка кабинета химии 404',
     'После проведения лабораторной работы требуется тщательная влажная уборка.',
     'COMPLETED', 'MEDIUM',
-    'a1111111-0003-4000-8000-000000000002', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31', '404-A',
+    'a1111111-0003-4000-8000-000000000002', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), '404-A',
     NOW() - INTERVAL '6 hours', NOW(), NOW() + INTERVAL '18 hours', false, 'Уборка выполнена, кабинет проветрен'
   ),
   (
@@ -237,14 +250,14 @@ VALUES
     'MAINTENANCE', 'Не работает кондиционер в серверной 502',
     'Температура поднялась до 26C, требуется проверка внешнего блока.',
     'IN_PROGRESS', 'URGENT',
-    'a1111111-0005-4000-8000-000000000001', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31', '502-A',
+    'a1111111-0005-4000-8000-000000000001', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), '502-A',
     NOW() - INTERVAL '40 minutes', NOW(), NOW() + INTERVAL '80 minutes', false, 'Техник на объекте'
   ),
   (
     'CLEANING', 'Пополнение антисептиков и мыла на 3 этаже',
     'В санузлах 3 этажа корпуса А закончилось жидкое мыло.',
     'COMPLETED', 'LOW',
-    'a1111111-0001-4000-8000-000000000003', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31', '3-й этаж',
+    'a1111111-0001-4000-8000-000000000003', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), '3-й этаж',
     NOW() - INTERVAL '12 hours', NOW(), NOW() + INTERVAL '36 hours', false, 'Диспенсеры заправлены'
   );
 
@@ -359,19 +372,19 @@ VALUES
     gen_random_uuid(), 'День открытых дверей и олимпиада Primakov Digital',
     'Приглашаем родителей и гимназистов на презентацию инновационных IT-направлений.',
     'В программе мероприятия: мастер-классы по искусственному интеллекту, презентация лаборатории беспилотных систем, открытый диалог с ведущими экспертами отрасли и подведение итогов хакатона.',
-    NOW(), 'Кампус', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31', NOW(), NOW()
+    NOW(), 'Кампус', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), NOW(), NOW()
   ),
   (
     gen_random_uuid(), 'Открытый лекторий: Встреча с летчиком-космонавтом в Атриуме',
     'В пятницу в 15:30 состоится вдохновляющая встреча с Героем России.',
     'Гимназисты смогут задать вопросы об исследовании дальнего космоса, подготовке к длительным полетам и научных экспериментах на борту орбитальной станции.',
-    NOW() + INTERVAL '2 days', 'События', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31', NOW(), NOW()
+    NOW() + INTERVAL '2 days', 'События', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), NOW(), NOW()
   ),
   (
     gen_random_uuid(), 'Финал Междомовского турнира по шахматам и дебатам',
     'Борьба за Кубок Лиги Домов выходит на финишную прямую!',
     'Решающие поединки между сборными командами Домов Север, Юг, Восток и Запад пройдут в зеркальном зале гимназии. Приглашаем болельщиков поддержать свои Дома.',
-    NOW() + INTERVAL '4 days', 'Лига Домов', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31', NOW(), NOW()
+    NOW() + INTERVAL '4 days', 'Лига Домов', (SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1), NOW(), NOW()
   );
 
 INSERT INTO stories (id, title, description, image_url, link_url, link_text, author, expires_at, created_at, updated_at)
