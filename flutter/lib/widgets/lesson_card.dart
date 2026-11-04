@@ -1,23 +1,31 @@
-/// Lesson Card Widget
-/// Converted from React Native LessonCard component
+/// Lesson Card Widget - Bento 2.0 Academic Style
+/// Modern minimalist card with Lucide icons, ghost borders, and noble Primakov branding
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../config/app_colors.dart';
 import '../models/api_models.dart';
 import '../config/app_spacing.dart';
 import '../config/app_typography.dart';
+import 'primakov_card.dart';
 
 class LessonCard extends StatelessWidget {
   final Lesson lesson;
+  final VoidCallback? onTap;
+  final bool isCurrent;
 
-  const LessonCard({Key? key, required this.lesson}) : super(key: key);
+  const LessonCard({
+    Key? key,
+    required this.lesson,
+    this.onTap,
+    this.isCurrent = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
 
-    // 🔥 ЗАЩИТА ОТ NULL: используем значения по умолчанию
     final startTime = lesson.startTime.isNotEmpty ? lesson.startTime : '--:--';
     final endTime = lesson.endTime.isNotEmpty ? lesson.endTime : '--:--';
     final subject = lesson.subject.isNotEmpty ? lesson.subject : 'Без названия';
@@ -25,86 +33,169 @@ class LessonCard extends StatelessWidget {
     final room = lesson.room.isNotEmpty ? lesson.room : '?';
     final floor = lesson.floor;
 
-    return Container(
-      padding: AppSpacing.paddingMD,
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      decoration: BoxDecoration(
-        border: Border(
-          left: BorderSide(
-            color: theme.colorScheme.primary,
-            width: 4,
-          ),
-        ),
-        color: theme.colorScheme.surface,
-        borderRadius: AppSpacing.borderRadiusSM,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05),
-            blurRadius: 2,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
+    final primaryColor = isDarkMode ? AppColors.darkPrimary : AppColors.primary;
+    final primaryContainer = isDarkMode
+        ? AppColors.darkPrimaryContainer.withOpacity(0.3)
+        : AppColors.primaryFixed.withOpacity(0.4);
+
+    return PrimakovCard(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      onTap: onTap,
+      borderColor: isCurrent
+          ? primaryColor.withOpacity(0.5)
+          : null,
+      backgroundColor: isCurrent
+          ? (isDarkMode ? const Color(0xFF1E1719) : const Color(0xFFFFF9F9))
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Time
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
-            decoration: BoxDecoration(
-              color: isDarkMode ? AppColors.darkBackgroundTertiary : AppColors.backgroundSecondary,
-              borderRadius: BorderRadius.circular(AppSpacing.xs),
-            ),
-            child: Text(
-              '$startTime - $endTime',
-              style: AppTypography.bodySmall.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          // Subject
-          Text(
-            subject,
-            style: AppTypography.heading3.copyWith(
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          // Teacher Name
-          Text(
-            '👨‍🏫 $teacherName',
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          // Location
-          Text(
-            '🚪 Каб. $room, этаж $floor',
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textTertiary,
-            ),
-          ),
-          // Homework indicator
-          if (lesson.hasHomework) ...[
-            const SizedBox(height: AppSpacing.sm),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
-              decoration: BoxDecoration(
-                color: AppColors.warning.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(AppSpacing.xs),
-              ),
-              child: Text(
-                '📝 Домашнее задание',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.warning,
-                  fontWeight: FontWeight.bold,
+          // Row 1: Time Interval Pill + Current indicator / Homework Pill
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Time Interval Badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isCurrent ? primaryContainer : (isDarkMode ? AppColors.darkSurfaceContainerHigh : AppColors.surfaceContainerLow),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                  border: isCurrent
+                      ? Border.all(color: primaryColor.withOpacity(0.4), width: 1)
+                      : null,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LucideIcons.clock,
+                      size: 13,
+                      color: isCurrent
+                          ? primaryColor
+                          : (isDarkMode ? AppColors.darkTextSecondary : AppColors.secondary),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$startTime — $endTime',
+                      style: AppTypography.labelMedium.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: isCurrent
+                            ? primaryColor
+                            : (isDarkMode ? AppColors.darkTextPrimary : AppColors.onSurface),
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+
+              // Homework status chip
+              if (lesson.hasHomework)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isDarkMode
+                        ? AppColors.darkPastelAmber
+                        : AppColors.pastelAmber,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                    border: Border.all(
+                      color: const Color(0xFFE65100).withOpacity(0.2),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        LucideIcons.bookOpen,
+                        size: 12,
+                        color: Color(0xFFE65100),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'ДЗ',
+                        style: AppTypography.labelExtraSmall.copyWith(
+                          color: const Color(0xFFE65100),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Row 2: Subject Title
+          Text(
+            subject,
+            style: AppTypography.heading2.copyWith(
+              color: isDarkMode ? AppColors.darkTextPrimary : AppColors.onSurface,
+              fontSize: 18,
             ),
-          ],
+          ),
+
+          const SizedBox(height: 10),
+
+          // Row 3: Teacher + Location chips
+          Row(
+            children: [
+              // Teacher
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(
+                      LucideIcons.user,
+                      size: 14,
+                      color: isDarkMode
+                          ? AppColors.darkTextSecondary
+                          : AppColors.secondary,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        teacherName,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: isDarkMode
+                              ? AppColors.darkTextSecondary
+                              : AppColors.secondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Location (Room & Floor)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    LucideIcons.mapPin,
+                    size: 14,
+                    color: isDarkMode
+                        ? AppColors.darkTextSecondary
+                        : AppColors.secondary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Каб. $room, эт. $floor',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: isDarkMode
+                          ? AppColors.darkTextSecondary
+                          : AppColors.secondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
     );

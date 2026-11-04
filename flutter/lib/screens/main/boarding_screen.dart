@@ -7,6 +7,8 @@ import '../../config/app_spacing.dart';
 import '../../models/api_models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/boarding_provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class BoardingScreen extends ConsumerStatefulWidget {
   const BoardingScreen({Key? key}) : super(key: key);
@@ -65,7 +67,7 @@ class _BoardingScreenState extends ConsumerState<BoardingScreen> {
                         color: AppColors.primary.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.weekend_rounded, color: AppColors.primary, size: 20),
+                      child: const Icon(LucideIcons.calendar, color: AppColors.primary, size: 20),
                     ),
                     const SizedBox(width: 10),
                     Column(
@@ -99,9 +101,9 @@ class _BoardingScreenState extends ConsumerState<BoardingScreen> {
                 Wrap(
                   spacing: 8,
                   children: [
-                    {'type': 'SHUTTLE', 'label': 'Шаттл гимназии', 'icon': Icons.directions_bus},
-                    {'type': 'PARENTS', 'label': 'С родителями', 'icon': Icons.family_restroom},
-                    {'type': 'INDEPENDENT', 'label': 'Самостоятельно', 'icon': Icons.directions_walk},
+                    {'type': 'SHUTTLE', 'label': 'Шаттл гимназии', 'icon': LucideIcons.bus},
+                    {'type': 'PARENTS', 'label': 'С родителями', 'icon': LucideIcons.users},
+                    {'type': 'INDEPENDENT', 'label': 'Самостоятельно', 'icon': LucideIcons.footprints},
                   ].map((item) {
                     final isSel = transportType == item['type'];
                     return ChoiceChip(
@@ -143,7 +145,7 @@ class _BoardingScreenState extends ConsumerState<BoardingScreen> {
                           Text('Пятница, 17:30', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, color: textPrimary)),
                         ],
                       ),
-                      const Icon(Icons.arrow_forward_rounded, size: 16, color: Colors.grey),
+                      const Icon(LucideIcons.arrowRight, size: 16, color: Colors.grey),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
@@ -236,7 +238,7 @@ class _BoardingScreenState extends ConsumerState<BoardingScreen> {
         SnackBar(
           content: const Row(
             children: [
-              Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+              Icon(LucideIcons.checkCircle2, color: Colors.white, size: 20),
               SizedBox(width: 8),
               Text('Отметка в корпусе успешно сохранена!'),
             ],
@@ -288,7 +290,7 @@ class _BoardingScreenState extends ConsumerState<BoardingScreen> {
                   color: AppColors.primary.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.card_membership_rounded, color: AppColors.primary, size: 20),
+                child: const Icon(LucideIcons.ticket, color: AppColors.primary, size: 20),
               ),
             ),
           ),
@@ -381,7 +383,7 @@ class _BoardingScreenState extends ConsumerState<BoardingScreen> {
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
-                                    isPresent ? Icons.check_circle_rounded : Icons.access_time_filled_rounded,
+                                    isPresent ? LucideIcons.checkCircle2 : LucideIcons.clock,
                                     color: color,
                                     size: 18,
                                   ),
@@ -476,7 +478,7 @@ class _BoardingScreenState extends ConsumerState<BoardingScreen> {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.nightlight_round, color: Colors.white, size: 12),
+                    Icon(LucideIcons.moon, color: Colors.white, size: 12),
                     SizedBox(width: 4),
                     Text(
                       '21:00 Вечерний Check-in',
@@ -485,7 +487,7 @@ class _BoardingScreenState extends ConsumerState<BoardingScreen> {
                   ],
                 ),
               ),
-              const Icon(Icons.shield_rounded, color: Colors.white70, size: 20),
+              const Icon(LucideIcons.shield, color: Colors.white70, size: 20),
             ],
           ),
           const SizedBox(height: 14),
@@ -526,7 +528,7 @@ class _BoardingScreenState extends ConsumerState<BoardingScreen> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1565C0)),
                     )
-                  : const Icon(Icons.done_all_rounded, size: 20, color: Color(0xFF1565C0)),
+                  : const Icon(LucideIcons.checkCheck, size: 20, color: Color(0xFF1565C0)),
               label: Text(
                 _isCheckingIn ? 'Регистрация...' : 'Я в корпусе',
                 style: const TextStyle(
@@ -559,7 +561,7 @@ class _BoardingScreenState extends ConsumerState<BoardingScreen> {
               color: AppColors.primary.withOpacity(0.12),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.car_rental_rounded, color: AppColors.primary, size: 24),
+            child: const Icon(LucideIcons.car, color: AppColors.primary, size: 24),
           ),
           const SizedBox(width: 14),
           Expanded(

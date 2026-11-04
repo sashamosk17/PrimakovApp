@@ -31,6 +31,10 @@
 | `domain/entities/Rating.ts` | Сущность рейтинга: оценка 1-5, OCC-версия, комментарий, хеш IP. | `class Rating` |
 | `domain/entities/Story.ts` | Сущность сторис: медиа-ссылки, срок жизни, внешняя ссылка. | `class Story` |
 | `domain/entities/Announcement.ts` | Сущность официального объявления с категоризацией. | `class Announcement` |
+| `domain/entities/Grade.ts` | Сущность академической оценки (значение 2-5, вес 1 / 1.5 / 2, триместр, дата, тема). | `class Grade`, `interface SubjectGradeSummary` |
+| `domain/entities/HousePointTransaction.ts` | Сущность транзакции баллов Лиги Домов (`NORTH`, `SOUTH`, `EAST`, `WEST`). | `class HousePointTransaction` |
+| `domain/entities/BoardingCheckIn.ts` | Сущность вечерней переклички воспитанника пансиона (геолокация, статус, комната). | `class BoardingCheckIn` |
+| `domain/entities/WeekendLeaveRequest.ts` | Сущность заявления на выезд из пансиона на выходные (статусы PENDING/APPROVED/REJECTED). | `class WeekendLeaveRequest` |
 | `domain/value-objects/Email.ts` | Value Object валидного адреса электронной почты с нормализацией. | `class Email` |
 | `domain/value-objects/Password.ts` | Value Object безопасного пароля: валидация сложности и хеширование bcrypt. | `class Password` |
 | `domain/repositories/IUserRepository.ts` | Контракт интерфейса репозитория пользователей. | `interface IUserRepository` |
@@ -39,6 +43,9 @@
 | `domain/repositories/IRatingRepository.ts` | Контракт интерфейса репозитория оценок и отзывов. | `interface IRatingRepository` |
 | `domain/repositories/IStoryRepository.ts` | Контракт интерфейса репозитория историй гимназии. | `interface IStoryRepository` |
 | `domain/repositories/IAnnouncementRepository.ts` | Контракт интерфейса репозитория объявлений. | `interface IAnnouncementRepository` |
+| `domain/repositories/IGradeRepository.ts` | Контракт интерфейса репозитория успеваемости (сохранение пачкой, средневзвешенный балл). | `interface IGradeRepository` |
+| `domain/repositories/IHouseRepository.ts` | Контракт интерфейса репозитория Лиги Домов (турнирная таблица, запись транзакций). | `interface IHouseRepository` |
+| `domain/repositories/IBoardingRepository.ts` | Контракт интерфейса репозитория пансиона (вечерние чек-ины, заявления на выезд, ростер). | `interface IBoardingRepository` |
 | `domain/services/AuthService.ts` | Доменный сервис аутентификации: сверка bcrypt-паролей, генерация JWT токенов. | `class AuthService` |
 | `domain/services/ScheduleService.ts` | Доменный сервис выборки расписания с fallback логикой. | `class ScheduleService` |
 | `domain/services/DeadlineService.ts` | Доменный сервис управления жизненным циклом дедлайнов. | `class DeadlineService` |
@@ -67,8 +74,21 @@
 | `application/rating/GetTeacherRatingsUseCase.ts` | Сценарий получения средних баллов преподавателей. | `class GetTeacherRatingsUseCase` |
 | `application/story/GetStoriesUseCase.ts` | Сценарий выборки актуальных историй гимназии. | `class GetStoriesUseCase` |
 | `application/story/MarkStoryAsViewedUseCase.ts` | Сценарий фиксации факта просмотра истории пользователем. | `class MarkStoryAsViewedUseCase` |
+| `application/story/CreateStoryUseCase.ts` | Сценарий создания новой истории гимназии с ссылкой и таймером. | `class CreateStoryUseCase` |
+| `application/story/UpdateStoryUseCase.ts` | Сценарий обновления параметров истории гимназии. | `class UpdateStoryUseCase` |
+| `application/story/DeleteStoryUseCase.ts` | Сценарий мягкого удаления истории гимназии. | `class DeleteStoryUseCase` |
 | `application/announcement/GetAnnouncementsUseCase.ts` | Сценарий выборки объявлений гимназии. | `class GetAnnouncementsUseCase` |
 | `application/announcement/GetAnnouncementByCategoryUseCase.ts` | Сценарий выборки объявлений по категории. | `class GetAnnouncementByCategoryUseCase` |
+| `application/announcement/UpdateAnnouncementUseCase.ts` | Сценарий редактирования существующего объявления. | `class UpdateAnnouncementUseCase` |
+| `application/grades/AdminImportMeshGradesUseCase.ts` | Сценарий парсинга CSV отчетов МЭШ, сопоставления учеников и пакетного сохранения оценок с весами. | `class AdminImportMeshGradesUseCase` |
+| `application/grades/GetStudentGradesUseCase.ts` | Сценарий выборки полной ведомости оценок и расчета средневзвешенного балла ученика. | `class GetStudentGradesUseCase` |
+| `application/house/AwardHousePointsUseCase.ts` | Сценарий начисления баллов Дому («Север», «Юг», «Восток», «Запад») по категориям. | `class AwardHousePointsUseCase` |
+| `application/house/GetHouseCupStandingsUseCase.ts` | Сценарий расчета турнирной таблицы Кубка Лиги Домов и получения последних транзакций. | `class GetHouseCupStandingsUseCase` |
+| `application/boarding/BoardingCheckInUseCase.ts` | Сценарий вечерней переклички воспитанника пансиона с валидацией геолокации. | `class BoardingCheckInUseCase` |
+| `application/boarding/CreateWeekendLeaveRequestUseCase.ts` | Сценарий подачи заявления на выезд из пансиона на выходные. | `class CreateWeekendLeaveRequestUseCase` |
+| `application/boarding/GetBoardingRosterUseCase.ts` | Сценарий выборки суточного ростера переклички воспитанников пансиона. | `class GetBoardingRosterUseCase` |
+| `application/boarding/GetStudentBoardingStatusUseCase.ts` | Сценарий получения статуса пансиона гимназиста (сегодняшний чек-ин, активные заявления). | `class GetStudentBoardingStatusUseCase` |
+| `application/boarding/UpdateLeaveRequestStatusUseCase.ts` | Сценарий согласования или отклонения заявления на выезд воспитателем. | `class UpdateLeaveRequestStatusUseCase` |
 | `application/admin/AdminGetDashboardStatsUseCase.ts` | Сценарий вычисления сводных метрик дашборда администратора. | `class AdminGetDashboardStatsUseCase` |
 | `application/admin/AdminGetUsersUseCase.ts` | Сценарий выборки пользователей с пагинацией, поиском и фильтром ролей. | `class AdminGetUsersUseCase` |
 | `application/admin/AdminCreateUserUseCase.ts` | Сценарий ручного создания аккаунта администратором. | `class AdminCreateUserUseCase` |
@@ -104,7 +124,10 @@
 | `presentation/routes/roomRoutes.ts` | Роуты справочника аудиторий (`/api/rooms`, `/:number`). | `roomRoutes()` |
 | `presentation/routes/requestRoutes.ts` | Роуты сервисных заявок (`/api/requests`, `/:id/status`). | `requestRoutes()` |
 | `presentation/routes/canteenRoutes.ts` | Роуты меню столовой (`/api/canteen/menu/today`, `/:date`). | `canteenRoutes()` |
-| `presentation/routes/adminRoutes.ts` | Маршруты административной панели (`/api/admin/*`, RBAC guard). | `adminRoutes()` |
+| `presentation/routes/gradeRoutes.ts` | Роуты успеваемости (`/api/grades/my`). | `gradeRoutes()` |
+| `presentation/routes/houseRoutes.ts` | Роуты Лиги Домов (`/api/houses/standings`, `/award`). | `houseRoutes()` |
+| `presentation/routes/boardingRoutes.ts`| Роуты пансиона (`/api/boarding/my-status`, `/check-in`, `/leave-request`, `/roster`). | `boardingRoutes()` |
+| `presentation/routes/adminRoutes.ts` | Маршруты административной панели (`/api/admin/*`, RBAC guard, CSV импорт ведомостей, модерация анонсов). | `adminRoutes()` |
 | `presentation/controllers/AuthController.ts` | Контроллер обработки HTTP-запросов авторизации. | `class AuthController` |
 | `presentation/controllers/UserController.ts` | Контроллер профиля и управления пользователями. | `class UserController` |
 | `presentation/controllers/ScheduleController.ts` | Контроллер выдачи индивидуального/группового расписания. | `class ScheduleController` |
@@ -115,6 +138,9 @@
 | `presentation/controllers/RoomController.ts` | Контроллер каталога аудиторий, корпусов и этажей. | `class RoomController` |
 | `presentation/controllers/RequestController.ts` | Контроллер создания и модерации сервисных заявок. | `class RequestController` |
 | `presentation/controllers/CanteenController.ts` | Контроллер столовой: меню на даты и приемы пищи. | `class CanteenController` |
+| `presentation/controllers/GradeController.ts` | Контроллер успеваемости ученика и импорта ведомостей МЭШ. | `class GradeController` |
+| `presentation/controllers/HouseController.ts` | Контроллер лидерборда Домов и начисления очков. | `class HouseController` |
+| `presentation/controllers/BoardingController.ts` | Контроллер вечерних чек-инов, заявок на выезд и ростера пансиона. | `class BoardingController` |
 | `presentation/controllers/AdminController.ts` | Контроллер админ-панели (дашборд, пользователи, CSV-импорт, тикеты). | `class AdminController` |
 | `presentation/middleware/authMiddleware.ts` | Проверка валидности Bearer JWT токена в заголовке запроса. | `authMiddleware` |
 | `presentation/middleware/rbacMiddleware.ts` | Проверка прав доступа пользователя по списку `Permission`. | `requirePermission` |
@@ -136,7 +162,10 @@
 | `postgres/PostgresRoomRepository.ts` | Реализация репозитория аудиторий (фильтры по корпусу/этажу). | `class PostgresRoomRepository` |
 | `postgres/PostgresRequestRepository.ts`| Реализация репозитория сервисных тикетов. | `class PostgresRequestRepository` |
 | `postgres/PostgresCanteenMenuRepository.ts`| Реализация репозитория столовой (джойн `canteen_menu` и `menu_items`). | `class PostgresCanteenMenuRepository` |
-| `migrations/migrationRunner.ts` | Автоматический загрузчик и исполнитель SQL-миграций из файлов 001-017. | `runMigrations()` |
+| `postgres/PostgresGradeRepository.ts` | Реализация `IGradeRepository` (пакетный INSERT, расчет средневзвешенного балла). | `class PostgresGradeRepository` |
+| `postgres/PostgresHouseRepository.ts` | Реализация `IHouseRepository` (агрегация очков по домам, запись истории транзакций). | `class PostgresHouseRepository` |
+| `postgres/PostgresBoardingRepository.ts`| Реализация `IBoardingRepository` (чек-ины переклички, заявления на выезд, ростер). | `class PostgresBoardingRepository` |
+| `migrations/migrationRunner.ts` | Автоматический загрузчик и исполнитель SQL-миграций из файлов 001-027. | `runMigrations()` |
 
 ---
 
@@ -157,7 +186,7 @@
 ### 2.2. Модели данных (DTO)
 | Файл | Описание и ответственность | Экспорты / Символы |
 | :--- | :--- | :--- |
-| [flutter/lib/models/api_models.dart](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/flutter/lib/models/api_models.dart) | Единый файл всех DTO с `fromJson`, `toJson` и `copyWith`: `User`, `UserRole`, `Lesson`, `Schedule`, `Deadline`, `DeadlineStatus`, `Rating`, `Story`, `Announcement`, `Room`, `SupportRequest`, `RequestType`, `RequestPriority`, `RequestStatus`, `CanteenMenu`, `CanteenMenuItem`, `MealType`, `NotificationSettings`. | `class User`, `class Lesson`, `class Schedule`, `class Deadline`, `class Rating` и др. |
+| [flutter/lib/models/api_models.dart](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/flutter/lib/models/api_models.dart) | Единый файл всех DTO с `fromJson`, `toJson` и `copyWith`: `User`, `UserRole`, `Lesson`, `Schedule`, `Deadline`, `DeadlineStatus`, `Rating`, `Story`, `Announcement`, `Room`, `SupportRequest`, `RequestType`, `RequestPriority`, `RequestStatus`, `CanteenMenu`, `CanteenMenuItem`, `MealType`, `NotificationSettings`, `GradeItem`, `SubjectGradeSummary`, `HouseStanding`, `HouseCupInfo`, `BoardingStatus`, `BoardingCheckInItem`, `WeekendLeaveRequestItem`. | `class User`, `class Lesson`, `class Schedule`, `class Deadline`, `class GradeItem`, `class HouseCupInfo`, `class BoardingStatus` и др. |
 
 ### 2.3. Сетевой слой (API Services)
 Каталог: [flutter/lib/services/api/](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/flutter/lib/services/api)
@@ -173,6 +202,9 @@
 | `request_service.dart` | HTTP-клиент для создания и смены статуса тикетов техподдержки. |
 | `story_service.dart` | HTTP-клиент для получения сторис и отправки отметки о просмотре. |
 | `announcement_service.dart`| HTTP-клиент для получения объявлений по категориям. |
+| `grades_service.dart` | HTTP-клиент для получения оценок и средневзвешенного балла (`/api/grades/my`). |
+| `house_service.dart` | HTTP-клиент для получения таблицы Кубка Домов (`/api/houses/standings`). |
+| `boarding_service.dart` | HTTP-клиент для чек-ина переклички, подачи заявления на выезд и статуса пансиона (`/api/boarding/*`). |
 | `user_service.dart` | HTTP-клиент для работы с профилем (`/api/users/me`) и списком преподавателей. |
 
 ### 2.4. Провайдеры состояния (Riverpod)
@@ -189,6 +221,9 @@
 | `request_provider.dart` | Управление тикетами техподдержки пользователя. | `requestProvider` |
 | `story_provider.dart` | Список историй гимназии и локальный трекинг просмотров. | `storyProvider` |
 | `announcement_provider.dart`| Список официальных объявлений с фильтрами категорий. | `announcementProvider` |
+| `grades_provider.dart` | Загрузка ведомости успеваемости с оффлайн-кэшированием в Hive `grades_cache_box`. | `gradesProvider` |
+| `house_provider.dart` | Данные Кубка Лиги Домов с кэшированием в Hive `house_cache_box`. | `houseProvider` |
+| `boarding_provider.dart` | Статус воспитанника пансиона, чек-ин и заявки с кэшированием в Hive `boarding_cache_box`. | `boardingProvider` |
 | `user_provider.dart` | Список учителей и операции редактирования личного профиля. | `teachersListProvider`, `userProvider` |
 | `ui_provider.dart` | Управление темой оформления и настройками push-уведомлений. | `isDarkModeProvider`, `uiProvider` |
 
@@ -199,23 +234,26 @@
 | :--- | :--- |
 | `auth/login_screen.dart` | Экран входа с валидацией, переключателем видимости пароля и кнопкой входа. |
 | `auth/register_screen.dart` | Экран создания учетной записи ученика/преподавателя. |
-| `main/home_screen.dart` | Главный дашборд Bento Grid: лента Stories, карточка расписания, баланс, дедлайны, новости. |
+| `main/home_screen.dart` | Главный дашборд Bento Grid: лента Stories, карточка успеваемости, Лига Домов, расписание, баланс, дедлайны. |
 | `main/schedule_screen.dart` | Календарное расписание уроков с временными слотами, аудиториями и ДЗ. |
 | `main/lesson_detail_screen.dart` | Детальный экран урока: полное задание, кабинет, кнопка оценки учителя. |
 | `main/deadline_screen.dart` | Трекер дедлайнов с вкладками статусов и конфетти при завершении задачи. |
 | `main/add_deadline_screen.dart` | Форма создания дедлайна с выбором даты сдачи через пикер. |
-| `main/story_viewer_screen.dart` | Полноэкранный плеер сторис с таймером и кнопкой перехода по внешней ссылке. |
-| `main/services_screen.dart` | Плиточный каталог сервисов гимназии со строкой поиска. |
-| `main/profile_screen.dart` | Профиль учащегося: роль, класс, переход к настройкам, редактированию и выходу. |
+| `main/story_viewer_screen.dart` | Полноэкранный плеер сторис (Instagram/Telegram style) с кликабельной пилюлей-ссылкой, свайпом вниз и паузой по удержанию. |
+| `main/services_screen.dart` | Плиточный каталог сервисов гимназии (Успеваемость, Дома, Пансион, Меню, Заявки, Рейтинги, Справочник). |
+| `main/profile_screen.dart` | Профиль учащегося: роль, класс, Дом, переход к настройкам, редактированию и выходу. |
 | `main/edit_profile_screen.dart` | Форма изменения имени и фамилии. |
 | `main/change_password_screen.dart`| Форма безопасной смены пароля. |
 | `main/settings_screen.dart` | Экран управления темой (светлая/темная) и триггерами уведомлений. |
 | `main/notification_center_screen.dart` | Экран In-App Центра уведомлений с фильтрацией (срочные, дедлайны 24ч, расписание) и статусами прочтения. |
+| `grades_screen.dart` | Экран оценок и GPA Simulator: средний балл, веса работ (1/1.5/2), интерактивный симулятор прогноза оценок. |
+| `house_standings_screen.dart` | Экран Лиги Домов: турнирная таблица (Север, Юг, Восток, Запад), баланс очков, карточки и аудит начислений. |
+| `boarding_pass_screen.dart` | Сервис пансиона: цифровой QR-пропуск, вечерний чек-ин переклички с геолокацией, подача заявки на выезд. |
 | `canteen_menu_screen.dart` | Меню столовой: Завтрак/Обед/Полдник, расчет калорий, КБЖУ, бейджи аллергенов. |
 | `teacher_ratings_screen.dart` | Экран со списком учителей, средними оценками и диалогом анонимного отзыва. |
 | `rooms_list_screen.dart` | Навигационный справочник аудиторий кампуса с фильтрами по этажам и корпусам. |
 | `create_request_screen.dart` | Оформление сервисной заявки на IT-помощь, ремонт или клининг. |
-| `announcements_screen.dart` | Лента официальных объявлений гимназии по категориям. |
+| `announcements_screen.dart` | Лента официальных объявлений гимназии: клик открывает Apple-style Bottom Sheet модал с полным текстом и кнопкой копирования. |
 
 ### 2.6. Переиспользуемые виджеты (Widgets)
 Каталог: [flutter/lib/widgets/](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/flutter/lib/widgets)
@@ -249,6 +287,7 @@
 | `src/types.ts` | TypeScript интерфейсы сущностей: `User`, `DashboardMetrics`, `ServiceRequest`, `TeacherRating`, `LessonType`, `Subject`, `Schedule`. | `Role`, `User`, `ServiceRequest`, `LessonType` |
 | `src/data/mockData.ts` | Реалистичный датасет гимназии для автономного Demo-режима (110+ учеников, 27 учителей, 24 класса). | `MOCK_METRICS`, `MOCK_USERS` |
 | `src/context/ToastContext.tsx` | Контекст глобальных Toast-уведомлений об успехе, предупреждениях и ошибках API. | `ToastProvider`, `useToast` |
+| `src/context/LanguageContext.tsx` | Контекст двуязычного интерфейса (RU / EN) с мгновенным переключением без перезагрузки. | `LanguageProvider`, `useLanguage` |
 | `src/components/Sidebar.tsx` | Боковая навигация в стиле Stitch Design System. | `Sidebar` |
 | `src/components/Header.tsx` | Верхняя панель с поисковой строкой, аватаром и информацией о текущем администраторе. | `Header` |
 | `src/components/EmptyState.tsx` | Переиспользуемый компонент аккуратного пустого состояния для всех разделов. | `EmptyState` |
@@ -256,13 +295,17 @@
 | `src/components/LoginModal.tsx` | Окно входа: форма логина, селектор адреса API, кнопка мгновенного входа в демо-режим. | `LoginModal` |
 | `src/components/AddUserModal.tsx` | Модальное окно создания нового пользователя с валидацией. | `AddUserModal` |
 | `src/components/ImportCsvModal.tsx` | Модальное окно пакетного парсинга и загрузки CSV/Excel списка пользователей. | `ImportCsvModal` |
+| `src/components/ImportMeshGradesModal.tsx` | Модальное окно Drag-and-Drop парсинга ведомостей оценок МЭШ и пакетной загрузки. | `ImportMeshGradesModal` |
 | `src/pages/DashboardView.tsx` | Главный экран: бенто-сетка метрик, график недельной активности, заявки и анонсы. | `DashboardView` |
 | `src/pages/UsersView.tsx` | Управление пользователями: фильтры ролей, таблица, переключатели активности, пагинация. | `UsersView` |
 | `src/pages/ScheduleView.tsx` | Расписание всех 24 параллелей гимназии (1–11), поддержка ИУП, поиск любого ученика по фамилии, карточки-аккордеоны, «Раскрыть для всех», замена учителей, справочник предметов и матрица закрепления. | `ScheduleView` |
 | `src/pages/CanteenView.tsx` | Управление столовой: меню дней, рационы (Завтрак/Обед/Полдник/Ужин), КБЖУ, аллергены, копирование недель. | `CanteenView` |
 | `src/pages/RequestsView.tsx` | Служба заявок (Helpdesk): канбан/реестр тикетов, смена статусов и добавление заметок. | `RequestsView` |
 | `src/pages/RatingsView.tsx` | Модерация рейтингов учителей с просмотром авторов отзывов для администрации. | `RatingsView` |
-| `src/pages/AnnouncementsView.tsx`| Публикация и управление общешкольными объявлениями. | `AnnouncementsView` |
+| `src/pages/AnnouncementsView.tsx`| Полный CRUD общешкольных объявлений (создание, модальное редактирование с целевой аудиторией, удаление). | `AnnouncementsView` |
+| `src/pages/StoriesView.tsx` | Полный CRUD историй гимназии: создание с пресетами картинок, ссылками, редактирование, удаление. | `StoriesView` |
+| `src/pages/HousesView.tsx` | Управление Лигой Домов: турнирная таблица 4 Домов, начисление баллов по категориям, лог транзакций. | `HousesView` |
+| `src/pages/BoardingView.tsx` | Пансион гимназии: вечерняя перекличка чек-инов и согласование увольнительных записок на выезд. | `BoardingView` |
 
 ---
 
@@ -274,10 +317,10 @@
 | :--- | :--- |
 | `README.md` | Центральный портал документации, инструкции сборки, деплоя и общая карта репозитория. |
 | `features.md` | Матрица функциональности: текущее состояние (100% Ready), backlog, матрицы MoSCoW и RICE, релизный Roadmap. |
-| `architecture.md` | Системный дизайн, C4-диаграммы, диаграммы последовательностей, правила зависимостей Clean Architecture. |
-| `frontend.md` | Полное описание архитектуры Flutter: экраны, Riverpod-провайдеры, дизайн-код. |
-| `database.md` | Спецификация PostgreSQL: 15 таблиц, типы, индексы, мягкое удаление, OCC, реестр 21 миграции. |
-| `api_and_interfaces.md` | Полная спецификация REST API (11 модулей, включая `/api/admin`), контракты DTO, обработка edge cases. |
+| `architecture.md` | Системный дизайн, C4-диаграммы, диаграммы последовательностей, правила зависимостей Clean Architecture, 13 Bounded Contexts. |
+| `frontend.md` | Полное описание архитектуры Flutter и Web Admin: экраны, Riverpod-провайдеры, React-представления, дизайн-код. |
+| `database.md` | Спецификация PostgreSQL: 19 таблиц, типы, индексы, мягкое удаление, OCC, реестр 27 миграций. |
+| `api_and_interfaces.md` | Полная спецификация REST API (14 модулей, включая `/api/admin`, `/api/grades`, `/api/houses`, `/api/boarding`), контракты DTO, обработка edge cases. |
 | `file_catalog.md` | Настоящий пофайловый каталог всех исходных модулей и их ролей. |
 | `llm_context.xml` | Высокоплотный XML-манифест для сессий больших языковых моделей (LLM). |
 | `DEPLOYMENT_GUIDE.md` | Руководство по серверному развертыванию на VPS `185.221.198.242` через Docker Compose. |

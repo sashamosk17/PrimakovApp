@@ -24,6 +24,10 @@ import 'boarding_screen.dart';
 import '../../providers/grades_provider.dart';
 import '../../providers/boarding_provider.dart';
 import '../../widgets/notification_bell_icon.dart';
+import '../../config/app_localizations.dart';
+import '../../providers/locale_provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 // Mock data providers
 final mockNewsListProvider = Provider<List<News>>((ref) {
@@ -129,11 +133,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final currentUser = ref.watch(currentUserProvider);
     final userName = currentUser != null
         ? '${currentUser.lastName} ${currentUser.firstName}'
         : '';
-    final userRole = currentUser != null ? _roleLabel(currentUser.role) : '';
+    final userRole = currentUser != null ? _roleLabel(currentUser.role, loc) : '';
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -147,7 +152,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             slivers: [
               // Top App Bar
               SliverToBoxAdapter(
-                child: _buildTopAppBar(userName, userRole, currentUser),
+                child: _buildTopAppBar(userName, userRole, currentUser, loc),
               ),
 
               // Dynamic Day Glance (Contextual Card)
@@ -167,7 +172,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Column(
                     children: [
                       // Row 1: Schedule Hero Card (full width)
-                      _buildScheduleCard(),
+                      _buildScheduleCard()
+                          .animate()
+                          .fadeIn(duration: 300.ms, delay: 40.ms)
+                          .slideY(begin: 0.05, end: 0, curve: Curves.easeOutCubic),
                       const SizedBox(height: AppSpacing.md),
 
                       // Row 2: Deadlines + Cafeteria (2-column Bento)
@@ -182,25 +190,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             child: _buildCafeteriaCard(),
                           ),
                         ],
-                      ),
+                      )
+                          .animate()
+                          .fadeIn(duration: 300.ms, delay: 80.ms)
+                          .slideY(begin: 0.05, end: 0, curve: Curves.easeOutCubic),
                       const SizedBox(height: AppSpacing.md),
 
                       // Row 2.5: Academic GPA Simulator Bento Card
-                      _buildAcademicGpaCard(),
+                      _buildAcademicGpaCard()
+                          .animate()
+                          .fadeIn(duration: 300.ms, delay: 120.ms)
+                          .slideY(begin: 0.05, end: 0, curve: Curves.easeOutCubic),
                       const SizedBox(height: AppSpacing.md),
 
                       // Optional Row: Boarding Life Widget (for boarding students)
                       if (currentUser?.isBoarding == true) ...[
-                        _buildBoardingHomeWidget(),
+                        _buildBoardingHomeWidget()
+                            .animate()
+                            .fadeIn(duration: 300.ms, delay: 160.ms)
+                            .slideY(begin: 0.05, end: 0, curve: Curves.easeOutCubic),
                         const SizedBox(height: AppSpacing.md),
                       ],
 
                       // Row 3: News Carousel (full width)
-                      _buildNewsCard(),
+                      _buildNewsCard()
+                          .animate()
+                          .fadeIn(duration: 300.ms, delay: 200.ms)
+                          .slideY(begin: 0.05, end: 0, curve: Curves.easeOutCubic),
                       const SizedBox(height: AppSpacing.md),
 
                       // Row 4: Quote Card
-                      _buildQuoteCard(),
+                      _buildQuoteCard()
+                          .animate()
+                          .fadeIn(duration: 300.ms, delay: 240.ms)
+                          .slideY(begin: 0.05, end: 0, curve: Curves.easeOutCubic),
 
                       // Spacing for Floating Frosted BottomBar
                       const SizedBox(height: 90),
@@ -215,14 +238,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  String _roleLabel(UserRole role) {
+  String _roleLabel(UserRole role, AppLocalizations loc) {
     switch (role) {
       case UserRole.STUDENT:
-        return 'Ученик';
+        return loc.roleStudent;
       case UserRole.TEACHER:
-        return 'Учитель';
+        return loc.roleTeacher;
       case UserRole.ADMIN:
-        return 'Администратор';
+        return loc.roleAdmin;
     }
   }
 
@@ -232,7 +255,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return '$l$f';
   }
 
-  Widget _buildTopAppBar(String userName, String userRole, User? currentUser) {
+  Widget _buildTopAppBar(String userName, String userRole, User? currentUser, AppLocalizations loc) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final initials = _initials(currentUser?.firstName, currentUser?.lastName);
     final group = currentUser?.groupName;
@@ -285,7 +308,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  userName.isNotEmpty ? userName : 'Гимназист',
+                  userName.isNotEmpty ? userName : loc.translate('gymnasist'),
                   style: TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 18,
@@ -335,6 +358,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildDynamicDayGlance() {
+    final loc = AppLocalizations.of(context);
     final schedule = ref.watch(currentScheduleProvider);
     final deadlines = ref.watch(allDeadlinesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -342,32 +366,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final now = DateTime.now();
     final nowMinutes = now.hour * 60 + now.minute;
 
-    String badgeText = 'СЕЙЧАС';
+    String badgeText = loc.badgeNow;
     Color badgeColor = isDark ? AppColors.darkPrimary : AppColors.primary;
     Color badgeBg = isDark ? AppColors.darkPastelRed : AppColors.pastelRed;
-    IconData icon = Icons.access_time_rounded;
-    String headline = 'Учебный день';
-    String detail = 'Гимназия им. Е.М. Примакова';
+    IconData icon = LucideIcons.clock;
+    String headline = loc.translate('appName');
+    String detail = 'Primakov Gymnasium';
     VoidCallback? onTap;
 
     final lessons = schedule?.lessons ?? [];
     if (now.weekday == DateTime.sunday) {
-      badgeText = 'ВЫХОДНОЙ';
+      badgeText = loc.badgeWeekend;
       badgeColor = isDark ? const Color(0xFF64B5F6) : const Color(0xFF1976D2);
       badgeBg = isDark ? AppColors.darkPastelBlue : AppColors.pastelBlue;
-      icon = Icons.spa_rounded;
-      headline = 'Воскресенье • Отдых';
-      detail = 'Подготовьтесь к новой учебной неделе';
+      icon = LucideIcons.coffee;
+      headline = loc.weekendTitle;
+      detail = loc.weekendSubtitle;
     } else if (lessons.isEmpty) {
       final activeDeadlines = deadlines.where((d) => d.status == DeadlineStatus.PENDING).length;
-      badgeText = 'ДЕНЬ';
+      badgeText = loc.badgeDay;
       badgeColor = isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
       badgeBg = isDark ? AppColors.darkPastelGreen : AppColors.pastelGreen;
-      icon = Icons.calendar_today_rounded;
-      headline = 'Нет уроков на сегодня';
+      icon = LucideIcons.calendar;
+      headline = loc.noLessonsTodayTitle;
       detail = activeDeadlines > 0
-          ? '$activeDeadlines активных дедлайна • Нажмите для просмотра'
-          : 'Свободный график • Отличного дня!';
+          ? '$activeDeadlines ${loc.translate('activeDeadlinesCount')} • ${loc.translate('checkDeadlines')}'
+          : loc.freeSchedule;
       if (activeDeadlines > 0) {
         onTap = () {
           Navigator.of(context).push(
@@ -406,39 +430,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final firstStartMinutes = firstT != null ? firstT.hour * 60 + firstT.minute : 510;
 
       if (nowMinutes < firstStartMinutes && nextLesson != null) {
-        badgeText = 'СКОРО УРОК';
+        badgeText = loc.badgeSoon;
         badgeColor = isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100);
         badgeBg = isDark ? AppColors.darkPastelAmber : AppColors.pastelAmber;
-        icon = Icons.wb_sunny_rounded;
+        icon = LucideIcons.sun;
         final mins = minutesUntilNext ?? (firstStartMinutes - nowMinutes);
-        headline = 'До первого урока ${mins > 0 ? '$mins мин' : 'менее минуты'}';
-        detail = '${nextLesson.subject} • Кабинет ${nextLesson.room}';
+        headline = '${loc.translate('untilFirstLesson')} ${mins > 0 ? '$mins ${loc.translate('minutesShort')}' : loc.translate('lessThanMinute')}';
+        detail = '${nextLesson.subject} • ${loc.room} ${nextLesson.room}';
         onTap = () {
           Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => const ScheduleScreen()),
           );
         };
       } else if (currentLesson != null) {
-        badgeText = 'ИДЕТ УРОК';
+        badgeText = loc.badgeInProgress;
         badgeColor = isDark ? const Color(0xFFFF8A80) : AppColors.primaryRed;
         badgeBg = isDark ? AppColors.darkPastelRed : AppColors.pastelRed;
-        icon = Icons.menu_book_rounded;
+        icon = LucideIcons.bookOpen;
         headline = currentLesson.subject;
         final mins = minutesUntilEnd ?? 10;
-        detail = 'Кабинет ${currentLesson.room} • До конца урока $mins мин';
+        detail = '${loc.room} ${currentLesson.room} • ${loc.translate('untilLessonEnd')} $mins ${loc.translate('minutesShort')}';
         onTap = () {
           Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => const ScheduleScreen()),
           );
         };
       } else if (nextLesson != null) {
-        badgeText = 'ПЕРЕМЕНА';
+        badgeText = loc.badgeBreak;
         badgeColor = isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100);
         badgeBg = isDark ? AppColors.darkPastelAmber : AppColors.pastelAmber;
-        icon = Icons.restaurant_rounded;
+        icon = LucideIcons.utensils;
         final mins = minutesUntilNext ?? 15;
-        headline = 'Большая перемена ($mins мин)';
-        detail = 'Следующий: ${nextLesson.subject} (Каб. ${nextLesson.room}) • Меню столовой';
+        headline = '${loc.translate('bigRecess')} ($mins ${loc.translate('minutesShort')})';
+        detail = '${loc.translate('nextLesson')}: ${nextLesson.subject} (${loc.room} ${nextLesson.room}) • ${loc.translate('canteenMenuNav')}';
         onTap = () {
           Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => const CanteenMenuScreen()),
@@ -446,14 +470,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         };
       } else {
         final activeDeadlines = deadlines.where((d) => d.status == DeadlineStatus.PENDING).length;
-        badgeText = 'ВЕЧЕР';
+        badgeText = loc.badgeFinished;
         badgeColor = isDark ? const Color(0xFF9FA8DA) : const Color(0xFF3F51B5);
         badgeBg = isDark ? AppColors.darkPastelIndigo : AppColors.pastelIndigo;
-        icon = Icons.nightlight_round;
-        headline = 'Все уроки на сегодня завершены';
+        icon = LucideIcons.moon;
+        headline = loc.schoolDayOver;
         detail = activeDeadlines > 0
-            ? '$activeDeadlines дедлайна(ов) на этой неделе • Проверить'
-            : 'Отличная работа! Все задания выполнены';
+            ? '$activeDeadlines ${loc.translate('activeDeadlinesCount')} • ${loc.translate('checkDeadlines')}'
+            : loc.goodJobToday;
         onTap = () {
           Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => const DeadlineScreen()),
@@ -525,8 +549,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           const Spacer(),
                           if (onTap != null)
                             Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              size: 13,
+                              LucideIcons.chevronRight,
+                              size: 15,
                               color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                             ),
                         ],
@@ -785,21 +809,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   IconData _getStoryIcon(String title) {
     switch (title.toLowerCase()) {
       case 'события':
-        return Icons.event_rounded;
+        return LucideIcons.calendar;
       case 'приказы':
-        return Icons.description_rounded;
+        return LucideIcons.fileText;
       case 'меню':
-        return Icons.restaurant_menu_rounded;
+        return LucideIcons.utensils;
       case 'оценки':
-        return Icons.grade_rounded;
+        return LucideIcons.graduationCap;
       case 'разное':
-        return Icons.more_horiz_rounded;
+        return LucideIcons.moreHorizontal;
       default:
-        return Icons.circle_rounded;
+        return LucideIcons.circle;
     }
   }
 
   Widget _buildScheduleCard() {
+    final loc = AppLocalizations.of(context);
     final schedule = ref.watch(currentScheduleProvider);
     final isLoading = ref.watch(scheduleLoadingProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -855,7 +880,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Icon(
-                        Icons.calendar_month_rounded,
+                        LucideIcons.calendar,
                         color: isDark ? const Color(0xFF9FA8DA) : const Color(0xFF3F51B5),
                         size: 20,
                       ),
@@ -866,13 +891,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'РАСПИСАНИЕ',
+                            loc.translate('navSchedule').toUpperCase(),
                             style: AppTypography.microBadge.copyWith(
                               color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                             ),
                           ),
                           Text(
-                            'Мое расписание',
+                            loc.mySchedule,
                             style: TextStyle(
                               fontFamily: 'Manrope',
                               fontSize: 17,
@@ -894,7 +919,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Все уроки',
+                            loc.allLessons,
                             style: TextStyle(
                               fontFamily: 'Manrope',
                               fontSize: 12,
@@ -904,7 +929,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                           const SizedBox(width: 4),
                           Icon(
-                            Icons.arrow_forward_rounded,
+                            LucideIcons.arrowRight,
                             size: 13,
                             color: isDark ? AppColors.darkPrimary : AppColors.primary,
                           ),
@@ -962,7 +987,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    '• Следующий урок',
+                                    '• ${loc.translate('nextLesson')}',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
@@ -998,13 +1023,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.location_on_rounded,
+                                LucideIcons.mapPin,
                                 size: 14,
                                 color: isDark ? AppColors.darkPrimary : AppColors.primary,
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'Каб. ${nextLesson.room}',
+                                '${loc.room} ${nextLesson.room}',
                                 style: TextStyle(
                                   fontFamily: 'Manrope',
                                   fontSize: 12,
@@ -1020,7 +1045,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   )
                 else
                   Text(
-                    'Сегодня нет уроков',
+                    loc.noLessonsToday,
                     style: TextStyle(
                       fontFamily: 'Manrope',
                       fontSize: 14,
@@ -1037,6 +1062,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildDeadlinesCard() {
+    final loc = AppLocalizations.of(context);
     final deadlines = ref.watch(allDeadlinesProvider);
     final activeDeadlines = deadlines.where((d) => d.status == DeadlineStatus.PENDING).toList();
     final completedDeadlines = deadlines.where((d) => d.status == DeadlineStatus.COMPLETED).toList();
@@ -1085,7 +1111,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Icon(
-                            Icons.timer_rounded,
+                            LucideIcons.clock,
                             color: isDark ? AppColors.darkPrimary : AppColors.primary,
                             size: 20,
                           ),
@@ -1111,7 +1137,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      'Дедлайны',
+                      loc.deadlines,
                       style: TextStyle(
                         fontFamily: 'Manrope',
                         fontSize: 16,
@@ -1123,8 +1149,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     const SizedBox(height: 4),
                     Text(
                       activeDeadlines.isNotEmpty
-                          ? '${activeDeadlines.length} активных задачи'
-                          : 'Все сдано вовремя',
+                          ? '${activeDeadlines.length} ${loc.translate('activeTasksCount')}'
+                          : loc.translate('allDoneOnTime'),
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
@@ -1141,7 +1167,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Прогресс',
+                          loc.translate('progress'),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
@@ -1182,6 +1208,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildCafeteriaCard() {
+    final loc = AppLocalizations.of(context);
     final canteenState = ref.watch(canteenProvider);
     final String todayDish;
     if (canteenState.todayMenu != null &&
@@ -1235,21 +1262,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: const Icon(
-                            Icons.restaurant_rounded,
+                            LucideIcons.utensils,
                             color: Color(0xFFE65100),
                             size: 20,
                           ),
                         ),
                         Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 13,
+                          LucideIcons.chevronRight,
+                          size: 15,
                           color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                         ),
                       ],
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      'Столовая',
+                      loc.canteen,
                       style: TextStyle(
                         fontFamily: 'Manrope',
                         fontSize: 16,
@@ -1260,7 +1287,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Баланс: 1 450 ₽',
+                      '${loc.translate('balance')}: 1 450 ₽',
                       style: TextStyle(
                         fontFamily: 'Manrope',
                         fontSize: 14,
@@ -1278,7 +1305,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.soup_kitchen_rounded, size: 13, color: Color(0xFFE65100)),
+                      const Icon(LucideIcons.utensils, size: 12, color: Color(0xFFE65100)),
                       const SizedBox(width: 5),
                       Expanded(
                         child: Text(
@@ -1309,6 +1336,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildQuoteCard() {
+    final loc = AppLocalizations.of(context);
     final quote = ref.watch(mockQuoteProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -1333,13 +1361,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Row(
             children: [
               Icon(
-                Icons.format_quote_rounded,
+                LucideIcons.quote,
                 color: isDark ? AppColors.darkPrimary : AppColors.primary,
-                size: 28,
+                size: 24,
               ),
               const SizedBox(width: 8),
               Text(
-                'МЫСЛЬ ДНЯ',
+                loc.quoteThought,
                 style: AppTypography.microBadge.copyWith(
                   color: isDark ? AppColors.darkPrimary : AppColors.primary,
                 ),
@@ -1396,6 +1424,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildAcademicGpaCard() {
+    final loc = AppLocalizations.of(context);
     final gradesAsync = ref.watch(gradesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.darkBackgroundSecondary : AppColors.backgroundSecondary;
@@ -1405,10 +1434,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final overallGpa = ref.read(gradesProvider.notifier).overallGpa;
     final displayGpa = overallGpa > 0 ? overallGpa.toStringAsFixed(2) : '4.76';
 
-    String statusText = 'Претендент на медаль';
+    String statusText = loc.translate('medalCandidate');
     Color statusColor = const Color(0xFF2E7D32);
     if (overallGpa > 0 && overallGpa < 4.5) {
-      statusText = 'Хорошист';
+      statusText = loc.translate('goodStudent');
       statusColor = const Color(0xFF1E88E5);
     }
 
@@ -1445,9 +1474,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Icon(
-                    Icons.school_rounded,
+                    LucideIcons.graduationCap,
                     color: AppColors.primary,
-                    size: 26,
+                    size: 24,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -1458,7 +1487,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Row(
                         children: [
                           Text(
-                            'Успеваемость и GPA',
+                            loc.gpaPerformance,
                             style: TextStyle(
                               fontFamily: 'Manrope',
                               fontSize: 15,
@@ -1488,7 +1517,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Текущий средний балл: $displayGpa • Симулятор оценок',
+                        '${loc.translate('currentGpa')}: $displayGpa • ${loc.translate('gradeSimulator')}',
                         style: TextStyle(
                           fontFamily: 'Manrope',
                           fontSize: 12,
@@ -1505,14 +1534,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     color: AppColors.primary.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.tune_rounded, size: 14, color: AppColors.primary),
-                      SizedBox(width: 4),
+                      const Icon(LucideIcons.slidersHorizontal, size: 14, color: AppColors.primary),
+                      const SizedBox(width: 4),
                       Text(
-                        'Калькулятор',
-                        style: TextStyle(
+                        loc.translate('calculator'),
+                        style: const TextStyle(
                           fontFamily: 'Manrope',
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
@@ -1531,6 +1560,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildBoardingHomeWidget() {
+    final loc = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -1564,13 +1594,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.hotel_rounded, color: Colors.white, size: 13),
-                    SizedBox(width: 4),
+                    const Icon(LucideIcons.building, color: Colors.white, size: 13),
+                    const SizedBox(width: 4),
                     Text(
-                      'Пансион Примакова • Раздоры',
-                      style: TextStyle(
+                      loc.translate('boardingCampus'),
+                      style: const TextStyle(
                         fontFamily: 'Manrope',
                         color: Colors.white,
                         fontSize: 11,
@@ -1587,22 +1617,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     MaterialPageRoute(builder: (context) => const BoardingScreen()),
                   );
                 },
-                child: const Row(
+                child: Row(
                   children: [
                     Text(
-                      'Все сервисы',
-                      style: TextStyle(fontFamily: 'Manrope', color: Colors.white70, fontSize: 11),
+                      loc.translate('allServices'),
+                      style: const TextStyle(fontFamily: 'Manrope', color: Colors.white70, fontSize: 11),
                     ),
-                    Icon(Icons.chevron_right, color: Colors.white70, size: 16),
+                    const Icon(LucideIcons.chevronRight, color: Colors.white70, size: 16),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Вечерний Check-in (21:00)',
-            style: TextStyle(
+          Text(
+            loc.translate('eveningCheckInTime'),
+            style: const TextStyle(
               fontFamily: 'Manrope',
               fontSize: 17,
               fontWeight: FontWeight.w800,
@@ -1610,9 +1640,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
           const SizedBox(height: 2),
-          const Text(
-            'Подтвердите присутствие в жилом корпусе пансиона',
-            style: TextStyle(
+          Text(
+            loc.translate('boardingDormPrompt'),
+            style: const TextStyle(
               fontFamily: 'Manrope',
               fontSize: 11,
               color: Colors.white70,
@@ -1632,7 +1662,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       HapticFeedback.heavyImpact();
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: const Text('Присутствие в корпусе зафиксировано!'),
+                          content: Text(loc.translate('imInCampus')),
                           backgroundColor: const Color(0xFF2E7D32),
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1647,10 +1677,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                  icon: const Icon(Icons.check_circle_outline, size: 16, color: Color(0xFF1565C0)),
-                  label: const Text(
-                    'Я в корпусе',
-                    style: TextStyle(
+                  icon: const Icon(LucideIcons.checkCircle2, size: 16, color: Color(0xFF1565C0)),
+                  label: Text(
+                    loc.translate('imInCampus'),
+                    style: const TextStyle(
                       fontFamily: 'Manrope',
                       fontWeight: FontWeight.w900,
                       fontSize: 12,
@@ -1674,9 +1704,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
-                child: const Text(
-                  'Выезд',
-                  style: TextStyle(
+                child: Text(
+                  loc.translate('takeLeave'),
+                  style: const TextStyle(
                     fontFamily: 'Manrope',
                     fontWeight: FontWeight.w800,
                     fontSize: 12,
@@ -1739,6 +1769,7 @@ class _NewsCarouselState extends ConsumerState<_NewsCarousel> {
     } else {
       newsList = ref.watch(mockNewsListProvider);
     }
+    final loc = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final safeIndex = newsList.isEmpty ? 0 : _currentPage.clamp(0, newsList.length - 1);
 
@@ -1774,15 +1805,15 @@ class _NewsCarouselState extends ConsumerState<_NewsCarousel> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
-                      Icons.campaign,
+                      LucideIcons.megaphone,
                       color: isDark ? AppColors.darkIconGray : AppColors.iconGray,
-                      size: 20,
+                      size: 18,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Новости гимназии',
+                      loc.schoolNews,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -1799,8 +1830,8 @@ class _NewsCarouselState extends ConsumerState<_NewsCarousel> {
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                           icon: Icon(
-                            Icons.chevron_left,
-                            size: 20,
+                            LucideIcons.chevronLeft,
+                            size: 18,
                             color: safeIndex > 0
                                 ? (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary)
                                 : (isDark ? AppColors.darkTextSecondary.withAlpha(80) : Colors.grey.shade400),
@@ -1820,8 +1851,8 @@ class _NewsCarouselState extends ConsumerState<_NewsCarousel> {
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                           icon: Icon(
-                            Icons.chevron_right,
-                            size: 20,
+                            LucideIcons.chevronRight,
+                            size: 18,
                             color: safeIndex < newsList.length - 1
                                 ? (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary)
                                 : (isDark ? AppColors.darkTextSecondary.withAlpha(80) : Colors.grey.shade400),
@@ -1841,7 +1872,7 @@ class _NewsCarouselState extends ConsumerState<_NewsCarousel> {
                 padding: const EdgeInsets.all(24),
                 child: Center(
                   child: Text(
-                    'Нет новостей',
+                    loc.translate('noNews'),
                     style: TextStyle(
                       color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                       fontSize: 14,

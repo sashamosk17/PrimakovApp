@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../config/app_colors.dart';
 import '../../models/api_models.dart';
 import '../../providers/user_provider.dart';
@@ -334,7 +335,7 @@ class _UserProfileDetailScreenState extends ConsumerState<UserProfileDetailScree
                 children: [
                   Expanded(
                     child: _buildContactActionButton(
-                      icon: Icons.phone,
+                      icon: LucideIcons.phone,
                       label: 'Звонок',
                       color: const Color(0xFF10B981),
                       onTap: effectivePhone != null
@@ -345,7 +346,7 @@ class _UserProfileDetailScreenState extends ConsumerState<UserProfileDetailScree
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildContactActionButton(
-                      icon: Icons.mail_outline,
+                      icon: LucideIcons.mail,
                       label: 'Почта',
                       color: const Color(0xFF3B82F6),
                       onTap: () => _launchUrl('mailto:${user.email}'),
@@ -354,7 +355,7 @@ class _UserProfileDetailScreenState extends ConsumerState<UserProfileDetailScree
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildContactActionButton(
-                      icon: Icons.send_rounded,
+                      icon: LucideIcons.send,
                       label: 'Telegram',
                       color: const Color(0xFF0EA5E9),
                       onTap: effectiveTelegram != null
@@ -396,7 +397,7 @@ class _UserProfileDetailScreenState extends ConsumerState<UserProfileDetailScree
                     // Birth Date
                     if (effectiveBirthDate != null) ...[
                       _buildInfoRow(
-                        icon: Icons.cake_outlined,
+                        icon: LucideIcons.cake,
                         title: 'Дата рождения',
                         value: '${_formatDate(effectiveBirthDate)} ($ageStr)',
                         isDark: isDark,
@@ -406,7 +407,7 @@ class _UserProfileDetailScreenState extends ConsumerState<UserProfileDetailScree
 
                     // Email
                     _buildInfoRow(
-                      icon: Icons.alternate_email,
+                      icon: LucideIcons.atSign,
                       title: 'Корпоративная почта',
                       value: user.email,
                       isDark: isDark,
@@ -416,7 +417,7 @@ class _UserProfileDetailScreenState extends ConsumerState<UserProfileDetailScree
 
                     // Phone
                     _buildInfoRow(
-                      icon: Icons.phone_android,
+                      icon: LucideIcons.smartphone,
                       title: 'Телефон',
                       value: effectivePhone ?? 'Не указан',
                       isDark: isDark,
@@ -428,7 +429,7 @@ class _UserProfileDetailScreenState extends ConsumerState<UserProfileDetailScree
 
                     // Telegram
                     _buildInfoRow(
-                      icon: Icons.chat_bubble_outline,
+                      icon: LucideIcons.messageSquare,
                       title: 'Telegram',
                       value: effectiveTelegram ?? 'Не указан',
                       isDark: isDark,
@@ -612,7 +613,7 @@ class _UserProfileDetailScreenState extends ConsumerState<UserProfileDetailScree
             ),
             if (onTap != null)
               Icon(
-                Icons.copy,
+                LucideIcons.copy,
                 size: 16,
                 color: isDark ? AppColors.darkTextSecondary : const Color(0xFF94A3B8),
               ),
@@ -628,7 +629,7 @@ class _UserProfileDetailScreenState extends ConsumerState<UserProfileDetailScree
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.event_busy, size: 36, color: isDark ? Colors.white30 : const Color(0xFFCBD5E1)),
+            Icon(LucideIcons.calendarX, size: 36, color: isDark ? Colors.white30 : const Color(0xFFCBD5E1)),
             const SizedBox(height: 8),
             Text(
               'На сегодня уроков нет',

@@ -304,6 +304,9 @@
 | :--- | :--- | :---: | :--- |
 | `GET` | `/api/stories` | Нет | Получение активных историй гимназии |
 | `POST` | `/api/stories/:storyId/view` | Нет/Да | Отметка истории как просмотренной пользователем |
+| `POST` | `/api/stories` | Да (Staff/Admin) | Создание новой истории (title, description, imageUrl, linkUrl, linkText, expiresInDays) |
+| `PUT` | `/api/stories/:storyId` | Да (Staff/Admin) | Редактирование существующей истории |
+| `DELETE`| `/api/stories/:storyId` | Да (Staff/Admin) | Удаление истории (мягкое удаление `deleted_at`) |
 
 #### Пример элемента Stories (HTTP 200)
 ```json
@@ -327,7 +330,8 @@
 | Метод | Путь | Auth | Назначение |
 | :--- | :--- | :---: | :--- |
 | `GET` | `/api/announcements` | Нет | Получение списка всех актуальных объявлений |
-| `GET` | `/api/announcements/category/:category` | Нет | Фильтрация объявлений (`ACADEMIC`, `EVENT`, `GENERAL`, `URGENT`) |
+| `POST` | `/api/announcements` | Да (Admin) | Создание объявления |
+| `GET` | `/api/announcements/category/:category` | Нет | Фильтрация объявлений (`ACADEMIC`, `EVENT`, `GENERAL`, `URGENT`, `Кампус` и др.) |
 
 ---
 
@@ -421,6 +425,13 @@
 | `DELETE`| `/api/admin/canteen/items/:id` | Да (Admin) | Удаление блюда из меню |
 | `POST` | `/api/admin/canteen/copy-week` | Да (Admin) | Копирование меню целой учебной недели (`fromWeekStart`, `toWeekStart`) |
 | `POST` | `/api/deadlines/check-alerts` | Да (Admin/Worker) | Принудительный триггер воркера проверки дедлайнов (пуши за 24ч и 2ч) |
+| `POST` | `/api/admin/announcements` | Да (Admin) | Создание нового объявления администратором |
+| `PUT` | `/api/admin/announcements/:id` | Да (Admin) | Редактирование существующего объявления |
+| `DELETE`| `/api/admin/announcements/:id` | Да (Admin) | Удаление объявления |
+| `POST` | `/api/admin/grades/import` | Да (Admin) | Пакетный импорт ведомости оценок МЭШ из CSV |
+| `GET` | `/api/boarding/admin/roster` | Да (Admin/Staff) | Полная ведомость вечерней переклички пансиона |
+| `GET` | `/api/boarding/admin/leave-requests`| Да (Admin/Staff) | Список всех заявлений на выезд из пансиона |
+| `PATCH`| `/api/boarding/admin/leave-requests/:id/status`| Да (Admin/Staff) | Согласование/отклонение заявления на выезд |
 
 #### Пример ответа `/api/admin/dashboard`:
 ```json
@@ -444,6 +455,70 @@
   }
 }
 ```
+
+---
+
+### 2.12. Модуль успеваемости и оценок МЭШ (`/api/grades`)
+Реализация: [gradeRoutes.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/presentation/routes/gradeRoutes.ts) | [GradeController.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/presentation/controllers/GradeController.ts)
+
+| Метод | Путь | Auth | Назначение |
+| :--- | :--- | :---: | :--- |
+| `GET` | `/api/grades/my` | Да | Получение академической ведомости текущего гимназиста с группировкой по предметам и средневзвешенным баллом |
+| `POST` | `/api/admin/grades/import` | Да (Admin) | Загрузка CSV ведомости МЭШ: сопоставление по фамилии/имени и классу, расчет весов (1 — ДЗ, 1.5 — проверочная, 2 — контрольная) |
+
+#### Пример ответа `/api/grades/my` (HTTP 200):
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "subjectName": "Алгебра",
+      "averageScore": 4.67,
+      "periodMark": 5,
+      "grades": [
+        { "id": "g-1", "value": 5, "weight": 1.0, "date": "2026-10-15", "topic": "Тригонометрия", "period": "1 триместр" },
+        { "id": "g-2", "value": 4, "weight": 2.0, "date": "2026-10-22", "topic": "Контрольная работа", "period": "1 триместр" },
+        { "id": "g-3", "value": 5, "weight": 1.5, "date": "2026-10-28", "topic": "Проверочная работа", "period": "1 триместр" }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### 2.13. Модуль Лиги Домов (`/api/houses`)
+Реализация: [houseRoutes.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/presentation/routes/houseRoutes.ts) | [HouseController.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/presentation/controllers/HouseController.ts)
+
+| Метод | Путь | Auth | Назначение |
+| :--- | :--- | :---: | :--- |
+| `GET` | `/api/houses/standings` | Да | Текущая турнирная таблица 4 Домов (Север, Юг, Восток, Запад) и последние 10 транзакций |
+| `POST` | `/api/houses/award` | Да (Teacher/Admin) | Начисление баллов Дому за академические успехи, олимпиады, спорт, благотворительность |
+
+#### Пример тела запроса `/api/houses/award`:
+```json
+{
+  "house": "NORTH",
+  "points": 50,
+  "category": "OLYMPIAD",
+  "reason": "1 место на региональном этапе ВсОШ по физике",
+  "studentId": "c4b18c64-42b7-4c07-b352-7f7229a4e99a"
+}
+```
+
+---
+
+### 2.14. Модуль Пансиона (`/api/boarding`)
+Реализация: [boardingRoutes.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/presentation/routes/boardingRoutes.ts) | [BoardingController.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/presentation/controllers/BoardingController.ts)
+
+| Метод | Путь | Auth | Назначение |
+| :--- | :--- | :---: | :--- |
+| `POST` | `/api/boarding/check-in` | Да (Student) | Регистрация вечерней отметки присутствия в пансионе с геолокацией и заметкой |
+| `GET` | `/api/boarding/my-status` | Да (Student) | Текущий статус присутствия гимназиста, последняя отметка и активный пропуск на выезд |
+| `POST` | `/api/boarding/leave-request` | Да (Student) | Подача заявления на выезд на выходные (даты, транспорт, подтверждение родителей) |
+| `GET` | `/api/boarding/admin/roster` | Да (Staff/Admin) | Сводная ведомость присутствия гимназистов пансиона с фильтром по статусам |
+| `GET` | `/api/boarding/admin/leave-requests` | Да (Staff/Admin) | Реестр всех поданных заявлений на выезд |
+| `PATCH`| `/api/boarding/admin/leave-requests/:id/status` | Да (Staff/Admin) | Утверждение (`APPROVED`) или отклонение (`REJECTED`) заявления на выезд |
 
 ---
 

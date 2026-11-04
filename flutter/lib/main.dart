@@ -21,6 +21,7 @@ import 'services/cache/offline_cache_service.dart';
 import 'config/app_theme.dart';
 import 'config/app_colors.dart';
 import 'config/app_spacing.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -144,60 +145,63 @@ class _MainNavigatorState extends ConsumerState<MainNavigator> with TickerProvid
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: isDarkMode ? AppColors.darkFloatingShadow : AppColors.floatingShadow,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? const Color(0xCC161B22)
-                        : const Color(0xE6FFFFFF),
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: isDarkMode ? AppColors.darkFloatingShadow : AppColors.floatingShadow,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: Container(
+                    decoration: BoxDecoration(
                       color: isDarkMode
-                          ? const Color(0x26FFFFFF)
-                          : const Color(0x14000000),
-                      width: 1,
-                    ),
-                  ),
-                  child: Theme(
-                    data: theme.copyWith(
-                      splashColor: Colors.transparent,
-                      highlightColor: Colors.transparent,
-                    ),
-                    child: BottomNavigationBar(
-                      currentIndex: _selectedIndex,
-                      onTap: _onItemTapped,
-                      type: BottomNavigationBarType.fixed,
-                      backgroundColor: Colors.transparent,
-                      elevation: 0,
-                      selectedItemColor: theme.colorScheme.primary,
-                      unselectedItemColor: isDarkMode
-                          ? const Color(0xFF8B949E)
-                          : const Color(0xFF8A9099),
-                      selectedLabelStyle: const TextStyle(
-                        fontFamily: 'Manrope',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11,
-                        letterSpacing: 0.3,
+                          ? const Color(0xCC161B22)
+                          : const Color(0xE6FFFFFF),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: isDarkMode
+                            ? const Color(0x26FFFFFF)
+                            : const Color(0x14000000),
+                        width: 1,
                       ),
-                      unselectedLabelStyle: const TextStyle(
-                        fontFamily: 'Manrope',
-                        fontWeight: FontWeight.w500,
-                        fontSize: 11,
+                    ),
+                    child: Theme(
+                      data: theme.copyWith(
+                        splashColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
                       ),
-                      items: [
-                        _buildNavItem(Icons.newspaper_rounded, Icons.newspaper_outlined, loc.navHome, 0),
-                        _buildNavItem(Icons.calendar_month_rounded, Icons.calendar_today_outlined, loc.navSchedule, 1),
-                        _buildNavItem(Icons.grid_view_rounded, Icons.grid_view_outlined, loc.navServices, 2),
-                        _buildNavItem(Icons.person_rounded, Icons.person_outline_rounded, loc.navProfile, 3),
-                      ],
+                      child: BottomNavigationBar(
+                        currentIndex: _selectedIndex,
+                        onTap: _onItemTapped,
+                        type: BottomNavigationBarType.fixed,
+                        backgroundColor: Colors.transparent,
+                        elevation: 0,
+                        selectedItemColor: theme.colorScheme.primary,
+                        unselectedItemColor: isDarkMode
+                            ? const Color(0xFF8B949E)
+                            : const Color(0xFF8A9099),
+                        selectedLabelStyle: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                          letterSpacing: 0.3,
+                        ),
+                        unselectedLabelStyle: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontWeight: FontWeight.w500,
+                          fontSize: 11,
+                        ),
+                        items: [
+                          _buildNavItem(LucideIcons.newspaper, LucideIcons.newspaper, loc.navHome, 0),
+                          _buildNavItem(LucideIcons.calendarDays, LucideIcons.calendar, loc.navSchedule, 1),
+                          _buildNavItem(LucideIcons.layoutGrid, LucideIcons.layoutGrid, loc.navServices, 2),
+                          _buildNavItem(LucideIcons.user, LucideIcons.user, loc.navProfile, 3),
+                        ],
+                      ),
                     ),
                   ),
                 ),

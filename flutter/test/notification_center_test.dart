@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:primakov_app/widgets/notification_bell_icon.dart';
 import 'package:primakov_app/screens/main/notification_center_screen.dart';
-import 'package:primakov_app/providers/notification_provider.dart';
 
 void main() {
   testWidgets('NotificationBellIcon shows unread count badge', (WidgetTester tester) async {

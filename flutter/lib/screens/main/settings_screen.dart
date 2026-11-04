@@ -1,10 +1,8 @@
-/// Settings Screen
-import '../../config/app_colors.dart';
-/// App settings and preferences
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/ui_provider.dart';
 import '../../providers/locale_provider.dart';
@@ -54,7 +52,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         backgroundColor: theme.colorScheme.primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(LucideIcons.arrowLeft, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -75,7 +73,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SectionHeader(title: loc.appearance),
           const SizedBox(height: 12),
           _SettingsTile(
-            icon: Icons.dark_mode,
+            icon: LucideIcons.moon,
             title: isEnglish ? 'Dark Theme' : 'Темная тема',
             subtitle: isEnglish ? 'Use dark appearance theme' : 'Использовать темную тему оформления',
             trailing: Switch(
@@ -97,11 +95,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 8),
           _SettingsTile(
-            icon: Icons.language,
+            icon: LucideIcons.globe,
             title: loc.language,
             subtitle: isEnglish ? 'English (US)' : 'Русский',
             trailing: Icon(
-              Icons.arrow_forward_ios,
+              LucideIcons.chevronRight,
               size: 16,
               color: theme.colorScheme.onSurface.withAlpha((0.5 * 255).round()),
             ),
@@ -116,16 +114,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const _SectionHeader(title: 'О приложении'),
           const SizedBox(height: 12),
           _SettingsTile(
-            icon: Icons.info,
+            icon: LucideIcons.info,
             title: 'Версия приложения',
             subtitle: _appVersion,
           ),
           const SizedBox(height: 8),
           _SettingsTile(
-            icon: Icons.description,
+            icon: LucideIcons.fileText,
             title: 'Лицензии',
             trailing: Icon(
-              Icons.arrow_forward_ios,
+              LucideIcons.chevronRight,
               size: 16,
               color: theme.colorScheme.onSurface.withAlpha((0.5 * 255).round()),
             ),
@@ -139,10 +137,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 8),
           _SettingsTile(
-            icon: Icons.privacy_tip,
+            icon: LucideIcons.shield,
             title: 'Политика конфиденциальности',
             trailing: Icon(
-              Icons.arrow_forward_ios,
+              LucideIcons.chevronRight,
               size: 16,
               color: theme.colorScheme.onSurface.withAlpha((0.5 * 255).round()),
             ),
@@ -163,7 +161,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onPressed: () {
                 _showLogoutDialog();
               },
-              icon: const Icon(Icons.logout, size: 20),
+              icon: const Icon(LucideIcons.logOut, size: 20),
               label: const Text(
                 'Выйти из аккаунта',
                 style: TextStyle(

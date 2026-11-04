@@ -14,6 +14,8 @@ import '../../providers/schedule_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/soft_offline_badge.dart';
 import '../../widgets/notification_bell_icon.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'lesson_detail_screen.dart';
 import 'deadline_screen.dart';
 import '../canteen_menu_screen.dart';
@@ -144,7 +146,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               actions: [
                 const NotificationBellIcon(),
                 IconButton(
-                  icon: Icon(Icons.calendar_month_rounded, color: primaryColor),
+                  icon: Icon(LucideIcons.calendar, color: primaryColor, size: 22),
                   onPressed: _pickDate,
                 ),
                 const SizedBox(width: 8),
@@ -312,8 +314,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(
-                        Icons.error_outline_rounded,
-                        size: 56,
+                        LucideIcons.alertCircle,
+                        size: 52,
                         color: Color(0xFFBA1A1A),
                       ),
                       const SizedBox(height: 16),
@@ -353,8 +355,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          Icons.event_busy_rounded,
-                          size: 36,
+                          LucideIcons.calendarX,
+                          size: 32,
                           color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                         ),
                       ),
@@ -496,9 +498,9 @@ class _LessonCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
-                      Icons.assignment_rounded,
+                      LucideIcons.bookOpen,
                       color: isDark ? AppColors.darkPrimary : AppColors.primary,
-                      size: 22,
+                      size: 20,
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -559,7 +561,7 @@ class _LessonCard extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => const DeadlineScreen()),
                     );
                   },
-                  icon: const Icon(Icons.alarm_rounded, size: 18),
+                  icon: const Icon(LucideIcons.clock, size: 16),
                   label: const Text('Перейти в дедлайны'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isDark ? AppColors.darkPrimary : AppColors.primary,
@@ -738,9 +740,9 @@ class _LessonCard extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.location_on_rounded,
+                                LucideIcons.mapPin,
                                 color: isDark ? AppColors.darkPrimary : AppColors.primary,
-                                size: 13,
+                                size: 12,
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -777,8 +779,8 @@ class _LessonCard extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    Icons.edit_note_rounded,
-                                    size: 14,
+                                    LucideIcons.pencil,
+                                    size: 13,
                                     color: primaryColor,
                                   ),
                                   const SizedBox(width: 3),
@@ -805,8 +807,8 @@ class _LessonCard extends StatelessWidget {
 
               // Arrow
               Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
+                LucideIcons.chevronRight,
+                size: 15,
                 color: textSecondary.withOpacity(0.6),
               ),
             ],
@@ -854,9 +856,9 @@ class _BigBreakCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
-                  Icons.restaurant_rounded,
+                  LucideIcons.utensils,
                   color: accentColor,
-                  size: 20,
+                  size: 18,
                 ),
               ),
               const SizedBox(width: 12),
@@ -886,9 +888,9 @@ class _BigBreakCard extends StatelessWidget {
                 ),
               ),
               const Icon(
-                Icons.arrow_forward_ios_rounded,
+                LucideIcons.chevronRight,
                 color: accentColor,
-                size: 13,
+                size: 15,
               ),
             ],
           ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_typography.dart';
 import '../../widgets/custom_text_field.dart';
@@ -223,7 +224,8 @@ class _AddDeadlineScreenState extends ConsumerState<AddDeadlineScreen> {
                       children: [
                         IconButton(
                           icon: Icon(
-                            Icons.close,
+                            LucideIcons.x,
+                            size: 20,
                             color: isDark
                                 ? AppColors.darkTextPrimary
                                 : AppColors.textPrimary,

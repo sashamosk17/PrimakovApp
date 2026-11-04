@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { HouseStanding, HouseTransaction } from "../types";
 import { useToast } from "../context/ToastContext";
+import { useLanguage } from "../context/LanguageContext";
 
 interface HousesViewProps {
   standings: HouseStanding[];
@@ -49,20 +50,32 @@ const HOUSE_THEMES: Record<string, { name: string; emblem: string; gradient: str
   },
 };
 
-const CATEGORIES = [
-  { id: "ACADEMIC", label: "Учебные успехи" },
-  { id: "OLYMPIAD", label: "ВсОШ и олимпиады" },
-  { id: "SPORTS", label: "Спорт и спартакиады" },
-  { id: "CHARITY", label: "Благотворительность" },
-  { id: "CULTURE", label: "Творчество и культура" },
-];
-
 export const HousesView: React.FC<HousesViewProps> = ({
   standings,
   transactions,
   onAwardPoints,
 }) => {
   const { showToast } = useToast();
+  const { t, language } = useLanguage();
+
+  const categories = [
+    { id: "ACADEMIC", label: t("houses.academic") },
+    { id: "OLYMPIAD", label: t("houses.olympiad") },
+    { id: "SPORTS", label: t("houses.sports") },
+    { id: "CHARITY", label: t("houses.charity") },
+    { id: "CULTURE", label: t("houses.culture") },
+  ];
+
+  const getHouseName = (key: string) => {
+    switch (key?.toUpperCase()) {
+      case "NORTH": return t("houses.north");
+      case "SOUTH": return t("houses.south");
+      case "EAST": return t("houses.east");
+      case "WEST": return t("houses.west");
+      default: return key;
+    }
+  };
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [house, setHouse] = useState("NORTH");
   const [points, setPoints] = useState(25);
@@ -86,7 +99,7 @@ export const HousesView: React.FC<HousesViewProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reason.trim()) {
-      showToast("Укажите причину начисления баллов", "error");
+      showToast(language === "en" ? "Please provide a reason for point allocation" : "Укажите причину начисления баллов", "error");
       return;
     }
 
@@ -98,11 +111,11 @@ export const HousesView: React.FC<HousesViewProps> = ({
         category,
         reason: reason.trim(),
       });
-      showToast(`Начислено +${points} баллов Дому ${HOUSE_THEMES[house]?.name}`, "success");
+      showToast(language === "en" ? `Awarded +${points} points to House ${getHouseName(house)}` : `Начислено +${points} баллов Дому ${getHouseName(house)}`, "success");
       setReason("");
       setIsModalOpen(false);
     } catch (err: any) {
-      showToast(err.message || "Ошибка начисления баллов", "error");
+      showToast(err.message || (language === "en" ? "Error awarding points" : "Ошибка начисления баллов"), "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -115,10 +128,10 @@ export const HousesView: React.FC<HousesViewProps> = ({
         <div>
           <h3 className="text-3xl font-extrabold text-on-surface font-display tracking-tight flex items-center gap-3">
             <span className="material-symbols-outlined text-primary text-3xl">shield</span>
-            Лига Домов (House Cup)
+            {t("houses.title")}
           </h3>
           <p className="text-xs text-secondary mt-1">
-            Кубок Домов Гимназии им. Е. М. Примакова: Север, Юг, Восток, Запад. Начисление баллов и аудит транзакций.
+            {t("houses.subtitle")}
           </p>
         </div>
 
@@ -127,7 +140,7 @@ export const HousesView: React.FC<HousesViewProps> = ({
           className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-red-800 to-red-600 hover:from-red-700 hover:to-red-500 text-white font-bold rounded-2xl text-xs shadow-md shadow-red-950/20 cursor-pointer transition-all hover:scale-[1.02]"
         >
           <span className="material-symbols-outlined text-base">military_tech</span>
-          Начислить баллы Дому
+          {t("houses.awardPoints")}
         </button>
       </div>
 
@@ -148,7 +161,7 @@ export const HousesView: React.FC<HousesViewProps> = ({
               {isLeader && (
                 <div className="absolute top-3 right-3 flex items-center gap-1 bg-amber-400 text-amber-950 font-black text-[10px] uppercase px-2.5 py-0.5 rounded-full shadow-xs">
                   <span className="material-symbols-outlined text-xs">emoji_events</span>
-                  Лидер
+                  {t("houses.leader")}
                 </div>
               )}
 
@@ -158,10 +171,10 @@ export const HousesView: React.FC<HousesViewProps> = ({
                 </div>
                 <div>
                   <h4 className="font-extrabold text-sm text-on-surface font-headline">
-                    {theme.name}
+                    {getHouseName(s.house)}
                   </h4>
                   <span className="text-[11px] font-semibold text-slate-400">
-                    Место #{index + 1}
+                    {t("houses.rank")} #{index + 1}
                   </span>
                 </div>
               </div>
@@ -169,7 +182,7 @@ export const HousesView: React.FC<HousesViewProps> = ({
               <div className="mt-4 pt-4 border-t border-slate-100 flex items-baseline justify-between">
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Всего баллов
+                    {t("houses.totalPoints")}
                   </p>
                   <p className="text-3xl font-black text-slate-900 dark:text-white font-headline tracking-tight">
                     {s.totalPoints}
@@ -183,7 +196,7 @@ export const HousesView: React.FC<HousesViewProps> = ({
                   }}
                   className={`px-3 py-1.5 rounded-xl ${theme.bg} ${theme.text} text-[11px] font-bold hover:opacity-80 transition-opacity cursor-pointer`}
                 >
-                  + Баллы
+                  + {t("houses.points")}
                 </button>
               </div>
             </div>
@@ -197,60 +210,60 @@ export const HousesView: React.FC<HousesViewProps> = ({
           <div>
             <h4 className="text-base font-bold font-headline text-on-surface flex items-center gap-2">
               <span className="material-symbols-outlined text-primary text-lg">history_edu</span>
-              Журнал начислений баллов
+              {t("houses.recentHistory")}
             </h4>
             <p className="text-xs text-secondary mt-0.5">
-              Все последние транзакции баллов за олимпиады, спорт и академические достижения
+              {language === "en" ? "Recent point allocations for olympiads, athletics, and academic honors" : "Все последние транзакции баллов за олимпиады, спорт и академические достижения"}
             </p>
           </div>
 
           <span className="text-xs font-semibold text-slate-400">
-            Записей: {transactions.length}
+            {language === "en" ? `Entries: ${transactions.length}` : `Записей: ${transactions.length}`}
           </span>
         </div>
 
         {transactions.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-400">
-            Транзакции пока отсутствуют. Начислите баллы за первые победы гимназистов!
+            {language === "en" ? "No house points transactions recorded yet." : "Транзакции пока отсутствуют. Начислите баллы за первые победы гимназистов!"}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-400 uppercase tracking-wider text-[10px] font-bold">
                 <tr>
-                  <th className="py-3 px-4">Дом</th>
-                  <th className="py-3 px-4">Баллы</th>
-                  <th className="py-3 px-4">Категория</th>
-                  <th className="py-3 px-4">Обоснование</th>
-                  <th className="py-3 px-4">Дата</th>
+                  <th className="py-3 px-4">{t("houses.house") || "Дом"}</th>
+                  <th className="py-3 px-4">{t("houses.points")}</th>
+                  <th className="py-3 px-4">{t("houses.category")}</th>
+                  <th className="py-3 px-4">{t("houses.reason")}</th>
+                  <th className="py-3 px-4">{t("houses.date")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {transactions.map((t) => {
-                  const theme = HOUSE_THEMES[t.house?.toUpperCase()] || HOUSE_THEMES.WEST;
+                {transactions.map((tItem) => {
+                  const theme = HOUSE_THEMES[tItem.house?.toUpperCase()] || HOUSE_THEMES.WEST;
                   return (
-                    <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
+                    <tr key={tItem.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-3 px-4">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${theme.bg} ${theme.text}`}>
                           <span className="material-symbols-outlined text-xs">{theme.emblem}</span>
-                          {t.house}
+                          {getHouseName(tItem.house)}
                         </span>
                       </td>
                       <td className="py-3 px-4">
                         <span className="font-extrabold text-sm text-emerald-600">
-                          +{t.points}
+                          +{tItem.points}
                         </span>
                       </td>
                       <td className="py-3 px-4">
                         <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-medium text-[10px]">
-                          {t.category}
+                          {categories.find(c => c.id === tItem.category)?.label || tItem.category}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-slate-700 font-medium">
-                        {t.reason}
+                        {tItem.reason}
                       </td>
                       <td className="py-3 px-4 text-slate-400 whitespace-nowrap">
-                        {new Date(t.createdAt).toLocaleDateString("ru-RU", {
+                        {new Date(tItem.createdAt).toLocaleDateString(language === "en" ? "en-US" : "ru-RU", {
                           day: "numeric",
                           month: "short",
                           hour: "2-digit",
@@ -273,7 +286,7 @@ export const HousesView: React.FC<HousesViewProps> = ({
             <div className="flex justify-between items-center pb-3 border-b border-slate-100">
               <h4 className="text-lg font-bold font-headline text-slate-900 flex items-center gap-2">
                 <span className="material-symbols-outlined text-amber-500 text-xl">military_tech</span>
-                Начислить баллы Дому
+                {t("houses.awardPoints")}
               </h4>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -286,24 +299,24 @@ export const HousesView: React.FC<HousesViewProps> = ({
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                  Выберите Дом
+                  {language === "en" ? "Select House" : "Выберите Дом"}
                 </label>
                 <select
                   value={house}
                   onChange={(e) => setHouse(e.target.value)}
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-primary font-bold cursor-pointer"
                 >
-                  <option value="NORTH">Север (North)</option>
-                  <option value="SOUTH">Юг (South)</option>
-                  <option value="EAST">Восток (East)</option>
-                  <option value="WEST">Запад (West)</option>
+                  <option value="NORTH">{t("houses.north")}</option>
+                  <option value="SOUTH">{t("houses.south")}</option>
+                  <option value="EAST">{t("houses.east")}</option>
+                  <option value="WEST">{t("houses.west")}</option>
                 </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                    Количество баллов
+                    {t("houses.points")}
                   </label>
                   <input
                     type="number"
@@ -318,14 +331,14 @@ export const HousesView: React.FC<HousesViewProps> = ({
 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                    Категория
+                    {t("houses.category")}
                   </label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-primary font-medium cursor-pointer"
                   >
-                    {CATEGORIES.map((c) => (
+                    {categories.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.label}
                       </option>
@@ -336,14 +349,14 @@ export const HousesView: React.FC<HousesViewProps> = ({
 
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                  Обоснование начисления *
+                  {t("houses.reason")} *
                 </label>
                 <textarea
                   required
                   rows={3}
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder="Например: Победитель регионального этапа ВсОШ по физике..."
+                  placeholder={language === "en" ? "e.g. 1st place in Physics Regional Olympiad..." : "Например: Победитель регионального этапа ВсОШ по физике..."}
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-primary font-body"
                 />
               </div>
@@ -354,14 +367,16 @@ export const HousesView: React.FC<HousesViewProps> = ({
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
                 >
-                  Отмена
+                  {language === "en" ? "Cancel" : "Отмена"}
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="px-5 py-2 bg-gradient-to-r from-red-800 to-red-600 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer disabled:opacity-50"
                 >
-                  {isSubmitting ? "Начисление..." : "Подтвердить и начислить"}
+                  {isSubmitting
+                    ? (language === "en" ? "Awarding..." : "Начисление...")
+                    : (language === "en" ? "Confirm & Award" : "Подтвердить и начислить")}
                 </button>
               </div>
             </form>

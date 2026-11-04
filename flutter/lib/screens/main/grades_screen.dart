@@ -8,6 +8,8 @@ import '../../config/app_typography.dart';
 import '../../models/api_models.dart';
 import '../../providers/grades_provider.dart';
 import '../../widgets/soft_offline_badge.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class GradesScreen extends ConsumerStatefulWidget {
   const GradesScreen({Key? key}) : super(key: key);
@@ -104,7 +106,7 @@ class _GradesScreenState extends ConsumerState<GradesScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
-                  Icons.calculate_rounded,
+                  LucideIcons.calculator,
                   color: AppColors.primary,
                   size: 20,
                 ),
@@ -164,7 +166,7 @@ class _GradesScreenState extends ConsumerState<GradesScreen> {
                   ),
                   child: Column(
                     children: [
-                      const Icon(Icons.cloud_off_rounded, size: 40, color: Colors.redAccent),
+                      const Icon(LucideIcons.cloudOff, size: 36, color: Colors.redAccent),
                       const SizedBox(height: 12),
                       Text(
                         'Не удалось загрузить ведомость оценок',
@@ -195,7 +197,7 @@ class _GradesScreenState extends ConsumerState<GradesScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        icon: const Icon(Icons.refresh, size: 16, color: Colors.white),
+                        icon: const Icon(LucideIcons.refreshCw, size: 15, color: Colors.white),
                         label: const Text(
                           'Повторить попытку',
                           style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, color: Colors.white),
@@ -286,7 +288,7 @@ class _GradesScreenState extends ConsumerState<GradesScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.school, color: Colors.white, size: 13),
+                        const Icon(LucideIcons.graduationCap, color: Colors.white, size: 13),
                         const SizedBox(width: 5),
                         Text(
                           _selectedPeriod,
@@ -363,7 +365,7 @@ class _GradesScreenState extends ConsumerState<GradesScreen> {
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.trending_up, color: Colors.white, size: 12),
+                            Icon(LucideIcons.trendingUp, color: Colors.white, size: 12),
                             SizedBox(width: 3),
                             Text(
                               '+0.14 нед.',
@@ -392,7 +394,7 @@ class _GradesScreenState extends ConsumerState<GradesScreen> {
                   ),
                   child: const Row(
                     children: [
-                      Icon(Icons.auto_graph_rounded, color: AppColors.primary, size: 16),
+                      Icon(LucideIcons.lineChart, color: AppColors.primary, size: 15),
                       SizedBox(width: 6),
                       Text(
                         'Калькулятор',
@@ -466,7 +468,7 @@ class _GradesScreenState extends ConsumerState<GradesScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          Icon(Icons.search_rounded, size: 18, color: textSecondary),
+          Icon(LucideIcons.search, size: 16, color: textSecondary),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
@@ -502,7 +504,7 @@ class _GradesScreenState extends ConsumerState<GradesScreen> {
                   _searchQuery = '';
                 });
               },
-              child: Icon(Icons.close_rounded, size: 16, color: textSecondary),
+              child: Icon(LucideIcons.x, size: 16, color: textSecondary),
             ),
         ],
       ),
@@ -674,7 +676,7 @@ class _GradesScreenState extends ConsumerState<GradesScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.tune_rounded, size: 14, color: isDark ? const Color(0xFFFFA396) : AppColors.primary),
+                    Icon(LucideIcons.slidersHorizontal, size: 13, color: isDark ? const Color(0xFFFFA396) : AppColors.primary),
                     const SizedBox(width: 4),
                     Text(
                       'Смоделировать балл',
@@ -804,7 +806,7 @@ class _GpaSimulatorSheetState extends State<_GpaSimulatorSheet> {
                       color: AppColors.primary.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.calculate_rounded, color: AppColors.primary, size: 20),
+                    child: const Icon(LucideIcons.calculator, color: AppColors.primary, size: 20),
                   ),
                   const SizedBox(width: 10),
                   Column(
@@ -913,7 +915,7 @@ class _GpaSimulatorSheetState extends State<_GpaSimulatorSheet> {
                     ),
                   ],
                 ),
-                Icon(Icons.arrow_forward_rounded, color: textSecondary, size: 20),
+                Icon(LucideIcons.arrowRight, color: textSecondary, size: 18),
                 Column(
                   children: [
                     Text(
@@ -1036,7 +1038,7 @@ class _GpaSimulatorSheetState extends State<_GpaSimulatorSheet> {
                     h.label,
                     style: const TextStyle(fontFamily: 'Manrope', fontSize: 11, fontWeight: FontWeight.bold),
                   ),
-                  deleteIcon: const Icon(Icons.close, size: 14),
+                  deleteIcon: const Icon(LucideIcons.x, size: 14),
                   onDeleted: () => _removeGrade(idx),
                   backgroundColor: isDark ? const Color(0xFF32353B) : const Color(0xFFE9ECF0),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

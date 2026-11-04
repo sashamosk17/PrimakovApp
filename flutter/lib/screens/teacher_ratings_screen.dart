@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/rating_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
@@ -127,7 +128,7 @@ class _TeacherRatingsScreenState extends ConsumerState<TeacherRatingsScreen> {
             ),
           ),
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: textPrimary),
+            icon: Icon(LucideIcons.arrowLeft, color: textPrimary),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
@@ -148,7 +149,7 @@ class _TeacherRatingsScreenState extends ConsumerState<TeacherRatingsScreen> {
             ),
           ),
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: textPrimary),
+            icon: Icon(LucideIcons.arrowLeft, color: textPrimary),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
@@ -158,7 +159,7 @@ class _TeacherRatingsScreenState extends ConsumerState<TeacherRatingsScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline, size: 64, color: textSecondary),
+                Icon(LucideIcons.alertCircle, size: 56, color: textSecondary),
                 const SizedBox(height: 16),
                 Text(
                   'Ошибка загрузки учителей',
@@ -177,7 +178,7 @@ class _TeacherRatingsScreenState extends ConsumerState<TeacherRatingsScreen> {
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: () => ref.refresh(teachersProvider),
-                  icon: const Icon(Icons.refresh, size: 18),
+                  icon: const Icon(LucideIcons.refreshCw, size: 16),
                   label: const Text('Повторить попытку'),
                 ),
               ],
@@ -231,7 +232,7 @@ class _TeacherRatingsScreenState extends ConsumerState<TeacherRatingsScreen> {
           ),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -318,10 +319,10 @@ class _TeacherRatingsScreenState extends ConsumerState<TeacherRatingsScreen> {
                         return IconButton(
                           icon: Icon(
                             index < _currentRating
-                                ? Icons.star
-                                : Icons.star_border,
-                            color: const Color(0xFFFFB300),
-                            size: 32,
+                                ? LucideIcons.star
+                                : LucideIcons.star,
+                            color: index < _currentRating ? const Color(0xFFFFB300) : Colors.grey.shade400,
+                            size: 28,
                           ),
                           onPressed: () {
                             HapticFeedback.selectionClick();
@@ -416,7 +417,7 @@ class _TeacherRatingsScreenState extends ConsumerState<TeacherRatingsScreen> {
                       child: Row(
                         children: [
                           const Icon(
-                            Icons.star,
+                            LucideIcons.star,
                             color: Color(0xFFFFB300),
                             size: 16,
                           ),
@@ -449,8 +450,8 @@ class _TeacherRatingsScreenState extends ConsumerState<TeacherRatingsScreen> {
                     child: Column(
                       children: [
                         Icon(
-                          Icons.rate_review_outlined,
-                          size: 48,
+                          LucideIcons.messageSquare,
+                          size: 40,
                           color: textSecondary,
                         ),
                         const SizedBox(height: 12),
@@ -528,10 +529,10 @@ class _RatingCard extends StatelessWidget {
                 children: List.generate(5, (index) {
                   return Icon(
                     index < rating.rate.floor()
-                        ? Icons.star
-                        : Icons.star_border,
-                    color: const Color(0xFFFFB300),
-                    size: 20,
+                        ? LucideIcons.star
+                        : LucideIcons.star,
+                    color: index < rating.rate.floor() ? const Color(0xFFFFB300) : Colors.grey.shade400,
+                    size: 16,
                   );
                 }),
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../config/app_colors.dart';
 import '../../providers/notification_provider.dart';
 import '../../services/notifications/push_notification_service.dart';
@@ -72,7 +73,7 @@ class _NotificationCenterScreenState
                 HapticFeedback.lightImpact();
                 ref.read(notificationProvider.notifier).markAllAsRead();
               },
-              icon: const Icon(Icons.done_all, size: 18),
+              icon: const Icon(LucideIcons.checkCheck, size: 18),
               label: const Text('Прочитать все'),
               style: TextButton.styleFrom(
                 foregroundColor: primaryColor,
@@ -80,7 +81,8 @@ class _NotificationCenterScreenState
             ),
           PopupMenuButton<String>(
             icon: Icon(
-              Icons.more_vert,
+              LucideIcons.moreVertical,
+              size: 20,
               color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
             ),
             onSelected: (val) {
@@ -94,7 +96,7 @@ class _NotificationCenterScreenState
                 value: 'clear',
                 child: Row(
                   children: [
-                    Icon(Icons.delete_sweep, size: 20, color: Colors.red),
+                    Icon(LucideIcons.trash2, size: 18, color: Colors.red),
                     SizedBox(width: 8),
                     Text('Очистить все'),
                   ],
@@ -132,8 +134,8 @@ class _NotificationCenterScreenState
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.notifications_none,
-                          size: 64,
+                          LucideIcons.bellOff,
+                          size: 56,
                           color: isDark
                               ? AppColors.darkIconGray
                               : Colors.grey[400],
@@ -245,11 +247,11 @@ class _NotificationCenterScreenState
                                     ),
                                     child: Icon(
                                       isUrgent
-                                          ? Icons.warning_amber_rounded
+                                          ? LucideIcons.alertTriangle
                                           : (item.payload['type'] ==
                                                   'SCHEDULE_CHANGE'
-                                              ? Icons.calendar_month
-                                              : Icons.notifications),
+                                              ? LucideIcons.calendarDays
+                                              : LucideIcons.bell),
                                       color: isUrgent
                                           ? Colors.white
                                           : (item.isRead

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import '../config/app_colors.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 /// Soft Offline Badge (UI-03)
 /// Visual indicator displayed when data is served from local offline cache (Hive).
@@ -65,7 +65,7 @@ class SoftOfflineBadge extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            isSyncing ? Icons.sync : Icons.cloud_done_outlined,
+            isSyncing ? LucideIcons.refreshCw : LucideIcons.cloud,
             size: 18,
             color: iconColor,
           ),
@@ -120,7 +120,7 @@ class SoftOfflineBadge extends StatelessWidget {
                       ),
                     )
                   else
-                    Icon(Icons.refresh, size: 13, color: textColor),
+                    Icon(LucideIcons.refreshCw, size: 13, color: textColor),
                   const SizedBox(width: 4),
                   Text(
                     isSyncing ? 'Синхронизация' : 'Обновить',

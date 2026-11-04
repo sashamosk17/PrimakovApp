@@ -1,10 +1,11 @@
-/// Login Screen - Updated Design
-import '../../config/app_colors.dart';
-/// Modern login interface with improved UX
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../../config/app_colors.dart';
+import '../../config/app_localizations.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/locale_provider.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -31,10 +32,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
+  Future<void> _handleLogin(AppLocalizations loc) async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       setState(() {
-        _error = 'Пожалуйста, заполните все поля';
+        _error = loc.translate('fillAllFields');
       });
       return;
     }
@@ -58,6 +59,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    final currentLocale = ref.watch(localeProvider);
     final isLoading = ref.watch(authLoadingProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -70,20 +73,63 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                
+                // Language Switcher Chip at top
+                Align(
+                  alignment: Alignment.topRight,
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      ref.read(localeProvider.notifier).toggleLocale();
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkSurfaceContainer : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isDark ? AppColors.darkSubtleBorder : AppColors.subtleBorder,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            LucideIcons.globe,
+                            size: 14,
+                            color: isDark ? AppColors.darkPrimary : AppColors.primaryRed,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            currentLocale.languageCode == 'en' ? 'EN' : 'RU',
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
                 // Logo/Icon
                 Container(
                   width: 100,
                   height: 100,
-                   child: Center(
-                            child: Opacity(
-                              opacity: 0.8,
-                              child: Image.asset(
-                                'assets/images/primakov_logo.png',
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
+                  child: Center(
+                    child: Opacity(
+                      opacity: 0.8,
+                      child: Image.asset(
+                        'assets/images/primakov_logo.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 32),
 
@@ -100,7 +146,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Subtitle
                 Text(
-                  'Добро пожаловать!',
+                  loc.welcome,
                   style: TextStyle(
                     fontSize: 16,
                     color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
@@ -129,12 +175,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Email',
+                      hintText: loc.email,
                       hintStyle: TextStyle(
                         color: isDark ? AppColors.darkTextSecondary : const Color(0xFF999999),
                       ),
                       prefixIcon: Icon(
-                        Icons.email_outlined,
+                        LucideIcons.mail,
+                        size: 20,
                         color: isDark ? AppColors.darkPrimary : AppColors.primaryRed,
                       ),
                       border: OutlineInputBorder(
@@ -170,19 +217,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Пароль',
+                      hintText: loc.password,
                       hintStyle: TextStyle(
                         color: isDark ? AppColors.darkTextSecondary : const Color(0xFF999999),
                       ),
                       prefixIcon: Icon(
-                        Icons.lock_outlined,
+                        LucideIcons.lock,
+                        size: 20,
                         color: isDark ? AppColors.darkPrimary : AppColors.primaryRed,
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
+                              ? LucideIcons.eye
+                              : LucideIcons.eyeOff,
+                          size: 20,
                           color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                         ),
                         onPressed: () {
@@ -208,13 +257,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: TextButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Восстановление пароля скоро появится'),
+                        SnackBar(
+                          content: Text(loc.translate('passwordRecoverySoon')),
                         ),
                       );
                     },
                     child: Text(
-                      'Забыли пароль?',
+                      loc.forgotPassword,
                       style: TextStyle(
                         color: isDark ? AppColors.darkPrimary : AppColors.primaryRed,
                         fontWeight: FontWeight.w600,
@@ -237,7 +286,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: Row(
                       children: [
                         Icon(
-                          Icons.error_outline,
+                          LucideIcons.alertCircle,
                           color: isDark ? AppColors.darkError : const Color(0xFFD32F2F),
                           size: 20,
                         ),
@@ -262,7 +311,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: isLoading ? null : _handleLogin,
+                    onPressed: isLoading ? null : () => _handleLogin(loc),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isDark ? AppColors.darkPrimary : AppColors.primaryRed,
                       foregroundColor: Colors.white,
@@ -280,9 +329,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text(
-                            'Войти',
-                            style: TextStyle(
+                        : Text(
+                            loc.loginButton,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -297,7 +346,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Нет аккаунта? ',
+                      '${loc.dontHaveAccount} ',
                       style: TextStyle(
                         color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                       ),
@@ -311,7 +360,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         );
                       },
                       child: Text(
-                        'Зарегистрироваться',
+                        loc.registerButton,
                         style: TextStyle(
                           color: isDark ? AppColors.darkPrimary : AppColors.primaryRed,
                           fontWeight: FontWeight.w600,

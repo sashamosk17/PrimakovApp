@@ -1,5 +1,5 @@
-/// Story Card Widget - Исправленная версия без overflow
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../config/app_colors.dart';
 import '../models/api_models.dart';
 import '../config/app_spacing.dart';
@@ -127,7 +127,7 @@ class StoryCard extends StatelessWidget {
       height: 70,
       color: isDarkMode ? AppColors.darkMediumGray : AppColors.mediumGray,
       child: Icon(
-        type == 'video' ? Icons.videocam : Icons.newspaper,
+        type == 'video' ? LucideIcons.video : LucideIcons.newspaper,
         size: 28,
         color: isDarkMode ? AppColors.darkIconGray : AppColors.iconGray,
       ),

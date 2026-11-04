@@ -6,8 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_spacing.dart';
+import '../../config/app_localizations.dart';
+import '../../providers/locale_provider.dart';
 import '../../models/api_models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/ui_provider.dart';
@@ -659,7 +662,7 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.download_outlined),
+                          icon: const Icon(LucideIcons.download),
                           tooltip: 'Скачать документ',
                           onPressed: () {
                             _showFloatingSnackBar('Загрузка документа «${doc['title']}» начата');
@@ -685,7 +688,7 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.assignment_turned_in, color: theme.colorScheme.primary, size: 22),
+                        Icon(LucideIcons.fileCheck2, color: theme.colorScheme.primary, size: 22),
                         const SizedBox(width: 10),
                         Text(
                           'Заказ справки об обучении',
@@ -709,7 +712,7 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        icon: const Icon(Icons.send, size: 16),
+                        icon: const Icon(LucideIcons.send, size: 16),
                         label: const Text('Заказать справку'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.colorScheme.primary,
@@ -755,11 +758,130 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
     );
   }
 
+  void _showLanguageSelectionSheet() {
+    final loc = AppLocalizations.of(context);
+    final currentLocale = ref.read(localeProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkBackgroundSecondary : AppColors.backgroundSecondary,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.black12,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Icon(
+                  LucideIcons.globe,
+                  color: theme.colorScheme.primary,
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  loc.chooseLanguage,
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              tileColor: currentLocale.languageCode == 'ru'
+                  ? theme.colorScheme.primary.withAlpha((0.1 * 255).round())
+                  : Colors.transparent,
+              leading: const Text('🇷🇺', style: TextStyle(fontSize: 24)),
+              title: Text(
+                'Русский',
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontWeight: currentLocale.languageCode == 'ru' ? FontWeight.w700 : FontWeight.w500,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              subtitle: Text(
+                'Russian',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: theme.colorScheme.onSurface.withAlpha((0.6 * 255).round()),
+                ),
+              ),
+              trailing: currentLocale.languageCode == 'ru'
+                  ? Icon(LucideIcons.check, color: theme.colorScheme.primary, size: 20)
+                  : null,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                ref.read(localeProvider.notifier).setLocale(const Locale('ru', 'RU'));
+                Navigator.pop(context);
+              },
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              tileColor: currentLocale.languageCode == 'en'
+                  ? theme.colorScheme.primary.withAlpha((0.1 * 255).round())
+                  : Colors.transparent,
+              leading: const Text('🇬🇧', style: TextStyle(fontSize: 24)),
+              title: Text(
+                'English',
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontWeight: currentLocale.languageCode == 'en' ? FontWeight.w700 : FontWeight.w500,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              subtitle: Text(
+                'Английский',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: theme.colorScheme.onSurface.withAlpha((0.6 * 255).round()),
+                ),
+              ),
+              trailing: currentLocale.languageCode == 'en'
+                  ? Icon(LucideIcons.check, color: theme.colorScheme.primary, size: 20)
+                  : null,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                ref.read(localeProvider.notifier).setLocale(const Locale('en', 'US'));
+                Navigator.pop(context);
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showAboutDialog(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('О приложении'),
+        title: Text(loc.aboutApp),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -768,9 +890,9 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
             const SizedBox(height: 8),
             const Text('Academic Curator System'),
             const SizedBox(height: 16),
-            const Text(
-              'Информационная система управления учебным процессом АНОО «Гимназия им. Е.М. Примакова».',
-              style: TextStyle(fontSize: 13, color: Color(0xFF5F5E5E)),
+            Text(
+              loc.translate('aboutAppDescription'),
+              style: const TextStyle(fontSize: 13, color: Color(0xFF5F5E5E)),
             ),
           ],
         ),
@@ -784,11 +906,11 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                 applicationVersion: _appVersion,
               );
             },
-            child: const Text('Лицензии'),
+            child: Text(loc.translate('licenses')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Закрыть'),
+            child: Text(loc.close),
           ),
         ],
       ),
@@ -796,17 +918,18 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
   }
 
   void _showLogoutDialog() {
+    final loc = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Выход из аккаунта'),
-        content: const Text('Вы уверены, что хотите выйти из профиля на этом устройстве?'),
+        title: Text(loc.confirmLogoutTitle),
+        content: Text(loc.confirmLogout),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Отмена',
-              style: TextStyle(color: Color(0xFF5F5E5E)),
+            child: Text(
+              loc.cancel,
+              style: const TextStyle(color: Color(0xFF5F5E5E)),
             ),
           ),
           TextButton(
@@ -814,9 +937,9 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
               Navigator.pop(context);
               ref.read(authProvider.notifier).logout();
             },
-            child: const Text(
-              'Выйти',
-              style: TextStyle(color: Color(0xFFBA1A1A)),
+            child: Text(
+              loc.logout,
+              style: const TextStyle(color: Color(0xFFBA1A1A)),
             ),
           ),
         ],
@@ -826,12 +949,14 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    final currentLocale = ref.watch(localeProvider);
     final authState = ref.watch(authProvider);
     final currentUser = ref.watch(currentUserProvider) ?? authState.currentUser;
     final isDarkMode = ref.watch(isDarkModeProvider);
     final userRole = authState.userRole ?? UserRole.STUDENT;
 
-    String userName = 'Студент';
+    String userName = loc.roleStudent;
     if (currentUser != null && currentUser.fullName.trim().isNotEmpty) {
       userName = currentUser.fullName.trim();
     } else if (currentUser != null && currentUser.email.isNotEmpty) {
@@ -845,11 +970,13 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
         userName = prefix;
       }
     } else if (authState.isAuthenticated) {
-      userName = userRole == UserRole.STUDENT ? 'Иван Петров' : 'Преподаватель';
+      userName = userRole == UserRole.STUDENT ? 'Иван Петров' : loc.roleTeacher;
     }
     final userClass = currentUser?.groupName != null
-        ? '${currentUser!.groupName} класс'
-        : (userRole == UserRole.STUDENT ? '10-А класс' : 'Преподаватель');
+        ? '${currentUser!.groupName} ${currentLocale.languageCode == 'en' ? 'Grade' : 'класс'}'
+        : (userRole == UserRole.STUDENT
+            ? (currentLocale.languageCode == 'en' ? '10-A Grade' : '10-А класс')
+            : loc.roleTeacher);
 
     final rawBirth = currentUser?.birthDate;
     final isStudent = userRole == UserRole.STUDENT;
@@ -869,7 +996,7 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
     try {
       final dt = DateTime.parse(effectiveBirth);
       final age = DateTime.now().year - dt.year - ((DateTime.now().month < dt.month || (DateTime.now().month == dt.month && DateTime.now().day < dt.day)) ? 1 : 0);
-      effectiveBirthDateStr = '$effectiveBirth ($age лет)';
+      effectiveBirthDateStr = '$effectiveBirth ($age ${loc.translate('yearsOld')})';
     } catch (_) {}
 
     final theme = Theme.of(context);
@@ -883,9 +1010,9 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
     final sessionsAsync = ref.watch(sessionsProvider);
 
     final sessionsSubtitle = sessionsAsync.when(
-      data: (sessions) => '${sessions.length} устройства в сети',
-      loading: () => 'Загрузка...',
-      error: (_, __) => 'Просмотр сессий',
+      data: (sessions) => '${sessions.length} ${loc.translate('devicesOnline')}',
+      loading: () => loc.loading,
+      error: (_, __) => loc.activeSessions,
     );
 
     return Scaffold(
@@ -910,7 +1037,7 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                 ),
               ),
               child: Icon(
-                Icons.person,
+                LucideIcons.user,
                 size: 18,
                 color: isDark ? AppColors.darkPrimary : const Color(0xFF8C251C),
               ),
@@ -963,7 +1090,7 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                   children: [
                     Expanded(
                       child: _StatsCard(
-                        label: 'Средний балл',
+                        label: loc.translate('studentGpa'),
                         value: statsAsync.when(
                           data: (s) => s.gpa.toStringAsFixed(2),
                           loading: () => '...',
@@ -975,7 +1102,7 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: _StatsCard(
-                        label: 'Посещаемость',
+                        label: loc.translate('attendance'),
                         value: statsAsync.when(
                           data: (s) => '${s.attendanceRate.round()}%',
                           loading: () => '...',
@@ -992,16 +1119,16 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                     children: [
                       Expanded(
                         child: _MiniStatChip(
-                          icon: Icons.check_circle_outline,
-                          label: 'Сдано дедлайнов: ${statsAsync.value!.completedDeadlines}',
+                          icon: LucideIcons.checkCircle2,
+                          label: '${loc.translate('deadlinesDone')}: ${statsAsync.value!.completedDeadlines}',
                           color: const Color(0xFF2E7D32),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _MiniStatChip(
-                          icon: Icons.pending_actions,
-                          label: 'В процессе: ${statsAsync.value!.pendingDeadlines}',
+                          icon: LucideIcons.clock,
+                          label: '${loc.translate('deadlinesPending')}: ${statsAsync.value!.pendingDeadlines}',
                           color: const Color(0xFFE65100),
                         ),
                       ),
@@ -1016,8 +1143,8 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
               _SettingsGroup(
                 children: [
                   _SettingsRow(
-                    icon: Icons.cake_outlined,
-                    title: 'Дата рождения',
+                    icon: LucideIcons.cake,
+                    title: loc.birthDate,
                     subtitle: effectiveBirthDateStr,
                     onTap: () async {
                       await Navigator.of(context).push(
@@ -1032,8 +1159,8 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                     color: isDark ? AppColors.darkBorderSecondary : const Color(0xFFEEEEF0),
                   ),
                   _SettingsRow(
-                    icon: Icons.phone_outlined,
-                    title: 'Телефон',
+                    icon: LucideIcons.phone,
+                    title: loc.phone,
                     subtitle: effectivePhone,
                     onTap: () async {
                       await Navigator.of(context).push(
@@ -1048,8 +1175,8 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                     color: isDark ? AppColors.darkBorderSecondary : const Color(0xFFEEEEF0),
                   ),
                   _SettingsRow(
-                    icon: Icons.send_rounded,
-                    title: 'Telegram',
+                    icon: LucideIcons.send,
+                    title: loc.telegram,
                     subtitle: effectiveTelegram,
                     onTap: () async {
                       await Navigator.of(context).push(
@@ -1064,11 +1191,11 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                     color: isDark ? AppColors.darkBorderSecondary : const Color(0xFFEEEEF0),
                   ),
                   _SettingsRow(
-                    icon: Icons.email_outlined,
-                    title: 'Корпоративная почта',
+                    icon: LucideIcons.mail,
+                    title: loc.corporateEmail,
                     subtitle: currentUser?.email ?? 'ivan.petrov@primakov.school',
                     onTap: () {
-                      _showFloatingSnackBar('Корпоративный адрес привязан к аккаунту');
+                      _showFloatingSnackBar(loc.translate('emailBoundMsg'));
                     },
                   ),
                 ],
@@ -1080,9 +1207,9 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
               _SettingsGroup(
                 children: [
                   _SettingToggleRow(
-                    icon: Icons.verified_user,
-                    title: 'Двухфакторная аутентификация',
-                    subtitle: 'Дополнительная защита аккаунта',
+                    icon: LucideIcons.shieldCheck,
+                    title: loc.twoFactorAuth,
+                    subtitle: loc.translate('twoFactorSubtitle'),
                     value: currentUser?.twoFactorEnabled ?? false,
                     onChanged: (value) async {
                       try {
@@ -1091,10 +1218,10 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                             .updateProfile(twoFactorEnabled: value);
                         ref.read(authProvider.notifier).fetchCurrentUser();
                         _showFloatingSnackBar(
-                          value ? '2FA успешно включена' : '2FA выключена',
+                          value ? loc.translate('twoFactorEnabledMsg') : loc.translate('twoFactorDisabledMsg'),
                         );
                       } catch (e) {
-                        _showFloatingSnackBar('Ошибка переключения 2FA: $e', isError: true);
+                        _showFloatingSnackBar('${loc.translate('twoFactorErrorMsg')}: $e', isError: true);
                       }
                     },
                   ),
@@ -1104,8 +1231,8 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                     color: isDark ? AppColors.darkBorderSecondary : const Color(0xFFEEEEF0),
                   ),
                   _SettingsRow(
-                    icon: Icons.devices,
-                    title: 'Активные сессии',
+                    icon: LucideIcons.laptop,
+                    title: loc.activeSessions,
                     subtitle: sessionsSubtitle,
                     onTap: _showActiveSessionsSheet,
                   ),
@@ -1119,15 +1246,15 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                 _SettingsGroup(
                   children: [
                     _SettingNavigationRow(
-                      icon: Icons.admin_panel_settings,
-                      title: 'Панель администратора (Web)',
-                      subtitle: 'Управление пользователями, контентом и заявками',
+                      icon: LucideIcons.shieldAlert,
+                      title: loc.translate('adminPanel'),
+                      subtitle: loc.translate('adminPanelSubtitle'),
                       onTap: () async {
                         final uri = Uri.parse('http://185.221.198.242:3000');
                         try {
                           await launchUrl(uri, mode: LaunchMode.externalApplication);
                         } catch (e) {
-                          _showFloatingSnackBar('Не удалось открыть веб-панель', isError: true);
+                          _showFloatingSnackBar(loc.translate('cannotOpenWebPanel'), isError: true);
                         }
                       },
                     ),
@@ -1140,9 +1267,9 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
               _SettingsGroup(
                 children: [
                   _SettingNavigationRow(
-                    icon: Icons.badge_outlined,
-                    title: 'Мой публичный профиль',
-                    subtitle: 'Контакты, расписание и как вас видят в справочнике',
+                    icon: LucideIcons.badgeCheck,
+                    title: loc.publicProfile,
+                    subtitle: loc.translate('publicProfileSubtitle'),
                     onTap: () {
                       final u = ref.read(currentUserProvider) ?? currentUser;
                       if (u != null) {
@@ -1160,9 +1287,9 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                     color: isDark ? AppColors.darkBorderSecondary : const Color(0xFFEEEEF0),
                   ),
                   _SettingNavigationRow(
-                    icon: Icons.edit,
-                    title: 'Редактировать профиль',
-                    subtitle: 'Контакты, дата рождения, личные данные',
+                    icon: LucideIcons.pencil,
+                    title: loc.editProfile,
+                    subtitle: loc.translate('editProfileSubtitle'),
                     onTap: () async {
                       await Navigator.of(context).push(
                         MaterialPageRoute(
@@ -1178,9 +1305,9 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                     color: isDark ? AppColors.darkBorderSecondary : const Color(0xFFEEEEF0),
                   ),
                   _SettingNavigationRow(
-                    icon: Icons.lock_outline,
-                    title: 'Сменить пароль',
-                    subtitle: 'Обновить пароль доступа',
+                    icon: LucideIcons.lock,
+                    title: loc.changePassword,
+                    subtitle: loc.translate('changePasswordSubtitle'),
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -1212,14 +1339,14 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(
-                                Icons.palette,
+                                LucideIcons.palette,
                                 color: theme.colorScheme.primary,
                                 size: 20,
                               ),
                             ),
                             const SizedBox(width: 16),
                             Text(
-                              'Оформление',
+                              loc.appearance,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -1233,8 +1360,8 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                           children: [
                             Expanded(
                               child: _ThemeCard(
-                                icon: Icons.light_mode,
-                                label: 'Светлая',
+                                icon: LucideIcons.sun,
+                                label: loc.lightMode,
                                 isSelected: !isDarkMode,
                                 onTap: () {
                                   ref.read(uiProvider.notifier).setDarkMode(false);
@@ -1244,8 +1371,8 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                             const SizedBox(width: 16),
                             Expanded(
                               child: _ThemeCard(
-                                icon: Icons.dark_mode,
-                                label: 'Темная',
+                                icon: LucideIcons.moon,
+                                label: loc.darkMode,
                                 isSelected: isDarkMode,
                                 onTap: () {
                                   ref.read(uiProvider.notifier).setDarkMode(true);
@@ -1263,13 +1390,27 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
 
               const SizedBox(height: 24),
 
+              // Language Group
+              _SettingsGroup(
+                children: [
+                  _SettingNavigationRow(
+                    icon: LucideIcons.globe,
+                    title: loc.appLanguage,
+                    subtitle: currentLocale.languageCode == 'en' ? 'English (US)' : 'Русский',
+                    onTap: _showLanguageSelectionSheet,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
               // Support & Official Documents Group
               _SettingsGroup(
                 children: [
                   _SettingsRow(
-                    icon: Icons.help_outline,
-                    title: 'Помощь и поддержка',
-                    subtitle: 'Куратор, техническая поддержка, контакты',
+                    icon: LucideIcons.helpCircle,
+                    title: loc.helpAndSupport,
+                    subtitle: loc.translate('helpAndSupportSubtitle'),
                     onTap: _showHelpAndSupportModal,
                   ),
                   Divider(
@@ -1278,9 +1419,9 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                     color: isDark ? AppColors.darkBorderSecondary : const Color(0xFFEEEEF0),
                   ),
                   _SettingsRow(
-                    icon: Icons.description,
-                    title: 'Документы и регламенты',
-                    subtitle: 'Устав, правила, заказ справок',
+                    icon: LucideIcons.fileText,
+                    title: loc.documentsAndRegulations,
+                    subtitle: loc.translate('documentsAndRegulationsSubtitle'),
                     onTap: _showDocumentsModal,
                   ),
                   Divider(
@@ -1289,9 +1430,9 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                     color: isDark ? AppColors.darkBorderSecondary : const Color(0xFFEEEEF0),
                   ),
                   _SettingsRow(
-                    icon: Icons.info_outline,
-                    title: 'О приложении',
-                    subtitle: 'Версия $_appVersion • Лицензии',
+                    icon: LucideIcons.info,
+                    title: loc.aboutApp,
+                    subtitle: '${loc.translate('version')} $_appVersion • ${loc.translate('licenses')}',
                     onTap: () => _showAboutDialog(context),
                   ),
                 ],
@@ -1313,14 +1454,14 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.logout, size: 20),
-                      SizedBox(width: 12),
+                      const Icon(LucideIcons.logOut, size: 20),
+                      const SizedBox(width: 12),
                       Text(
-                        'Выйти из профиля',
-                        style: TextStyle(
+                        loc.logout,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1334,7 +1475,7 @@ class _ProfileScreenContentState extends ConsumerState<_ProfileScreenContent> {
 
               // Footer
               Text(
-                'ВЕРСИЯ $_appVersion\nhttps://primakov.school/',
+                '${loc.translate('version').toUpperCase()} $_appVersion\nhttps://primakov.school/',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 11,
@@ -1791,9 +1932,9 @@ class _SettingsRow extends StatelessWidget {
               ),
             ),
             Icon(
-              Icons.chevron_right,
+              LucideIcons.chevronRight,
               color: isDark ? AppColors.darkOutline : AppColors.borderPrimary,
-              size: 20,
+              size: 18,
             ),
           ],
         ),
@@ -1944,9 +2085,9 @@ class _SettingNavigationRow extends StatelessWidget {
               ),
             ),
             Icon(
-              Icons.chevron_right,
+              LucideIcons.chevronRight,
               color: theme.colorScheme.onSurface.withAlpha((0.4 * 255).round()),
-              size: 20,
+              size: 18,
             ),
           ],
         ),

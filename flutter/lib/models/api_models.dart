@@ -2,6 +2,7 @@
 /// Converted from TypeScript types/api.ts
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class User {
   final String id;
@@ -1226,7 +1227,7 @@ class HouseConfig {
           totem: 'Белый медведь',
           motto: 'Мудрость и стойкость',
           color: Color(0xFF1E88E5),
-          icon: Icons.ac_unit_rounded,
+          icon: LucideIcons.snowflake,
         );
       case 'SOUTH':
         return const HouseConfig(
@@ -1235,7 +1236,7 @@ class HouseConfig {
           totem: 'Тигр',
           motto: 'Всегда начинай с себя!',
           color: Color(0xFFF57C00),
-          icon: Icons.local_fire_department_rounded,
+          icon: LucideIcons.flame,
         );
       case 'EAST':
         return const HouseConfig(
@@ -1244,7 +1245,7 @@ class HouseConfig {
           totem: 'Дракон и Панда',
           motto: 'Гармония и баланс',
           color: Color(0xFF2E7D32),
-          icon: Icons.eco_rounded,
+          icon: LucideIcons.leaf,
         );
       case 'WEST':
       default:
@@ -1254,7 +1255,7 @@ class HouseConfig {
           totem: 'Крылатый лев',
           motto: 'Свобода и благородство',
           color: Color(0xFF8B0000),
-          icon: Icons.shield_rounded,
+          icon: LucideIcons.shield,
         );
     }
   }

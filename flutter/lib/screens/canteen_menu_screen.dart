@@ -7,6 +7,8 @@ import '../../config/app_spacing.dart';
 import '../models/api_models.dart';
 import '../providers/canteen_provider.dart';
 import '../widgets/soft_offline_badge.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class CanteenMenuScreen extends ConsumerStatefulWidget {
   const CanteenMenuScreen({super.key});
@@ -36,10 +38,10 @@ class _CanteenMenuScreenState extends ConsumerState<CanteenMenuScreen> {
     MealType.SNACK: 'Перекус',
   };
   final Map<MealType, IconData> _mealTypeIcons = {
-    MealType.BREAKFAST: Icons.wb_sunny_outlined,
-    MealType.LUNCH: Icons.restaurant,
-    MealType.DINNER: Icons.nightlight_outlined,
-    MealType.SNACK: Icons.coffee,
+    MealType.BREAKFAST: LucideIcons.sun,
+    MealType.LUNCH: LucideIcons.utensils,
+    MealType.DINNER: LucideIcons.moon,
+    MealType.SNACK: LucideIcons.coffee,
   };
 
   @override
@@ -170,7 +172,7 @@ class _CanteenMenuScreenState extends ConsumerState<CanteenMenuScreen> {
         backgroundColor: isDark ? AppColors.darkBackgroundSecondary : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -184,7 +186,7 @@ class _CanteenMenuScreenState extends ConsumerState<CanteenMenuScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed),
+            icon: Icon(LucideIcons.refreshCw, color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed, size: 18),
             tooltip: 'Обновить меню',
             onPressed: () {
               HapticFeedback.lightImpact();
@@ -242,8 +244,8 @@ class _CanteenMenuScreenState extends ConsumerState<CanteenMenuScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.error_outline,
-                              size: 64,
+                              LucideIcons.alertCircle,
+                              size: 56,
                               color: isDark ? AppColors.darkIconGray : Colors.grey.shade400,
                             ),
                             const SizedBox(height: 16),
@@ -268,8 +270,8 @@ class _CanteenMenuScreenState extends ConsumerState<CanteenMenuScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.restaurant_menu,
-                                  size: 64,
+                                  LucideIcons.utensils,
+                                  size: 56,
                                   color: isDark ? AppColors.darkIconGray : Colors.grey.shade300,
                                 ),
                                 const SizedBox(height: 16),
@@ -497,15 +499,15 @@ class _CanteenMenuScreenState extends ConsumerState<CanteenMenuScreen> {
                         item.imageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Icon(
-                          Icons.restaurant,
-                          size: 32,
+                          LucideIcons.utensils,
+                          size: 28,
                           color: isDark ? AppColors.darkIconGray : AppColors.iconGray,
                         ),
                       ),
                     )
                   : Icon(
-                      Icons.restaurant,
-                      size: 32,
+                      LucideIcons.utensils,
+                      size: 28,
                       color: isDark ? AppColors.darkIconGray : AppColors.iconGray,
                     ),
             ),
@@ -555,13 +557,13 @@ class _CanteenMenuScreenState extends ConsumerState<CanteenMenuScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _buildNutritionBadge('${item.calories} ккал', Icons.local_fire_department),
+                      _buildNutritionBadge('${item.calories} ккал', LucideIcons.flame),
                       if (item.weight != null)
-                        _buildNutritionBadge('${item.weight} г', Icons.scale),
+                        _buildNutritionBadge('${item.weight} г', LucideIcons.scale),
                       if (item.isVegetarian)
-                        _buildIconBadge(Icons.eco, Colors.green),
+                        _buildIconBadge(LucideIcons.leaf, Colors.green),
                       if (item.isVegan)
-                        _buildIconBadge(Icons.spa, Colors.lightGreen),
+                        _buildIconBadge(LucideIcons.sparkles, Colors.lightGreen),
                     ],
                   ),
                 ],

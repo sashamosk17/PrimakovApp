@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../config/app_colors.dart';
 import '../../models/api_models.dart';
 import '../../providers/story_provider.dart';
@@ -311,7 +312,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                             border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
                           ),
                           child: const Icon(
-                            Icons.school_rounded,
+                            LucideIcons.graduationCap,
                             color: Colors.white,
                             size: 20,
                           ),
@@ -349,7 +350,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.white.withOpacity(0.2)),
                             ),
-                            child: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
+                            child: const Icon(LucideIcons.x, color: Colors.white, size: 18),
                           ),
                           onPressed: () {
                             HapticFeedback.lightImpact();
@@ -428,7 +429,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                               width: double.infinity,
                               child: ElevatedButton.icon(
                                 onPressed: () => _launchURL(story.linkUrl!.trim()),
-                                icon: const Icon(Icons.arrow_outward_rounded, size: 16),
+                                icon: const Icon(LucideIcons.arrowUpRight, size: 16),
                                 label: Text(
                                   story.linkText?.trim().isNotEmpty == true
                                       ? story.linkText!.trim()
@@ -471,7 +472,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                     border: Border.all(color: Colors.white.withOpacity(0.25)),
                   ),
                   child: const Icon(
-                    Icons.pause_rounded,
+                    LucideIcons.pause,
                     color: Colors.white,
                     size: 36,
                   ),
@@ -535,7 +536,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
             border: Border.all(color: Colors.white.withOpacity(0.15)),
           ),
           child: const Icon(
-            Icons.school_rounded,
+            LucideIcons.graduationCap,
             size: 64,
             color: Colors.white38,
           ),

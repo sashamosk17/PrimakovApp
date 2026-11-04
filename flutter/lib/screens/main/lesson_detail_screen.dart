@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../models/api_models.dart';
 import '../../config/app_colors.dart';
 import '../teacher_ratings_screen.dart';
@@ -39,7 +40,7 @@ class LessonDetailScreen extends ConsumerWidget {
         elevation: 0,
         leading: IconButton(
           icon: Icon(
-            Icons.arrow_back,
+            LucideIcons.arrowLeft,
             color: isDarkMode ? textPrimary : Colors.white,
           ),
           onPressed: () => Navigator.of(context).pop(),
@@ -85,7 +86,7 @@ class LessonDetailScreen extends ConsumerWidget {
                   Row(
                     children: [
                       Icon(
-                        Icons.access_time,
+                        LucideIcons.clock,
                         color: isDarkMode
                             ? textPrimary.withOpacity(0.7)
                             : Colors.white70,
@@ -111,7 +112,7 @@ class LessonDetailScreen extends ConsumerWidget {
 
             // Location Info
             _InfoSection(
-              icon: Icons.room,
+              icon: LucideIcons.mapPin,
               title: 'Местоположение',
               children: [
                 _InfoRow(
@@ -129,7 +130,7 @@ class LessonDetailScreen extends ConsumerWidget {
 
             // Teacher Info
             _InfoSection(
-              icon: Icons.person,
+              icon: LucideIcons.user,
               title: 'Преподаватель',
               children: [
                 _InfoRow(
@@ -148,7 +149,7 @@ class LessonDetailScreen extends ConsumerWidget {
                           ),
                         );
                       },
-                      icon: const Icon(Icons.star, size: 18),
+                      icon: const Icon(LucideIcons.star, size: 18),
                       label: const Text('Оценить учителя'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isDarkMode
@@ -172,7 +173,7 @@ class LessonDetailScreen extends ConsumerWidget {
 
             // Homework Info
             _InfoSection(
-              icon: Icons.assignment,
+              icon: LucideIcons.bookOpen,
               title: 'Домашнее задание',
               children: [
                 Container(
@@ -189,11 +190,11 @@ class LessonDetailScreen extends ConsumerWidget {
                       Row(
                         children: [
                           Icon(
-                            lesson.hasHomework ? Icons.warning : Icons.check_circle,
+                            lesson.hasHomework ? LucideIcons.alertCircle : LucideIcons.checkCircle2,
                             color: lesson.hasHomework
                                 ? const Color(0xFFD32F2F)
                                 : const Color(0xFF4CAF50),
-                            size: 24,
+                            size: 22,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -255,7 +256,7 @@ class LessonDetailScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   _ActionButton(
-                    icon: Icons.map,
+                    icon: LucideIcons.map,
                     label: 'Показать на карте школы',
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -265,7 +266,7 @@ class LessonDetailScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   _ActionButton(
-                    icon: Icons.notifications,
+                    icon: LucideIcons.bell,
                     label: 'Напомнить за 10 минут',
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -465,7 +466,7 @@ class _ActionButton extends StatelessWidget {
                 ),
               ),
               Icon(
-                Icons.arrow_forward_ios,
+                LucideIcons.chevronRight,
                 size: 16,
                 color: textPrimary.withOpacity(0.4),
               ),

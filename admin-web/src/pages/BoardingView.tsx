@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import type { BoardingRosterItem, WeekendLeaveRequest } from "../types";
 import { useToast } from "../context/ToastContext";
+import { useLanguage } from "../context/LanguageContext";
 
 interface BoardingViewProps {
   roster: BoardingRosterItem[];
@@ -16,6 +17,7 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
   onRefresh,
 }) => {
   const { showToast } = useToast();
+  const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState<"roster" | "leaves">("roster");
   const [searchQuery, setSearchQuery] = useState("");
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
@@ -70,10 +72,10 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
         <div>
           <h3 className="text-3xl font-extrabold text-on-surface font-display tracking-tight flex items-center gap-3">
             <span className="material-symbols-outlined text-primary text-3xl">hotel</span>
-            Пансион Гимназии (Boarding Life)
+            {t("boarding.title")}
           </h3>
           <p className="text-xs text-secondary mt-1">
-            Вечерняя перекличка, контроль присутствия в кампусе Раздоры и согласование заявлений на выезд на выходные.
+            {t("boarding.subtitle")}
           </p>
         </div>
 
@@ -82,7 +84,7 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
           className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs cursor-pointer transition-colors"
         >
           <span className="material-symbols-outlined text-base">refresh</span>
-          Обновить ведомость
+          {t("boarding.refresh")}
         </button>
       </div>
 
@@ -90,7 +92,7 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-surface-container-lowest p-5 rounded-3xl border border-slate-100 shadow-xs">
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Всего в пансионе
+            {t("boarding.totalInBoarding")}
           </p>
           <p className="text-2xl font-black text-slate-900 mt-1">{totalStudents}</p>
         </div>
@@ -98,7 +100,7 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
         <div className="bg-surface-container-lowest p-5 rounded-3xl border border-slate-100 shadow-xs">
           <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1">
             <span className="material-symbols-outlined text-sm">check_circle</span>
-            В пансионе
+            {t("boarding.inCampus")}
           </p>
           <p className="text-2xl font-black text-emerald-600 mt-1">{presentCount}</p>
         </div>
@@ -106,7 +108,7 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
         <div className="bg-surface-container-lowest p-5 rounded-3xl border border-slate-100 shadow-xs">
           <p className="text-[11px] font-bold text-amber-600 uppercase tracking-wider flex items-center gap-1">
             <span className="material-symbols-outlined text-sm">schedule</span>
-            Опоздание
+            {t("boarding.late")}
           </p>
           <p className="text-2xl font-black text-amber-600 mt-1">{lateCount}</p>
         </div>
@@ -114,7 +116,7 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
         <div className="bg-surface-container-lowest p-5 rounded-3xl border border-slate-100 shadow-xs">
           <p className="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1">
             <span className="material-symbols-outlined text-sm">flight_takeoff</span>
-            На выезде
+            {t("boarding.onLeave")}
           </p>
           <p className="text-2xl font-black text-blue-600 mt-1">{onLeaveCount}</p>
         </div>
@@ -131,7 +133,7 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
           }`}
         >
           <span className="material-symbols-outlined text-lg">badge</span>
-          Вечерняя перекличка ({roster.length})
+          {t("boarding.tabRoster")} ({roster.length})
         </button>
 
         <button
@@ -143,7 +145,7 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
           }`}
         >
           <span className="material-symbols-outlined text-lg">assignment</span>
-          Заявления на выезд ({leaveRequests.length})
+          {t("boarding.tabLeaves")} ({leaveRequests.length})
           {leaveRequests.some((l) => l.status === "PENDING") && (
             <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
           )}
@@ -157,7 +159,7 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Поиск ученика или комнаты..."
+            placeholder={t("boarding.searchPlaceholder")}
             className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary font-medium"
           />
           <span className="material-symbols-outlined absolute left-2.5 top-2.5 text-slate-400 text-sm">
@@ -173,31 +175,31 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-400 uppercase tracking-wider text-[10px] font-bold">
                 <tr>
-                  <th className="py-3 px-4">Гимназист</th>
-                  <th className="py-3 px-4">Класс</th>
-                  <th className="py-3 px-4">Комната</th>
-                  <th className="py-3 px-4">Статус</th>
-                  <th className="py-3 px-4">Время отметки</th>
-                  <th className="py-3 px-4">Выезд</th>
+                  <th className="py-3 px-4">{t("boarding.colStudent")}</th>
+                  <th className="py-3 px-4">{t("boarding.colClass")}</th>
+                  <th className="py-3 px-4">{t("boarding.colRoom")}</th>
+                  <th className="py-3 px-4">{t("boarding.colStatus")}</th>
+                  <th className="py-3 px-4">{t("boarding.colTime")}</th>
+                  <th className="py-3 px-4">{t("boarding.colWeekendPass")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredRoster.map((r) => {
                   let statusBadge = (
                     <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
-                      Отсутствует
+                      {t("boarding.statusAbsent")}
                     </span>
                   );
                   if (r.status === "PRESENT") {
                     statusBadge = (
                       <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
-                        В пансионе
+                        {t("boarding.statusPresent")}
                       </span>
                     );
                   } else if (r.status === "LATE") {
                     statusBadge = (
                       <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">
-                        Опоздание
+                        {t("boarding.statusLate")}
                       </span>
                     );
                   }
@@ -218,17 +220,17 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
                       </td>
                       <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
                         {r.lastCheckInTime
-                          ? new Date(r.lastCheckInTime).toLocaleTimeString("ru-RU", {
+                          ? new Date(r.lastCheckInTime).toLocaleTimeString(language === "en" ? "en-US" : "ru-RU", {
                               hour: "2-digit",
                               minute: "2-digit",
                             })
-                          : "Нет данных"}
+                          : (language === "en" ? "No record" : "Нет данных")}
                       </td>
                       <td className="py-3 px-4">
                         {r.hasActiveLeave ? (
                           <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600">
                             <span className="material-symbols-outlined text-xs">flight</span>
-                            Согласован
+                            {t("boarding.passApproved")}
                           </span>
                         ) : (
                           <span className="text-[11px] text-slate-400">—</span>
@@ -248,19 +250,19 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
         <div className="bg-surface-container-lowest rounded-3xl border border-slate-100 shadow-xs overflow-hidden">
           {filteredLeaves.length === 0 ? (
             <div className="p-12 text-center text-xs text-slate-400">
-              Заявления на выезд отсутствуют
+              {language === "en" ? "No weekend leave requests found" : "Заявления на выезд отсутствуют"}
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-400 uppercase tracking-wider text-[10px] font-bold">
                   <tr>
-                    <th className="py-3 px-4">Гимназист</th>
-                    <th className="py-3 px-4">Даты выезда / возвращения</th>
-                    <th className="py-3 px-4">Транспорт</th>
-                    <th className="py-3 px-4">Согласие родителей</th>
-                    <th className="py-3 px-4">Статус</th>
-                    <th className="py-3 px-4 text-right">Действие</th>
+                    <th className="py-3 px-4">{t("boarding.colStudent")}</th>
+                    <th className="py-3 px-4">{language === "en" ? "Departure / Return Dates" : "Даты выезда / возвращения"}</th>
+                    <th className="py-3 px-4">{t("boarding.transport")}</th>
+                    <th className="py-3 px-4">{language === "en" ? "Guardian Consent" : "Согласие родителей"}</th>
+                    <th className="py-3 px-4">{t("boarding.colStatus")}</th>
+                    <th className="py-3 px-4 text-right">{t("users.colActions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -276,10 +278,10 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
                         </td>
                         <td className="py-3 px-4 text-slate-600">
                           <div className="font-medium">
-                            Выезд: {new Date(l.departureDate).toLocaleDateString("ru-RU")}
+                            {t("boarding.departure")}: {new Date(l.departureDate).toLocaleDateString(language === "en" ? "en-US" : "ru-RU")}
                           </div>
                           <div className="text-[10px] text-slate-400">
-                            Возврат: {new Date(l.returnDate).toLocaleDateString("ru-RU")}
+                            {t("boarding.return")}: {new Date(l.returnDate).toLocaleDateString(language === "en" ? "en-US" : "ru-RU")}
                           </div>
                         </td>
                         <td className="py-3 px-4">
@@ -291,29 +293,29 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
                           {l.guardianConfirmed ? (
                             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
                               <span className="material-symbols-outlined text-xs">verified</span>
-                              Подтверждено
+                              {language === "en" ? "Confirmed" : "Подтверждено"}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600">
                               <span className="material-symbols-outlined text-xs">warning</span>
-                              Ожидает звонка
+                              {language === "en" ? "Awaiting Call" : "Ожидает звонка"}
                             </span>
                           )}
                         </td>
                         <td className="py-3 px-4">
                           {isPending && (
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700">
-                              На рассмотрении
+                              {t("boarding.passPending")}
                             </span>
                           )}
                           {isApproved && (
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700">
-                              Одобрено
+                              {t("boarding.passApproved")}
                             </span>
                           )}
                           {isRejected && (
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-red-50 text-red-700">
-                              Отклонено
+                              {language === "en" ? "Rejected" : "Отклонено"}
                             </span>
                           )}
                         </td>
@@ -325,18 +327,20 @@ export const BoardingView: React.FC<BoardingViewProps> = ({
                                 onClick={() => handleStatusChange(l.id, "APPROVED")}
                                 className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-[11px] cursor-pointer transition-colors shadow-xs"
                               >
-                                Одобрить
+                                {t("boarding.approve")}
                               </button>
                               <button
                                 disabled={isUpdating === l.id}
                                 onClick={() => handleStatusChange(l.id, "REJECTED")}
                                 className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-700 font-bold rounded-xl text-[11px] cursor-pointer transition-colors"
                               >
-                                Отклонить
+                                {t("boarding.reject")}
                               </button>
                             </div>
                           ) : (
-                            <span className="text-[11px] text-slate-400 italic">Решение принято</span>
+                            <span className="text-[11px] text-slate-400 italic">
+                              {language === "en" ? "Decision recorded" : "Решение принято"}
+                            </span>
                           )}
                         </td>
                       </tr>

@@ -7,6 +7,8 @@ import '../../config/app_spacing.dart';
 import '../../models/api_models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/house_provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class HouseCupScreen extends ConsumerStatefulWidget {
   const HouseCupScreen({Key? key}) : super(key: key);
@@ -48,7 +50,7 @@ class _HouseCupScreenState extends ConsumerState<HouseCupScreen>
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
           title: const Row(
             children: [
-              Icon(Icons.stars_rounded, color: AppColors.primary, size: 24),
+              Icon(LucideIcons.trophy, color: AppColors.primary, size: 22),
               SizedBox(width: 8),
               Text(
                 'Начислить баллы Дому',
@@ -218,7 +220,7 @@ class _HouseCupScreenState extends ConsumerState<HouseCupScreen>
                     color: AppColors.primary.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.add_circle_outline_rounded, color: AppColors.primary, size: 20),
+                  child: const Icon(LucideIcons.plusCircle, color: AppColors.primary, size: 20),
                 ),
               ),
             ),
@@ -240,7 +242,7 @@ class _HouseCupScreenState extends ConsumerState<HouseCupScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.shield_outlined, size: 48, color: Colors.grey),
+                    const Icon(LucideIcons.shield, size: 44, color: Colors.grey),
                     const SizedBox(height: 12),
                     Text(
                       'Не удалось загрузить таблицу Лиги Домов',
@@ -290,7 +292,7 @@ class _HouseCupScreenState extends ConsumerState<HouseCupScreen>
                       if (isStaff)
                         TextButton.icon(
                           onPressed: () => _showAwardPointsDialog(context),
-                          icon: const Icon(Icons.add, size: 16, color: AppColors.primary),
+                          icon: const Icon(LucideIcons.plus, size: 16, color: AppColors.primary),
                           label: const Text('Баллы', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, color: AppColors.primary)),
                         ),
                     ],

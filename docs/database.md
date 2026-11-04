@@ -318,6 +318,80 @@
 
 ---
 
+### 2.15. Таблица `grades` (Академическая успеваемость и оценки МЭШ)
+Миграции: `026_CreateGradesTable.sql`.
+
+| Столбец | Тип данных | Nullable | Ограничения / Default | Описание |
+| :--- | :--- | :---: | :--- | :--- |
+| `id` | `UUID` | Нет | `PRIMARY KEY DEFAULT gen_random_uuid()` | Идентификатор оценки |
+| `student_id` | `UUID` | Нет | `REFERENCES users(id) ON DELETE CASCADE` | Гимназист |
+| `subject_id` | `UUID` | Да | `REFERENCES subjects(id) ON DELETE SET NULL` | Привязка к предмету из справочника |
+| `subject_name`| `VARCHAR(150)`| Нет | — | Название дисциплины (для отчетов МЭШ) |
+| `value` | `INTEGER` | Нет | `CHECK (value BETWEEN 2 AND 5)` | Балл оценки (от 2 до 5) |
+| `weight` | `NUMERIC(3,2)`| Нет | `DEFAULT 1.0` | Весовой коэффициент (1 — ДЗ, 1.5 — проверочная, 2 — контрольная) |
+| `date` | `DATE` | Нет | — | Дата выставления оценки |
+| `period` | `VARCHAR(50)` | Нет | — | Учебный период (например, `1 триместр`, `2 триместр`) |
+| `topic` | `VARCHAR(255)`| Да | — | Тема проверочной/контрольной работы |
+| `created_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Время фиксации в системе |
+
+*Индексы*: `idx_grades_student_period ON (student_id, period)`, `idx_grades_subject ON (subject_name)`.
+
+---
+
+### 2.16. Таблица `house_point_transactions` (Лига Домов — транзакции баллов)
+Миграции: `027_CreateHouseAndBoardingTables.sql`.
+
+| Столбец | Тип данных | Nullable | Ограничения / Default | Описание |
+| :--- | :--- | :---: | :--- | :--- |
+| `id` | `UUID` | Нет | `PRIMARY KEY DEFAULT gen_random_uuid()` | Идентификатор транзакции |
+| `house` | `VARCHAR(10)` | Нет | `CHECK in ('NORTH', 'SOUTH', 'EAST', 'WEST')` | Дом гимназии |
+| `points` | `INTEGER` | Нет | `CHECK (points > 0)` | Количество начисленных баллов |
+| `category` | `VARCHAR(50)` | Нет | `CHECK in ('ACADEMIC', 'OLYMPIAD', 'SPORTS', 'CHARITY', 'CULTURE')` | Категория достижения |
+| `reason` | `TEXT` | Нет | — | Текстовое обоснование начисления |
+| `awarded_by` | `UUID` | Нет | `REFERENCES users(id)` | Педагог или администратор |
+| `student_id` | `UUID` | Да | `REFERENCES users(id) ON DELETE SET NULL` | Ученик, лично принесший баллы |
+| `created_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Время начисления |
+
+*Индексы*: `idx_house_transactions_house ON (house)`, `idx_house_transactions_created_at ON (created_at DESC)`.
+
+---
+
+### 2.17. Таблица `boarding_checkins` (Вечерняя перекличка в пансионе)
+Миграции: `027_CreateHouseAndBoardingTables.sql`.
+
+| Столбец | Тип данных | Nullable | Ограничения / Default | Описание |
+| :--- | :--- | :---: | :--- | :--- |
+| `id` | `UUID` | Нет | `PRIMARY KEY DEFAULT gen_random_uuid()` | Идентификатор отметки |
+| `student_id` | `UUID` | Нет | `REFERENCES users(id) ON DELETE CASCADE` | Ученик пансиона |
+| `check_in_time`| `TIMESTAMPTZ`| Нет | `DEFAULT CURRENT_TIMESTAMP` | Время фактического чекина |
+| `status` | `VARCHAR(20)` | Нет | `CHECK in ('PRESENT', 'LATE', 'ABSENT')` | Статус присутствия |
+| `notes` | `TEXT` | Да | — | Заметки воспитателя или ученика |
+| `latitude` | `NUMERIC(10,7)`| Да | — | Координата широты (геочекин кампуса) |
+| `longitude`| `NUMERIC(10,7)`| Да | — | Координата долготы (геочекин кампуса) |
+| `created_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Время создания записи |
+
+*Индексы*: `idx_boarding_checkins_student_date ON (student_id, check_in_time DESC)`.
+
+---
+
+### 2.18. Таблица `weekend_leave_requests` (Заявления на выезд из пансиона на выходные)
+Миграции: `027_CreateHouseAndBoardingTables.sql`.
+
+| Столбец | Тип данных | Nullable | Ограничения / Default | Описание |
+| :--- | :--- | :---: | :--- | :--- |
+| `id` | `UUID` | Нет | `PRIMARY KEY DEFAULT gen_random_uuid()` | Идентификатор заявления |
+| `student_id` | `UUID` | Нет | `REFERENCES users(id) ON DELETE CASCADE` | Ученик пансиона |
+| `departure_date`| `TIMESTAMPTZ`| Нет | — | Планируемая дата и время выезда |
+| `return_date` | `TIMESTAMPTZ`| Нет | — | Планируемая дата и время возвращения |
+| `transport_type`| `VARCHAR(50)`| Нет | `CHECK in ('PARENTS', 'PUBLIC_TRANSPORT', 'SHUTTLE')` | Способ передвижения |
+| `status` | `VARCHAR(20)` | Нет | `CHECK in ('PENDING', 'APPROVED', 'REJECTED')` | Статус согласования |
+| `guardian_confirmed`| `BOOLEAN`| Нет | `DEFAULT false` | Подтверждение законного представителя |
+| `created_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Время подачи заявления |
+
+*Индексы*: `idx_leave_requests_student ON (student_id)`, `idx_leave_requests_status ON (status)`.
+
+---
+
 ## 3. Реестр миграций базы данных
 
 Расположение: [backend/src/infrastructure/database/migrations/](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/infrastructure/database/migrations)
@@ -353,3 +427,5 @@
 | `023` | `023_SeedLargeScaleUsersAndClasses.sql` | Масштабное сидирование 110+ учащихся и 27 педагогов по всем 24 классам гимназии с нормализацией классов через дефис (`10-А`, `11-А`). |
 | `024` | `024_SeedStandardSubjects.sql` | Первоначальное наполнение справочника 25 ключевыми гимназическими дисциплинами по 5 кафедрам. |
 | `025` | `025_AddUserProfileFields.sql` | Добавление полей профиля `birth_date`, `phone`, `telegram` в таблицу `users`, сидирование ДР и контактов тестовых пользователей. |
+| `026` | `026_CreateGradesTable.sql` | Создание таблицы успеваемости `grades` с поддержкой весов оценок, периодов и тем работ. |
+| `027` | `027_CreateHouseAndBoardingTables.sql` | Создание таблиц `house_point_transactions`, `boarding_checkins`, `weekend_leave_requests` и добавление колонок `house`, `is_boarding`, `room_number` в `users`. |

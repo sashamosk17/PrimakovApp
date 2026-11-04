@@ -1,15 +1,18 @@
-/// Today Schedule Widget for Home Screen
-/// Shows today's schedule with next lesson highlighted
+/// Today Schedule Widget for Home Screen - Bento 2.0 Academic Style
+/// Modern minimalist widget with Lucide icons, ghost borders, and noble Primakov branding
 
 import 'package:flutter/material.dart';
-import '../../config/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../../config/app_colors.dart';
 import '../models/api_models.dart';
 import '../providers/schedule_provider.dart';
 import '../providers/auth_provider.dart';
 import '../screens/main/schedule_screen.dart';
 import '../config/app_spacing.dart';
 import '../config/app_typography.dart';
+import 'primakov_card.dart';
 
 class TodayScheduleWidget extends ConsumerStatefulWidget {
   const TodayScheduleWidget({Key? key}) : super(key: key);
@@ -39,31 +42,42 @@ class _TodayScheduleWidgetState extends ConsumerState<TodayScheduleWidget> {
   Widget build(BuildContext context) {
     final schedule = ref.watch(currentScheduleProvider);
     final isLoading = ref.watch(scheduleLoadingProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     if (isLoading) {
       return Container(
-        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
         child: const Center(
-          child: CircularProgressIndicator(),
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: CircularProgressIndicator(),
+          ),
         ),
       );
     }
 
     if (schedule == null || schedule.lessons.isEmpty) {
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-        padding: AppSpacing.paddingLG,
-        decoration: BoxDecoration(
-          color: AppColors.backgroundSecondary,
-          borderRadius: AppSpacing.borderRadiusLG,
-          boxShadow: AppColors.toggleShadow,
-        ),
+      return PrimakovCard(
+        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: Center(
-          child: Text(
-            'Сегодня нет уроков',
-            style: AppTypography.heading3.copyWith(
-              color: AppColors.textPrimary,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                LucideIcons.calendarCheck,
+                size: 20,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Сегодня нет уроков',
+                style: AppTypography.heading3.copyWith(
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.onSurface,
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -84,7 +98,7 @@ class _TodayScheduleWidgetState extends ConsumerState<TodayScheduleWidget> {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -92,11 +106,14 @@ class _TodayScheduleWidgetState extends ConsumerState<TodayScheduleWidget> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Расписание на сегодня',
-                style: AppTypography.heading1,
+                style: AppTypography.heading2.copyWith(
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.onSurface,
+                  fontSize: 20,
+                ),
               ),
-              TextButton(
+              TextButton.icon(
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -104,17 +121,22 @@ class _TodayScheduleWidgetState extends ConsumerState<TodayScheduleWidget> {
                     ),
                   );
                 },
-                child: Text(
-                  'Полное расписание',
-                  style: AppTypography.bodyMedium.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryRed,
+                icon: Icon(
+                  LucideIcons.chevronRight,
+                  size: 16,
+                  color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                ),
+                label: Text(
+                  'Все уроки',
+                  style: AppTypography.bodySmall.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.darkPrimary : AppColors.primary,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: 10),
           // Lessons List (show max 3)
           ...schedule.lessons.take(3).toList().asMap().entries.map((entry) {
             final index = entry.key;
@@ -123,16 +145,17 @@ class _TodayScheduleWidgetState extends ConsumerState<TodayScheduleWidget> {
             return _LessonCompactCard(
               lesson: lesson,
               isNext: isNext,
-            );
+            ).animate(delay: Duration(milliseconds: 60 * index)).fadeIn(duration: 250.ms).slideY(begin: 0.05, end: 0);
           }),
           if (schedule.lessons.length > 3)
             Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.sm),
+              padding: const EdgeInsets.only(top: 4),
               child: Center(
                 child: Text(
                   'Еще ${schedule.lessons.length - 3} уроков',
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -151,9 +174,7 @@ class _TodayScheduleWidgetState extends ConsumerState<TodayScheduleWidget> {
           minute: int.parse(parts[1]),
         );
       }
-    } catch (e) {
-      return null;
-    }
+    } catch (_) {}
     return null;
   }
 
@@ -170,50 +191,62 @@ class _LessonCompactCard extends StatelessWidget {
 
   const _LessonCompactCard({
     required this.lesson,
-    this.isNext = false,
+    required this.isNext,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      padding: AppSpacing.paddingMD,
-      decoration: BoxDecoration(
-        color: isNext ? AppColors.storyBackground : AppColors.backgroundSecondary,
-        borderRadius: AppSpacing.borderRadiusMD,
-        border: isNext
-            ? Border.all(color: AppColors.primaryRed, width: 2)
-            : null,
-        boxShadow: AppColors.toggleShadow,
-      ),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primary;
+    final primaryBg = isDark ? AppColors.darkPastelRed : AppColors.pastelRed;
+
+    return PrimakovCard(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      backgroundColor: isNext
+          ? primaryBg
+          : (isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceContainerLowest),
+      borderColor: isNext ? primaryColor.withOpacity(0.4) : null,
       child: Row(
         children: [
-          // Time
+          // Time Column
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 lesson.startTime,
                 style: AppTypography.heading3.copyWith(
-                  color: isNext ? AppColors.primaryRed : AppColors.textPrimary,
+                  color: isNext
+                      ? primaryColor
+                      : (isDark ? AppColors.darkTextPrimary : AppColors.onSurface),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
                 ),
               ),
               Text(
                 lesson.endTime,
                 style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textPrimary,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
+                  fontSize: 12,
                 ),
               ),
             ],
           ),
-          const SizedBox(width: AppSpacing.md),
-          // Divider
+          const SizedBox(width: 14),
+          // Subtle vertical separator
           Container(
             width: 2,
-            height: 40,
-            color: isNext ? AppColors.primaryRed : AppColors.borderSecondary,
+            height: 36,
+            decoration: BoxDecoration(
+              color: isNext
+                  ? primaryColor.withOpacity(0.5)
+                  : (isDark ? AppColors.darkBorderSecondary : AppColors.outlineVariant.withOpacity(0.2)),
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: 14),
           // Subject and Room
           Expanded(
             child: Column(
@@ -222,20 +255,25 @@ class _LessonCompactCard extends StatelessWidget {
                 Text(
                   lesson.subject,
                   style: AppTypography.heading3.copyWith(
-                    color: isNext ? AppColors.primaryRed : AppColors.textPrimary,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.onSurface,
+                    fontSize: 15,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: 3),
                 Row(
                   children: [
-                    Icon(Icons.location_on, size: 14, color: AppColors.textSecondary),
-                    const SizedBox(width: AppSpacing.xs),
+                    Icon(
+                      LucideIcons.mapPin,
+                      size: 12,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
+                    ),
+                    const SizedBox(width: 4),
                     Text(
                       'Кабинет ${lesson.room}',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.textPrimary,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.secondary,
                       ),
                     ),
                   ],
@@ -246,16 +284,17 @@ class _LessonCompactCard extends StatelessWidget {
           // Next indicator
           if (isNext)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.primaryRed,
-                borderRadius: BorderRadius.circular(AppSpacing.sm),
+                color: primaryColor,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
               ),
               child: Text(
-                'Следующий',
-                style: AppTypography.bodySmall.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.backgroundSecondary,
+                'СЕЙЧАС',
+                style: AppTypography.labelExtraSmall.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
                 ),
               ),
             ),
@@ -264,4 +303,3 @@ class _LessonCompactCard extends StatelessWidget {
     );
   }
 }
-

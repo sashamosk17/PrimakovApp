@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/room_provider.dart';
 import '../models/api_models.dart';
 import '../../config/app_colors.dart';
@@ -60,7 +61,7 @@ class _RoomsListScreenState extends ConsumerState<RoomsListScreen> {
         backgroundColor: isDark ? AppColors.darkBackgroundSecondary : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -84,10 +85,10 @@ class _RoomsListScreenState extends ConsumerState<RoomsListScreen> {
               decoration: InputDecoration(
                 hintText: 'Поиск по номеру или названию',
                 hintStyle: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
-                prefixIcon: Icon(Icons.search, color: isDark ? AppColors.darkIconGray : AppColors.iconGray),
+                prefixIcon: Icon(LucideIcons.search, size: 20, color: isDark ? AppColors.darkIconGray : AppColors.iconGray),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: Icon(Icons.clear, color: isDark ? AppColors.darkIconGray : AppColors.iconGray),
+                        icon: Icon(LucideIcons.x, size: 18, color: isDark ? AppColors.darkIconGray : AppColors.iconGray),
                         onPressed: () {
                           _searchController.clear();
                           setState(() => _searchQuery = '');
@@ -137,8 +138,8 @@ class _RoomsListScreenState extends ConsumerState<RoomsListScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.error_outline,
-                              size: 64,
+                              LucideIcons.alertCircle,
+                              size: 56,
                               color: isDark ? AppColors.darkIconGray : Colors.grey.shade400,
                             ),
                             const SizedBox(height: 16),
@@ -163,8 +164,8 @@ class _RoomsListScreenState extends ConsumerState<RoomsListScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.search_off,
-                                  size: 64,
+                                  LucideIcons.searchX,
+                                  size: 56,
                                   color: isDark ? AppColors.darkIconGray : Colors.grey.shade300,
                                 ),
                                 const SizedBox(height: 16),
@@ -248,9 +249,9 @@ class _RoomsListScreenState extends ConsumerState<RoomsListScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
-                Icons.meeting_room,
+                LucideIcons.doorOpen,
                 color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
-                size: 28,
+                size: 26,
               ),
             ),
             const SizedBox(width: 16),
@@ -299,7 +300,7 @@ class _RoomsListScreenState extends ConsumerState<RoomsListScreen> {
                   Row(
                     children: [
                       Icon(
-                        Icons.layers,
+                        LucideIcons.layers,
                         size: 14,
                         color: isDark ? AppColors.darkIconGray : Colors.grey,
                       ),
@@ -314,7 +315,7 @@ class _RoomsListScreenState extends ConsumerState<RoomsListScreen> {
                       if (room.capacity != null) ...[
                         const SizedBox(width: 12),
                         Icon(
-                          Icons.people,
+                          LucideIcons.users,
                           size: 14,
                           color: isDark ? AppColors.darkIconGray : Colors.grey,
                         ),
@@ -335,7 +336,7 @@ class _RoomsListScreenState extends ConsumerState<RoomsListScreen> {
             if (room.latitude != null && room.longitude != null)
               IconButton(
                 icon: Icon(
-                  Icons.map,
+                  LucideIcons.mapPin,
                   color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
                 ),
                 onPressed: () {

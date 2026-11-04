@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { apiClient } from "../api/client";
 import { useToast } from "../context/ToastContext";
+import { useLanguage } from "../context/LanguageContext";
 import { EmptyState } from "../components/EmptyState";
 import type { CanteenMenu, CanteenMenuItem, MealType } from "../types";
 
@@ -26,19 +27,20 @@ const CATEGORY_OPTIONS = [
   "Закуски",
 ];
 
-const MEAL_LABELS: Record<MealType, { label: string; icon: string; time: string }> = {
-  BREAKFAST: { label: "Завтрак", icon: "bakery_dining", time: "08:15 — 09:30" },
-  LUNCH: { label: "Обед", icon: "lunch_dining", time: "12:30 — 14:00" },
-  SNACK: { label: "Полдник", icon: "cookie", time: "15:45 — 16:30" },
-  DINNER: { label: "Ужин", icon: "dinner_dining", time: "18:00 — 19:30" },
-};
-
 interface CanteenViewProps {
   isDemoMode?: boolean;
 }
 
 export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
   const { showToast } = useToast();
+  const { t, language } = useLanguage();
+
+  const localizedMealLabels: Record<MealType, { label: string; icon: string; time: string }> = {
+    BREAKFAST: { label: t("canteen.breakfast"), icon: "bakery_dining", time: "08:15 — 09:30" },
+    LUNCH: { label: t("canteen.lunch"), icon: "lunch_dining", time: "12:30 — 14:00" },
+    SNACK: { label: t("canteen.snack"), icon: "cookie", time: "15:45 — 16:30" },
+    DINNER: { label: t("canteen.dinner"), icon: "dinner_dining", time: "18:00 — 19:30" },
+  };
 
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     return new Date().toISOString().split("T")[0];
@@ -490,14 +492,13 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-amber-300 text-xs font-bold tracking-wider uppercase">
               <span className="material-symbols-outlined text-sm">restaurant</span>
-              Комбинат питания гимназии
+              {language === "en" ? "Gymnasium Food Service" : "Комбинат питания гимназии"}
             </div>
             <h2 className="text-2xl lg:text-3xl font-black font-headline tracking-tight">
-              Управление меню столовой
+              {t("canteen.title")}
             </h2>
             <p className="text-xs text-red-100 max-w-xl leading-relaxed">
-              Формирование ежедневного и недельного рациона учащихся, расчет КБЖУ, бейджи
-              аллергенов и мгновенная синхронизация с мобильным приложением.
+              {t("canteen.subtitle")}
             </p>
           </div>
 
@@ -507,7 +508,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
               className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold border border-white/20 backdrop-blur-md transition-all cursor-pointer flex items-center gap-2"
             >
               <span className="material-symbols-outlined text-sm">content_copy</span>
-              Клонировать неделю
+              {t("canteen.copyWeek")}
             </button>
 
             <button
@@ -515,7 +516,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
               className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black shadow-lg shadow-amber-500/30 transition-all cursor-pointer flex items-center gap-2"
             >
               <span className="material-symbols-outlined text-sm">add</span>
-              Добавить блюдо
+              {t("canteen.addDish")}
             </button>
           </div>
         </div>
@@ -527,7 +528,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
         <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between gap-3">
           <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
             <span className="material-symbols-outlined text-primary text-base">calendar_today</span>
-            Выбор даты рациона:
+            {language === "en" ? "Select Meal Date:" : "Выбор даты рациона:"}
           </label>
           <div className="flex items-center gap-2">
             <input
@@ -540,7 +541,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
               onClick={() => setSelectedDate(new Date().toISOString().split("T")[0])}
               className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
             >
-              Сегодня
+              {language === "en" ? "Today" : "Сегодня"}
             </button>
           </div>
         </div>
@@ -550,33 +551,32 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
               <span className="material-symbols-outlined text-emerald-600 text-base">nutrition</span>
-              Суммарные показатели КБЖУ дня (
-              {allCurrentItems.length} позиций):
+              {language === "en" ? `Daily Nutrition Totals (${allCurrentItems.length} items):` : `Суммарные показатели КБЖУ дня (${allCurrentItems.length} позиций):`}
             </span>
-            <span className="text-[11px] text-slate-400 font-medium">Стандарты питания СанПиН</span>
+            <span className="text-[11px] text-slate-400 font-medium">SanPiN / Healthy Standards</span>
           </div>
 
           <div className="grid grid-cols-4 gap-3 text-center">
             <div className="p-2.5 bg-orange-50/80 rounded-xl border border-orange-100">
-              <p className="text-[10px] font-bold text-orange-800 uppercase tracking-wider">Калории</p>
-              <p className="text-base font-black text-orange-950 mt-0.5">{totalCalories} ккал</p>
+              <p className="text-[10px] font-bold text-orange-800 uppercase tracking-wider">{t("canteen.calories")}</p>
+              <p className="text-base font-black text-orange-950 mt-0.5">{totalCalories} {language === "en" ? "kcal" : "ккал"}</p>
             </div>
             <div className="p-2.5 bg-blue-50/80 rounded-xl border border-blue-100">
-              <p className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">Белки</p>
+              <p className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">{t("canteen.protein")}</p>
               <p className="text-base font-black text-blue-950 mt-0.5">
-                {totalProtein.toFixed(1)} г
+                {totalProtein.toFixed(1)} {language === "en" ? "g" : "г"}
               </p>
             </div>
             <div className="p-2.5 bg-amber-50/80 rounded-xl border border-amber-100">
-              <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Жиры</p>
-              <p className="text-base font-black text-amber-950 mt-0.5">{totalFat.toFixed(1)} г</p>
+              <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">{t("canteen.fat")}</p>
+              <p className="text-base font-black text-amber-950 mt-0.5">{totalFat.toFixed(1)} {language === "en" ? "g" : "г"}</p>
             </div>
             <div className="p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-100">
               <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">
-                Углеводы
+                {t("canteen.carbs")}
               </p>
               <p className="text-base font-black text-emerald-950 mt-0.5">
-                {totalCarbs.toFixed(1)} г
+                {totalCarbs.toFixed(1)} {language === "en" ? "g" : "г"}
               </p>
             </div>
           </div>
@@ -593,11 +593,11 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
               : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
         >
-          Все приемы пищи
+          {t("canteen.allMeals")}
         </button>
 
         {(["BREAKFAST", "LUNCH", "SNACK", "DINNER"] as MealType[]).map((type) => {
-          const info = MEAL_LABELS[type];
+          const info = localizedMealLabels[type];
           const count = menus.find((m) => m.mealType === type)?.items.length || 0;
           const isActive = activeMealType === type;
           return (
@@ -628,20 +628,20 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
       {isLoading ? (
         <div className="py-16 text-center text-slate-400">
           <span className="material-symbols-outlined text-4xl animate-spin">progress_activity</span>
-          <p className="text-xs font-bold mt-2">Загрузка меню столовой...</p>
+          <p className="text-xs font-bold mt-2">{language === "en" ? "Loading menu..." : "Загрузка меню столовой..."}</p>
         </div>
       ) : filteredMenus.length === 0 ? (
         <EmptyState
           icon="restaurant_menu"
-          title={`На ${selectedDate} меню еще не заполнено`}
-          description="Шеф-повар и комбинат питания могут добавить блюда или скопировать меню с прошлой недели."
-          actionLabel="Добавить первое блюдо"
+          title={t("canteen.noMenu")}
+          description={language === "en" ? "Chefs can add dishes or duplicate previous week's menu." : "Шеф-повар и комбинат питания могут добавить блюда или скопировать меню с прошлой недели."}
+          actionLabel={t("canteen.addDish")}
           onAction={() => handleOpenAddDish("LUNCH")}
         />
       ) : (
         <div className="space-y-8">
           {filteredMenus.map((menu) => {
-            const mealInfo = MEAL_LABELS[menu.mealType];
+            const mealInfo = localizedMealLabels[menu.mealType];
             return (
               <div
                 key={menu.id}
@@ -661,7 +661,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                         </span>
                       </h3>
                       <p className="text-[11px] text-slate-400">
-                        Позиций в рационе: {menu.items.length}
+                        {language === "en" ? `Items in ration: ${menu.items.length}` : `Позиций в рационе: ${menu.items.length}`}
                       </p>
                     </div>
                   </div>
@@ -671,13 +671,13 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                     className="self-start sm:self-center px-3.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-900 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
                   >
                     <span className="material-symbols-outlined text-sm">add</span>
-                    Добавить в {mealInfo.label.toLowerCase()}
+                    {language === "en" ? `Add to ${mealInfo.label}` : `Добавить в ${mealInfo.label.toLowerCase()}`}
                   </button>
                 </div>
 
                 {/* Dishes grid */}
                 {menu.items.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic py-4">Блюда пока не добавлены</p>
+                  <p className="text-xs text-slate-400 italic py-4">{language === "en" ? "No dishes added yet" : "Блюда пока не добавлены"}</p>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {menu.items.map((item) => (
@@ -689,14 +689,14 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                           <div className="flex items-start justify-between gap-2">
                             <div>
                               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                                {item.category || "Блюдо"}
+                                {item.category || (language === "en" ? "Dish" : "Блюдо")}
                               </span>
                               <h4 className="text-sm font-bold text-slate-800 leading-snug">
                                 {item.name}
                               </h4>
                             </div>
                             <span className="text-xs font-extrabold text-red-900 bg-red-50 px-2 py-0.5 rounded-lg shrink-0">
-                              {item.price ? `${item.price} ₽` : "В рационе"}
+                              {item.price ? `${item.price} ₽` : (language === "en" ? "Included" : "В рационе")}
                             </span>
                           </div>
 
@@ -710,12 +710,12 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                           <div className="flex flex-wrap gap-1 pt-1">
                             {item.isVegetarian && (
                               <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                🌱 Вегетарианское
+                                🌱 {t("canteen.vegetarian")}
                               </span>
                             )}
                             {item.isVegan && (
                               <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-green-50 text-green-700 border border-green-200">
-                                🌿 Веган
+                                🌿 {t("canteen.vegan")}
                               </span>
                             )}
                             {item.allergens &&
@@ -734,13 +734,13 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                         <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500 font-medium">
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-slate-800">
-                              {item.calories || 0} ккал
+                              {item.calories || 0} {language === "en" ? "kcal" : "ккал"}
                             </span>
                             <span>•</span>
-                            <span>{item.weight || 200} г</span>
+                            <span>{item.weight || 200} {language === "en" ? "g" : "г"}</span>
                             <span>•</span>
                             <span>
-                              Б:{item.protein || 0} Ж:{item.fat || 0} У:{item.carbs || 0}
+                              {language === "en" ? `P:${item.protein || 0} F:${item.fat || 0} C:${item.carbs || 0}` : `Б:${item.protein || 0} Ж:${item.fat || 0} У:${item.carbs || 0}`}
                             </span>
                           </div>
 
@@ -748,14 +748,14 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                             <button
                               onClick={() => handleOpenEditDish(item, menu.mealType)}
                               className="p-1 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
-                              title="Редактировать блюдо"
+                              title={t("canteen.editDish")}
                             >
                               <span className="material-symbols-outlined text-sm">edit</span>
                             </button>
                             <button
                               onClick={() => handleDeleteDish(item.id, item.name)}
                               className="p-1 hover:bg-red-100 rounded-lg text-red-600 transition-colors cursor-pointer"
-                              title="Удалить блюдо"
+                              title={t("canteen.deleteDish")}
                             >
                               <span className="material-symbols-outlined text-sm">delete</span>
                             </button>
@@ -778,7 +778,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
             <div className="flex items-center justify-between">
               <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">restaurant</span>
-                {editingItem ? "Редактирование блюда" : "Новое блюдо в меню"}
+                {editingItem ? (language === "en" ? "Edit Dish" : "Редактирование блюда") : (language === "en" ? "New Dish in Menu" : "Новое блюдо в меню")}
               </h4>
               <button
                 onClick={() => setIsDishModalOpen(false)}
@@ -791,13 +791,13 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
             <form onSubmit={handleSaveDish} className="space-y-4 text-xs font-medium">
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1">
-                  Название блюда *
+                  {t("canteen.dishName")} *
                 </label>
                 <input
                   type="text"
                   value={dishName}
                   onChange={(e) => setDishName(e.target.value)}
-                  placeholder="Например: Котлеты куриные на пару"
+                  placeholder={language === "en" ? "e.g. Steamed Chicken Cutlets" : "Например: Котлеты куриные на пару"}
                   className={`w-full px-3.5 py-2.5 border rounded-xl focus:outline-none ${
                     formErrors.name
                       ? "border-red-500 bg-red-50/50"
@@ -811,7 +811,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">Категория</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">{t("canteen.category")}</label>
                   <select
                     value={dishCategory}
                     onChange={(e) => setDishCategory(e.target.value)}
@@ -827,29 +827,29 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
 
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1">
-                    Прием пищи
+                    {language === "en" ? "Meal Slot" : "Прием пищи"}
                   </label>
                   <select
                     value={dishMealType}
                     onChange={(e) => setDishMealType(e.target.value as MealType)}
                     className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-white"
                   >
-                    <option value="BREAKFAST">Завтрак</option>
-                    <option value="LUNCH">Обед</option>
-                    <option value="SNACK">Полдник</option>
-                    <option value="DINNER">Ужин</option>
+                    <option value="BREAKFAST">{t("canteen.breakfast")}</option>
+                    <option value="LUNCH">{t("canteen.lunch")}</option>
+                    <option value="SNACK">{t("canteen.snack")}</option>
+                    <option value="DINNER">{t("canteen.dinner")}</option>
                   </select>
                 </div>
               </div>
 
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1">
-                  Описание состава
+                  {t("canteen.desc")}
                 </label>
                 <textarea
                   value={dishDesc}
                   onChange={(e) => setDishDesc(e.target.value)}
-                  placeholder="Ингредиенты, особенности приготовления..."
+                  placeholder={language === "en" ? "Ingredients, culinary specifics..." : "Ингредиенты, особенности приготовления..."}
                   rows={2}
                   className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-primary"
                 />
@@ -858,12 +858,12 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
               {/* KBJU Grid */}
               <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
                 <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
-                  Пищевая ценность (КБЖУ) и вес
+                  {language === "en" ? "Nutrition (KBJU) & Portion Weight" : "Пищевая ценность (КБЖУ) и вес"}
                 </span>
                 <div className="grid grid-cols-4 gap-2">
                   <div>
                     <label className="text-[10px] text-slate-500 font-bold block mb-0.5">
-                      Ккал
+                      {language === "en" ? "Kcal" : "Ккал"}
                     </label>
                     <input
                       type="number"
@@ -877,7 +877,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-500 font-bold block mb-0.5">
-                      Белки (г)
+                      {language === "en" ? "Protein (g)" : "Белки (г)"}
                     </label>
                     <input
                       type="number"
@@ -892,7 +892,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-500 font-bold block mb-0.5">
-                      Жиры (г)
+                      {language === "en" ? "Fat (g)" : "Жиры (г)"}
                     </label>
                     <input
                       type="number"
@@ -907,7 +907,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-500 font-bold block mb-0.5">
-                      Углеводы (г)
+                      {language === "en" ? "Carbs (g)" : "Углеводы (г)"}
                     </label>
                     <input
                       type="number"
@@ -925,7 +925,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div>
                     <label className="text-[10px] text-slate-500 font-bold block mb-0.5">
-                      Вес порции (г)
+                      {t("canteen.weight")}
                     </label>
                     <input
                       type="number"
@@ -939,7 +939,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-500 font-bold block mb-0.5">
-                      Цена (руб)
+                      {t("canteen.price")}
                     </label>
                     <input
                       type="number"
@@ -957,7 +957,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
               {/* Allergens & Tags */}
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-700 block">
-                  Аллергены в составе блюда:
+                  {language === "en" ? "Allergens contained:" : "Аллергены в составе блюда:"}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                   {ALLERGEN_OPTIONS.map((alg) => {
@@ -988,7 +988,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                     onChange={(e) => setIsVegetarian(e.target.checked)}
                     className="rounded text-primary focus:ring-primary"
                   />
-                  <span>🌱 Вегетарианское блюдо</span>
+                  <span>🌱 {t("canteen.vegetarian")}</span>
                 </label>
 
                 <label className="flex items-center gap-2 cursor-pointer text-slate-700 text-xs">
@@ -998,7 +998,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                     onChange={(e) => setIsVegan(e.target.checked)}
                     className="rounded text-primary focus:ring-primary"
                   />
-                  <span>🌿 Веганское (100% plant-based)</span>
+                  <span>🌿 {t("canteen.vegan")}</span>
                 </label>
               </div>
 
@@ -1008,7 +1008,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                   onClick={() => setIsDishModalOpen(false)}
                   className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
-                  Отмена
+                  {t("canteen.cancel")}
                 </button>
                 <button
                   type="submit"
@@ -1020,12 +1020,12 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                       <span className="material-symbols-outlined text-sm animate-spin">
                         progress_activity
                       </span>
-                      Сохранение...
+                      {language === "en" ? "Saving..." : "Сохранение..."}
                     </>
                   ) : (
                     <>
                       <span className="material-symbols-outlined text-sm">check</span>
-                      {editingItem ? "Сохранить изменения" : "Добавить в меню"}
+                      {editingItem ? (language === "en" ? "Save Changes" : "Сохранить изменения") : t("canteen.addDish")}
                     </>
                   )}
                 </button>
@@ -1042,7 +1042,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
             <div className="flex items-center justify-between">
               <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">content_copy</span>
-                Клонирование недельного меню
+                {t("canteen.copyWeek")}
               </h4>
               <button
                 onClick={() => setIsCopyWeekModalOpen(false)}
@@ -1053,14 +1053,15 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
             </div>
 
             <p className="text-xs text-slate-500 leading-relaxed">
-              Все рационы (завтраки, обеды, полдники и ужины) выбранной недели будут
-              автоматически скопированы на следующую неделю с пересчетом дат.
+              {language === "en"
+                ? "All meal plans (breakfast, lunch, snack, dinner) will be duplicated to target week with shifted dates."
+                : "Все рационы (завтраки, обеды, полдники и ужины) выбранной недели будут автоматически скопированы на следующую неделю с пересчетом дат."}
             </p>
 
             <form onSubmit={handleExecuteCopyWeek} className="space-y-4 text-xs font-medium">
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1">
-                  Понедельник исходной недели:
+                  {language === "en" ? "Source Week Monday:" : "Понедельник исходной недели:"}
                 </label>
                 <input
                   type="date"
@@ -1073,7 +1074,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
 
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1">
-                  Понедельник целевой недели:
+                  {language === "en" ? "Target Week Monday:" : "Понедельник целевой недели:"}
                 </label>
                 <input
                   type="date"
@@ -1090,7 +1091,7 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                   onClick={() => setIsCopyWeekModalOpen(false)}
                   className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
-                  Отмена
+                  {t("canteen.cancel")}
                 </button>
                 <button
                   type="submit"
@@ -1102,12 +1103,12 @@ export const CanteenView: React.FC<CanteenViewProps> = ({ isDemoMode }) => {
                       <span className="material-symbols-outlined text-sm animate-spin">
                         progress_activity
                       </span>
-                      Копирование...
+                      {language === "en" ? "Copying..." : "Копирование..."}
                     </>
                   ) : (
                     <>
                       <span className="material-symbols-outlined text-sm">content_copy</span>
-                      Скопировать рацион
+                      {language === "en" ? "Duplicate Ration" : "Скопировать рацион"}
                     </>
                   )}
                 </button>

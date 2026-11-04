@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { getApiBaseUrl, setApiBaseUrl } from "../api/client";
+import { useLanguage } from "../context/LanguageContext";
 
 interface LoginModalProps {
   onLogin: (email: string, pass: string) => Promise<void>;
@@ -7,6 +8,7 @@ interface LoginModalProps {
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onDemoLogin }) => {
+  const { t, language } = useLanguage();
   const [email, setEmail] = useState("admin@primakov.school");
   const [password, setPassword] = useState("password123");
   const [serverUrl, setServerUrlState] = useState(getApiBaseUrl());
@@ -28,13 +30,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onDemoLogin }) 
     } catch (err: any) {
       if (err?.code === "ERR_NETWORK" || err?.message?.includes("Network Error")) {
         setError(
-          `Ошибка сети: сервер недоступен по адресу ${serverUrl}. Запустите локальный бэкенд (npm run dev в папке backend) или переключитесь на VPS (185.221.198.242:3000).`
+          language === "en"
+            ? `Network error: Server unavailable at ${serverUrl}. Start the local backend (npm run dev in backend directory) or switch to VPS (185.221.198.242:3000).`
+            : `Ошибка сети: сервер недоступен по адресу ${serverUrl}. Запустите локальный бэкенд (npm run dev в папке backend) или переключитесь на VPS (185.221.198.242:3000).`
         );
       } else {
         setError(
           err?.response?.data?.error?.message ||
             err?.message ||
-            "Неверный логин или пароль администратора"
+            (language === "en" ? "Invalid admin email or password" : "Неверный логин или пароль администратора")
         );
       }
     } finally {
@@ -50,40 +54,40 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onDemoLogin }) 
             П
           </div>
           <h2 className="text-2xl font-black text-on-surface font-headline tracking-tight">
-            Гимназия им. Примакова
+            {language === "en" ? "Primakov Gymnasium" : "Гимназия им. Примакова"}
           </h2>
           <p className="text-xs font-semibold text-secondary uppercase tracking-wider mt-1 font-headline">
-            Административная панель управления
+            {language === "en" ? "Administrative Portal" : "Административная панель управления"}
           </p>
         </div>
 
         {/* Server connection picker */}
         <div className="mb-6 p-3 bg-slate-50 rounded-2xl border border-slate-100">
           <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">
-            Целевой сервер API:
+            {language === "en" ? "Target API Server:" : "Целевой сервер API:"}
           </p>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => handleServerChange("http://localhost:3000/api")}
-              className={`py-1.5 px-2 text-[11px] font-bold rounded-xl transition-all ${
+              className={`py-1.5 px-2 text-[11px] font-bold rounded-xl transition-all cursor-pointer ${
                 serverUrl.includes("localhost")
                   ? "bg-primary text-white shadow-sm"
                   : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Локальный (3000)
+              {language === "en" ? "Local (3000)" : "Локальный (3000)"}
             </button>
             <button
               type="button"
               onClick={() => handleServerChange("http://185.221.198.242:3000/api")}
-              className={`py-1.5 px-2 text-[11px] font-bold rounded-xl transition-all ${
+              className={`py-1.5 px-2 text-[11px] font-bold rounded-xl transition-all cursor-pointer ${
                 serverUrl.includes("185.221.198.242")
                   ? "bg-primary text-white shadow-sm"
                   : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              VPS Сервер (Прод)
+              {language === "en" ? "VPS Server (Prod)" : "VPS Сервер (Прод)"}
             </button>
           </div>
         </div>
@@ -97,7 +101,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onDemoLogin }) 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-              Корпоративный Email
+              {t("modals.email")}
             </label>
             <input
               type="email"
@@ -110,7 +114,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onDemoLogin }) 
 
           <div>
             <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-              Пароль
+              {t("modals.password")}
             </label>
             <input
               type="password"
@@ -126,14 +130,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onDemoLogin }) 
             disabled={loading}
             className="w-full py-3 bg-primary text-white font-bold rounded-xl text-xs hover:bg-primary-container transition-all shadow-lg shadow-primary/20 cursor-pointer disabled:opacity-50 mt-2"
           >
-            {loading ? "Авторизация..." : "Войти в систему"}
+            {loading ? (language === "en" ? "Authenticating..." : "Авторизация...") : t("modals.loginTitle")}
           </button>
 
           {onDemoLogin && (
             <div className="pt-2">
               <div className="relative flex py-2 items-center">
                 <div className="flex-grow border-t border-slate-200"></div>
-                <span className="flex-shrink mx-3 text-[10px] uppercase font-bold text-slate-400">или</span>
+                <span className="flex-shrink mx-3 text-[10px] uppercase font-bold text-slate-400">{language === "en" ? "or" : "или"}</span>
                 <div className="flex-grow border-t border-slate-200"></div>
               </div>
               <button
@@ -142,7 +146,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onDemoLogin }) 
                 className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer border border-slate-200"
               >
                 <span className="material-symbols-outlined text-[18px] text-primary">visibility</span>
-                Войти в Демо-режиме (предпросмотр UI)
+                {language === "en" ? "Enter Demo Mode (UI preview)" : "Войти в Демо-режиме (предпросмотр UI)"}
               </button>
             </div>
           )}
@@ -150,7 +154,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onDemoLogin }) 
 
         <div className="mt-5 pt-4 border-t border-slate-100 text-center">
           <p className="text-[11px] text-slate-400">
-            Доступ строго для учетных записей с ролью ADMIN / SUPERADMIN
+            {language === "en" ? "Access restricted to accounts with ADMIN / SUPERADMIN roles" : "Доступ строго для учетных записей с ролью ADMIN / SUPERADMIN"}
           </p>
         </div>
       </div>

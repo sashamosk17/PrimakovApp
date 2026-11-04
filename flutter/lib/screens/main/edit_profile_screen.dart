@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../models/api_models.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -196,7 +197,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Email (аккаунт)',
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.email_outlined),
+                        prefixIcon: const Icon(LucideIcons.mail, size: 20),
                       ),
                       enabled: false,
                       style: const TextStyle(color: Colors.grey),
@@ -210,7 +211,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         decoration: const InputDecoration(
                           labelText: 'Класс',
                           border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.school_outlined),
+                          prefixIcon: Icon(LucideIcons.graduationCap, size: 20),
                         ),
                         enabled: false,
                         style: const TextStyle(color: Colors.grey),
@@ -224,7 +225,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Имя',
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person),
+                        prefixIcon: Icon(LucideIcons.user, size: 20),
                       ),
                       textCapitalization: TextCapitalization.words,
                       validator: (value) {
@@ -245,7 +246,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Фамилия',
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person_outline),
+                        prefixIcon: Icon(LucideIcons.userCheck, size: 20),
                       ),
                       textCapitalization: TextCapitalization.words,
                       validator: (value) {
@@ -268,9 +269,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       decoration: InputDecoration(
                         labelText: 'Дата рождения',
                         border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.cake_outlined),
+                        prefixIcon: const Icon(LucideIcons.cake, size: 20),
                         suffixIcon: IconButton(
-                          icon: const Icon(Icons.calendar_month),
+                          icon: const Icon(LucideIcons.calendar, size: 20),
                           onPressed: _selectBirthDate,
                         ),
                         hintText: 'ГГГГ-ММ-ДД',
@@ -285,7 +286,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Номер телефона',
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.phone_outlined),
+                        prefixIcon: Icon(LucideIcons.phone, size: 20),
                         hintText: '+7 (999) 000-00-00',
                       ),
                     ),
@@ -297,7 +298,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Telegram никнейм',
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.send_rounded),
+                        prefixIcon: Icon(LucideIcons.send, size: 20),
                         hintText: '@username',
                       ),
                     ),

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import type { Schedule, Lesson, Subject, User, TeacherAssignment, LessonType } from "../types";
+import { useLanguage } from "../context/LanguageContext";
 
 export interface ScheduleViewProps {
   schedules: Schedule[];
@@ -118,6 +119,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   onTriggerPushAlerts,
   onOpenImportMeshModal,
 }) => {
+  const { t, language } = useLanguage();
   // Main Navigation Tabs
   const [activeTab, setActiveTab] = useState<"schedules" | "subjects" | "assignments">("schedules");
 
@@ -624,9 +626,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Расписание и учебные планы</h1>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{t("schedule.title")}</h1>
           <p className="text-sm text-slate-500">
-            Управление общеклассным расписанием (1–11 параллели), индивидуальными планами (ИУП), справочником предметов и заменами.
+            {t("schedule.subtitle")}
           </p>
         </div>
 
@@ -635,20 +637,20 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             onClick={handleTriggerPush}
             disabled={isProcessingPush}
             className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-50 transition-all cursor-pointer shadow-sm disabled:opacity-50"
-            title="Проверить дедлайны через 24ч и 2ч и разослать push-уведомления"
+            title={language === "en" ? "Check deadlines due in 24h & 2h and dispatch push notifications" : "Проверить дедлайны через 24ч и 2ч и разослать push-уведомления"}
           >
             <span className="material-symbols-outlined text-amber-500 text-sm">notifications_active</span>
-            {isProcessingPush ? "Рассылка..." : "Запустить Push-алерты"}
+            {isProcessingPush ? (language === "en" ? "Dispatching..." : "Рассылка...") : t("schedule.pushAlerts")}
           </button>
 
           {onOpenImportMeshModal && (
             <button
               onClick={onOpenImportMeshModal}
               className="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 text-red-900 rounded-xl text-xs font-bold hover:bg-red-100 transition-all cursor-pointer shadow-sm"
-              title="Импорт ведомостей оценок МЭШ (CSV)"
+              title={language === "en" ? "Import MES Grade Books (CSV)" : "Импорт ведомостей оценок МЭШ (CSV)"}
             >
               <span className="material-symbols-outlined text-primary text-sm">grade</span>
-              Импорт МЭШ
+              {t("schedule.importMesh")}
             </button>
           )}
         </div>
@@ -691,7 +693,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
           }`}
         >
           <span className="material-symbols-outlined text-base">calendar_month</span>
-          Расписание уроков
+          {t("schedule.tabTimetable")}
         </button>
 
         <button
@@ -703,7 +705,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
           }`}
         >
           <span className="material-symbols-outlined text-base">auto_stories</span>
-          Справочник предметов ({subjects.length})
+          {t("schedule.tabSubjects")} ({subjects.length})
         </button>
 
         <button
@@ -715,7 +717,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
           }`}
         >
           <span className="material-symbols-outlined text-base">assignment_ind</span>
-          Назначения учителей ({assignments.length})
+          {t("schedule.tabAssignments")} ({assignments.length})
         </button>
       </div>
 
@@ -727,7 +729,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               {/* View Mode Selector */}
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1">Режим:</span>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1">{language === "en" ? "View:" : "Режим:"}</span>
                 <button
                   onClick={() => setViewMode("CLASSES")}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
@@ -736,7 +738,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
                 >
-                  По классам (1–11)
+                  {t("schedule.byClasses")}
                 </button>
 
                 <button
@@ -748,7 +750,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                   }`}
                 >
                   <span className="material-symbols-outlined text-[14px]">school</span>
-                  По ученикам (ИУП)
+                  {t("schedule.byStudents")}
                 </button>
 
                 <button
@@ -760,7 +762,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                   }`}
                 >
                   <span className="material-symbols-outlined text-[14px]">badge</span>
-                  По преподавателям
+                  {t("schedule.byTeachers")}
                 </button>
 
                 <button
@@ -772,13 +774,13 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                   }`}
                 >
                   <span className="material-symbols-outlined text-[14px]">grid_view</span>
-                  Шахматка дня (Matrix)
+                  {language === "en" ? "Day Matrix" : "Шахматка дня (Matrix)"}
                 </button>
               </div>
 
               {/* Date Controls */}
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Дата:</span>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{language === "en" ? "Date:" : "Дата:"}</span>
                 <input
                   type="date"
                   value={selectedDate}
@@ -792,7 +794,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                   }}
                   className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-semibold text-slate-700 cursor-pointer transition-all"
                 >
-                  Сегодня
+                  {language === "en" ? "Today" : "Сегодня"}
                 </button>
               </div>
             </div>

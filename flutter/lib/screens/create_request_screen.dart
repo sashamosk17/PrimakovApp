@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../config/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/request_provider.dart';
@@ -47,7 +48,7 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
         backgroundColor: isDark ? AppColors.darkBackgroundSecondary : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -81,7 +82,7 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
                   child: _buildTypeCard(
                     RequestType.IT,
                     'IT',
-                    Icons.computer,
+                    LucideIcons.laptop,
                     const Color(0xFF2196F3),
                   ),
                 ),
@@ -90,7 +91,7 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
                   child: _buildTypeCard(
                     RequestType.MAINTENANCE,
                     'Ремонт',
-                    Icons.build,
+                    LucideIcons.wrench,
                     const Color(0xFFFF9800),
                   ),
                 ),
@@ -99,7 +100,7 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
                   child: _buildTypeCard(
                     RequestType.CLEANING,
                     'Уборка',
-                    Icons.cleaning_services,
+                    LucideIcons.sparkles,
                     const Color(0xFF4CAF50),
                   ),
                 ),

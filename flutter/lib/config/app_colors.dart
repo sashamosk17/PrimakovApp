@@ -68,8 +68,26 @@ class AppColors {
   static const Color success = Color(0xFF2E7D32);
   static const Color warning = Color(0xFFED6C02);
 
+  // House Cup (Faculty System) Colors
+  static const Color houseNorth = Color(0xFF1976D2);
+  static const Color houseNorthPastel = Color(0xFFE3F2FD);
+  static const Color houseNorthDark = Color(0xFF152A4A);
+
+  static const Color houseSouth = Color(0xFFD97706);
+  static const Color houseSouthPastel = Color(0xFFFEF3C7);
+  static const Color houseSouthDark = Color(0xFF38260F);
+
+  static const Color houseEast = Color(0xFF16A34A);
+  static const Color houseEastPastel = Color(0xFFDCFCE7);
+  static const Color houseEastDark = Color(0xFF14301D);
+
+  static const Color houseWest = Color(0xFF7C3AED);
+  static const Color houseWestPastel = Color(0xFFF3E8FF);
+  static const Color houseWestDark = Color(0xFF2C194D);
+
   // Ghost Border Helper (subtle border rgba(0,0,0,0.06) or 15% opacity outline_variant)
   static Color get ghostBorder => const Color(0x0F000000); // 6% black
+  static Color get darkGhostBorder => const Color(0x1AFFFFFF); // 10% white
   static Color get subtleBorder => const Color(0x0F000000); // rgba(0,0,0,0.06)
   static Color get darkSubtleBorder => const Color(0x1AFFFFFF); // rgba(255,255,255,0.10)
 

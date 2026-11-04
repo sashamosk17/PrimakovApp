@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { ALL_GYMNASIUM_CLASSES } from "../pages/ScheduleView";
 import { apiClient } from "../api/client";
+import { useLanguage } from "../context/LanguageContext";
 
 interface ImportMeshGradesModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export const ImportMeshGradesModal: React.FC<ImportMeshGradesModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { t, language } = useLanguage();
   const [selectedClass, setSelectedClass] = useState<string>("ALL");
   const [selectedPeriod, setSelectedPeriod] = useState<string>("1 триместр");
   const [csvText, setCsvText] = useState<string>(
@@ -184,16 +186,16 @@ export const ImportMeshGradesModal: React.FC<ImportMeshGradesModalProps> = ({
             </div>
             <div>
               <h3 className="text-xl font-extrabold font-headline text-on-surface">
-                Импорт ведомостей МЭШ (CSV)
+                {t("modals.importMesh")}
               </h3>
               <p className="text-xs text-secondary">
-                Пакетная загрузка оценок и расчет средневзвешенного GPA
+                {language === "en" ? "Batch import grades and calculate weighted GPA" : "Пакетная загрузка оценок и расчет средневзвешенного GPA"}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             ✕
           </button>
@@ -228,14 +230,14 @@ export const ImportMeshGradesModal: React.FC<ImportMeshGradesModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                Класс гимназии
+                {language === "en" ? "Gymnasium Class" : "Класс гимназии"}
               </label>
               <select
                 value={selectedClass}
                 onChange={(e) => setSelectedClass(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-on-surface focus:outline-none focus:border-primary transition-all"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-on-surface focus:outline-none focus:border-primary transition-all cursor-pointer"
               >
-                <option value="ALL">Все классы из файла</option>
+                <option value="ALL">{language === "en" ? "All classes in file" : "Все классы из файла"}</option>
                 {ALL_GYMNASIUM_CLASSES.map((c) => (
                   <option key={c.id} value={c.name}>
                     {c.name}
@@ -246,17 +248,17 @@ export const ImportMeshGradesModal: React.FC<ImportMeshGradesModalProps> = ({
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                Учебный период
+                {language === "en" ? "Academic Term" : "Учебный период"}
               </label>
               <select
                 value={selectedPeriod}
                 onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-on-surface focus:outline-none focus:border-primary transition-all"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-on-surface focus:outline-none focus:border-primary transition-all cursor-pointer"
               >
-                <option value="1 триместр">1 триместр</option>
-                <option value="2 триместр">2 триместр</option>
-                <option value="3 триместр">3 триместр</option>
-                <option value="Итог">Итоговая аттестация</option>
+                <option value="1 триместр">{language === "en" ? "Term 1" : "1 триместр"}</option>
+                <option value="2 триместр">{language === "en" ? "Term 2" : "2 триместр"}</option>
+                <option value="3 триместр">{language === "en" ? "Term 3" : "3 триместр"}</option>
+                <option value="Итог">{language === "en" ? "Final Assessment" : "Итоговая аттестация"}</option>
               </select>
             </div>
           </div>
@@ -279,9 +281,9 @@ export const ImportMeshGradesModal: React.FC<ImportMeshGradesModalProps> = ({
               upload_file
             </span>
             <p className="text-xs font-semibold text-slate-600">
-              Перетащите CSV-файл отчета МЭШ сюда или{" "}
+              {language === "en" ? "Drag & drop MES CSV file here or " : "Перетащите CSV-файл отчета МЭШ сюда или "}
               <label className="text-primary hover:underline cursor-pointer">
-                выберите файл
+                {language === "en" ? "browse files" : "выберите файл"}
                 <input
                   type="file"
                   accept=".csv,text/csv,text/plain"
@@ -291,7 +293,7 @@ export const ImportMeshGradesModal: React.FC<ImportMeshGradesModalProps> = ({
               </label>
             </p>
             <p className="text-[11px] text-slate-400 mt-1">
-              Формат: Класс, ФИО Ученика, Предмет, Оценки с весами ("5(1) 4(1.5) 5(2)")
+              {language === "en" ? "Format: Class, Student Name, Subject, Weighted Grades (\"5(1) 4(1.5) 5(2)\")" : "Формат: Класс, ФИО Ученика, Предмет, Оценки с весами (\"5(1) 4(1.5) 5(2)\")"}
             </p>
           </div>
 
@@ -299,10 +301,10 @@ export const ImportMeshGradesModal: React.FC<ImportMeshGradesModalProps> = ({
           <div>
             <div className="flex justify-between items-center mb-1.5">
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Содержимое CSV (редактируемое)
+                {language === "en" ? "CSV Content (editable)" : "Содержимое CSV (редактируемое)"}
               </label>
               <span className="text-[11px] text-slate-400">
-                Строк: {csvText.trim().split("\n").length}
+                {language === "en" ? `Lines: ${csvText.trim().split("\n").length}` : `Строк: ${csvText.trim().split("\n").length}`}
               </span>
             </div>
             <textarea
@@ -322,21 +324,21 @@ export const ImportMeshGradesModal: React.FC<ImportMeshGradesModalProps> = ({
             <div>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Предпросмотр данных ({previewRows.length} записей)
+                  {language === "en" ? `Data Preview (${previewRows.length} rows)` : `Предпросмотр данных (${previewRows.length} записей)`}
                 </span>
                 <span className="text-[11px] font-bold text-primary">
-                  Всего оценок: {previewRows.reduce((acc, r) => acc + r.gradeCount, 0)}
+                  {language === "en" ? `Total grades: ${previewRows.reduce((acc, r) => acc + r.gradeCount, 0)}` : `Всего оценок: ${previewRows.reduce((acc, r) => acc + r.gradeCount, 0)}`}
                 </span>
               </div>
               <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-xl bg-white shadow-xs">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 sticky top-0">
                     <tr>
-                      <th className="px-3 py-2">Класс</th>
-                      <th className="px-3 py-2">Ученик</th>
-                      <th className="px-3 py-2">Предмет</th>
-                      <th className="px-3 py-2">Оценки</th>
-                      <th className="px-3 py-2 text-right">Кол-во</th>
+                      <th className="px-3 py-2">{language === "en" ? "Class" : "Класс"}</th>
+                      <th className="px-3 py-2">{language === "en" ? "Student" : "Ученик"}</th>
+                      <th className="px-3 py-2">{language === "en" ? "Subject" : "Предмет"}</th>
+                      <th className="px-3 py-2">{language === "en" ? "Grades" : "Оценки"}</th>
+                      <th className="px-3 py-2 text-right">{language === "en" ? "Count" : "Кол-во"}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -370,24 +372,24 @@ export const ImportMeshGradesModal: React.FC<ImportMeshGradesModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+              className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
             >
-              Отмена
+              {t("modals.cancel")}
             </button>
             <button
               type="submit"
               disabled={loading || previewRows.length === 0}
-              className="px-6 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
+              className="px-6 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 shadow-lg shadow-primary/20 cursor-pointer"
             >
               {loading ? (
                 <>
                   <span className="inline-block animate-spin text-sm">⏳</span>
-                  Импорт...
+                  {language === "en" ? "Importing..." : "Импорт..."}
                 </>
               ) : (
                 <>
                   <span className="material-symbols-outlined text-sm">cloud_upload</span>
-                  Импортировать в систему
+                  {language === "en" ? "Import into System" : "Импортировать в систему"}
                 </>
               )}
             </button>

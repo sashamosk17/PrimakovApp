@@ -5,6 +5,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_spacing.dart';
 import '../../config/app_typography.dart';
@@ -93,7 +95,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                         ),
                       );
                     },
-                    icon: Icon(Icons.menu_book_rounded, size: 16, color: primaryColor),
+                    icon: Icon(LucideIcons.contact2, size: 16, color: primaryColor),
                     label: Text(
                       'Справочник',
                       style: TextStyle(
@@ -146,13 +148,13 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                           color: textSecondary,
                           fontSize: 13,
                         ),
-                        prefixIcon: Icon(Icons.search_rounded, color: textSecondary, size: 20),
+                        prefixIcon: Icon(LucideIcons.search, color: textSecondary, size: 18),
                         suffixIcon: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (_isSearching)
                               IconButton(
-                                icon: Icon(Icons.clear_rounded, color: textSecondary, size: 18),
+                                icon: Icon(LucideIcons.x, color: textSecondary, size: 16),
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() {
@@ -162,7 +164,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                               ),
                             IconButton(
                               tooltip: 'Открыть справочник с фильтрами',
-                              icon: Icon(Icons.tune_rounded, color: primaryColor, size: 20),
+                              icon: Icon(LucideIcons.slidersHorizontal, color: primaryColor, size: 18),
                               onPressed: () {
                                 HapticFeedback.lightImpact();
                                 Navigator.of(context).push(
@@ -260,7 +262,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                     childAspectRatio: 1.15,
                     children: [
                       _InteractiveBentoTile(
-                        icon: Icons.support_agent_rounded,
+                        icon: LucideIcons.lifeBuoy,
                         title: 'Заявки',
                         subtitle: 'Обращения и помощь',
                         pastelBg: isDark ? AppColors.darkPastelRed : AppColors.pastelRed,
@@ -272,9 +274,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                             ),
                           );
                         },
-                      ),
+                      ).animate().fadeIn(duration: 250.ms, delay: 30.ms).slideY(begin: 0.05, end: 0),
                       _InteractiveBentoTile(
-                        icon: Icons.restaurant_rounded,
+                        icon: LucideIcons.utensils,
                         title: 'Столовая',
                         subtitle: 'Меню и питание',
                         pastelBg: isDark ? AppColors.darkPastelAmber : AppColors.pastelAmber,
@@ -286,9 +288,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                             ),
                           );
                         },
-                      ),
+                      ).animate().fadeIn(duration: 250.ms, delay: 60.ms).slideY(begin: 0.05, end: 0),
                       _InteractiveBentoTile(
-                        icon: Icons.calendar_month_rounded,
+                        icon: LucideIcons.calendar,
                         title: 'Расписание',
                         subtitle: 'Уроки и звонки',
                         pastelBg: isDark ? AppColors.darkPastelIndigo : AppColors.pastelIndigo,
@@ -300,9 +302,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                             ),
                           );
                         },
-                      ),
+                      ).animate().fadeIn(duration: 250.ms, delay: 90.ms).slideY(begin: 0.05, end: 0),
                       _InteractiveBentoTile(
-                        icon: Icons.map_rounded,
+                        icon: LucideIcons.map,
                         title: 'Карта',
                         subtitle: 'Кабинеты и зоны',
                         pastelBg: isDark ? AppColors.darkPastelGreen : AppColors.pastelGreen,
@@ -314,9 +316,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                             ),
                           );
                         },
-                      ),
+                      ).animate().fadeIn(duration: 250.ms, delay: 120.ms).slideY(begin: 0.05, end: 0),
                       _InteractiveBentoTile(
-                        icon: Icons.campaign_rounded,
+                        icon: LucideIcons.megaphone,
                         title: 'Объявления',
                         subtitle: 'События гимназии',
                         pastelBg: isDark ? AppColors.darkPastelPink : AppColors.pastelPink,
@@ -328,9 +330,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                             ),
                           );
                         },
-                      ),
+                      ).animate().fadeIn(duration: 250.ms, delay: 150.ms).slideY(begin: 0.05, end: 0),
                       _InteractiveBentoTile(
-                        icon: Icons.star_rounded,
+                        icon: LucideIcons.star,
                         title: 'Рейтинги',
                         subtitle: 'Отзывы и оценки',
                         pastelBg: isDark ? AppColors.darkPastelBlue : AppColors.pastelBlue,
@@ -342,9 +344,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                             ),
                           );
                         },
-                      ),
+                      ).animate().fadeIn(duration: 250.ms, delay: 180.ms).slideY(begin: 0.05, end: 0),
                       _InteractiveBentoTile(
-                        icon: Icons.grade_rounded,
+                        icon: LucideIcons.graduationCap,
                         title: 'Успеваемость',
                         subtitle: 'Оценки и GPA симулятор',
                         pastelBg: isDark ? AppColors.darkPastelAmber : const Color(0xFFFFF3E0),
@@ -356,9 +358,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                             ),
                           );
                         },
-                      ),
+                      ).animate().fadeIn(duration: 250.ms, delay: 210.ms).slideY(begin: 0.05, end: 0),
                       _InteractiveBentoTile(
-                        icon: Icons.shield_rounded,
+                        icon: LucideIcons.shield,
                         title: 'Кубок Домов',
                         subtitle: 'Лига Домов Примакова',
                         pastelBg: isDark ? AppColors.darkPastelRed : AppColors.pastelRed,
@@ -370,9 +372,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                             ),
                           );
                         },
-                      ),
+                      ).animate().fadeIn(duration: 250.ms, delay: 240.ms).slideY(begin: 0.05, end: 0),
                       _InteractiveBentoTile(
-                        icon: Icons.hotel_rounded,
+                        icon: LucideIcons.building,
                         title: 'Пансион',
                         subtitle: 'Школа-пансион Раздоры',
                         pastelBg: isDark ? AppColors.darkPastelIndigo : AppColors.pastelIndigo,
@@ -384,7 +386,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                             ),
                           );
                         },
-                      ),
+                      ).animate().fadeIn(duration: 250.ms, delay: 270.ms).slideY(begin: 0.05, end: 0),
                     ],
                   ),
                 ),
@@ -476,8 +478,8 @@ class _InteractiveBentoTileState extends State<_InteractiveBentoTile> {
                       ),
                     ),
                     Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 13,
+                      LucideIcons.chevronRight,
+                      size: 15,
                       color: isDark
                           ? AppColors.darkTextSecondary.withOpacity(0.5)
                           : AppColors.textSecondary.withOpacity(0.5),
@@ -623,7 +625,7 @@ class _UserResultCard extends StatelessWidget {
             fontSize: 12,
           ),
         ),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+        trailing: const Icon(LucideIcons.chevronRight, size: 16),
       ),
     );
   }

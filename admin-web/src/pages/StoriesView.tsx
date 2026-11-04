@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import type { Story } from "../types";
 import { useToast } from "../context/ToastContext";
+import { useLanguage } from "../context/LanguageContext";
 
 interface StoriesViewProps {
   stories: Story[];
@@ -38,6 +39,7 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
   onDeleteStory,
 }) => {
   const { showToast } = useToast();
+  const { t, language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStory, setEditingStory] = useState<Story | null>(null);
@@ -47,7 +49,7 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
-  const [linkText, setLinkText] = useState("Подробнее");
+  const [linkText, setLinkText] = useState(language === "en" ? "Learn More" : "Подробнее");
   const [expiresInDays, setExpiresInDays] = useState(7);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -57,7 +59,7 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
     setDescription("");
     setImageUrl("");
     setLinkUrl("");
-    setLinkText("Подробнее");
+    setLinkText(language === "en" ? "Learn More" : "Подробнее");
     setExpiresInDays(7);
     setIsModalOpen(true);
   };
@@ -68,7 +70,7 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
     setDescription(story.description);
     setImageUrl(story.imageUrl || "");
     setLinkUrl(story.linkUrl || "");
-    setLinkText(story.linkText || "Подробнее");
+    setLinkText(story.linkText || (language === "en" ? "Learn More" : "Подробнее"));
     setExpiresInDays(7);
     setIsModalOpen(true);
   };
@@ -81,7 +83,7 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) {
-      showToast("Заполните заголовок и описание", "error");
+      showToast(language === "en" ? "Please fill in title and description" : "Заполните заголовок и описание", "error");
       return;
     }
 
@@ -96,7 +98,7 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
           linkText: linkText.trim() || undefined,
           expiresInDays,
         });
-        showToast("История успешно обновлена", "success");
+        showToast(language === "en" ? "Story updated successfully" : "История успешно обновлена", "success");
       } else {
         await onCreateStory({
           title: title.trim(),
@@ -106,23 +108,23 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
           linkText: linkText.trim() || undefined,
           expiresInDays,
         });
-        showToast("История успешно опубликована в приложении", "success");
+        showToast(language === "en" ? "Story published to mobile app" : "История успешно опубликована в приложении", "success");
       }
       closeModal();
     } catch (err: any) {
-      showToast(err.message || "Ошибка сохранения истории", "error");
+      showToast(err.message || (language === "en" ? "Error saving story" : "Ошибка сохранения истории"), "error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id: string, storyTitle: string) => {
-    if (confirm(`Удалить историю "${storyTitle}"?`)) {
+    if (confirm(language === "en" ? `Delete story "${storyTitle}"?` : `Удалить историю "${storyTitle}"?`)) {
       try {
         await onDeleteStory(id);
-        showToast("История удалена", "info");
+        showToast(language === "en" ? "Story deleted" : "История удалена", "info");
       } catch (err: any) {
-        showToast(err.message || "Ошибка удаления", "error");
+        showToast(err.message || (language === "en" ? "Error deleting story" : "Ошибка удаления"), "error");
       }
     }
   };
@@ -145,10 +147,10 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
         <div>
           <h3 className="text-3xl font-extrabold text-on-surface font-display tracking-tight flex items-center gap-3">
             <span className="material-symbols-outlined text-primary text-3xl">auto_stories</span>
-            Истории гимназии (Stories)
+            {t("stories.title")}
           </h3>
           <p className="text-xs text-secondary mt-1">
-            Публикация интерактивных историй для мобильного приложения с медиа, коротким текстом и кнопками-ссылками.
+            {t("stories.subtitle")}
           </p>
         </div>
 
@@ -157,7 +159,7 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
           className="flex items-center gap-2 px-5 py-3 bg-primary hover:bg-primary-container text-white font-bold rounded-2xl text-xs shadow-md shadow-primary/25 cursor-pointer transition-all hover:scale-[1.02]"
         >
           <span className="material-symbols-outlined text-base">add_circle</span>
-          Опубликовать историю
+          {t("stories.addStory")}
         </button>
       </div>
 
@@ -168,7 +170,7 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Поиск по историям..."
+            placeholder={t("stories.search")}
             className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary font-medium"
           />
           <span className="material-symbols-outlined absolute left-2.5 top-2.5 text-slate-400 text-sm">
@@ -177,20 +179,20 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
         </div>
 
         <div className="text-xs text-slate-500 font-medium">
-          Всего историй: <span className="font-bold text-slate-800">{filtered.length}</span>
+          {language === "en" ? `Total stories: ${filtered.length}` : `Всего историй: ${filtered.length}`}
         </div>
       </div>
 
       {/* Stories Grid */}
       {filtered.length === 0 ? (
         <div className="bg-white p-12 rounded-3xl border border-slate-100 text-center text-slate-400 text-xs">
-          Истории не найдены. Создайте первую историю для учеников!
+          {language === "en" ? "No stories found. Create the first story for students!" : "Истории не найдены. Создайте первую историю для учеников!"}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((s) => {
             const isExpired = new Date(s.expiresAt) < new Date();
-            const expiresFormatted = new Date(s.expiresAt).toLocaleDateString("ru-RU", {
+            const expiresFormatted = new Date(s.expiresAt).toLocaleDateString(language === "en" ? "en-US" : "ru-RU", {
               day: "numeric",
               month: "short",
             });
@@ -226,7 +228,7 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
                           : "bg-emerald-600/90 text-white shadow-sm"
                       }`}
                     >
-                      {isExpired ? "Архив" : "Активна"}
+                      {isExpired ? (language === "en" ? "Archived" : "Архив") : (language === "en" ? "Active" : "Активна")}
                     </span>
                   </div>
 
@@ -255,7 +257,7 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
                           link
                         </span>
                         <span className="truncate font-semibold">
-                          {s.linkText || "Подробнее"}
+                          {s.linkText || (language === "en" ? "Learn More" : "Подробнее")}
                         </span>
                       </div>
                       <a
@@ -264,7 +266,7 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
                         rel="noreferrer"
                         className="text-[11px] text-primary hover:underline flex items-center gap-0.5 flex-shrink-0"
                       >
-                        Перейти
+                        {language === "en" ? "Open" : "Перейти"}
                         <span className="material-symbols-outlined text-[12px]">open_in_new</span>
                       </a>
                     </div>
@@ -274,21 +276,21 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
                   <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
                     <span className="flex items-center gap-1">
                       <span className="material-symbols-outlined text-xs">schedule</span>
-                      до {expiresFormatted}
+                      {language === "en" ? `until ${expiresFormatted}` : `до ${expiresFormatted}`}
                     </span>
 
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => openEditModal(s)}
                         className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition-colors cursor-pointer"
-                        title="Редактировать историю"
+                        title={t("stories.edit")}
                       >
                         <span className="material-symbols-outlined text-sm">edit</span>
                       </button>
                       <button
                         onClick={() => handleDelete(s.id, s.title)}
                         className="p-1.5 hover:bg-red-50 text-slate-400 hover:text-red-700 rounded-lg transition-colors cursor-pointer"
-                        title="Удалить историю"
+                        title={t("stories.delete")}
                       >
                         <span className="material-symbols-outlined text-sm">delete</span>
                       </button>
@@ -308,10 +310,10 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
             <div className="flex justify-between items-center pb-4 border-b border-slate-100">
               <div>
                 <h4 className="text-xl font-bold font-headline text-slate-900">
-                  {editingStory ? "Редактировать историю" : "Новая история для гимназистов"}
+                  {editingStory ? (language === "en" ? "Edit Story" : "Редактировать историю") : (language === "en" ? "New Story for Students" : "Новая история для гимназистов")}
                 </h4>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  История появится в карусели на главном экране мобильного приложения
+                  {language === "en" ? "Story will appear in the carousel on the mobile app home screen" : "История появится в карусели на главном экране мобильного приложения"}
                 </p>
               </div>
               <button
@@ -326,14 +328,14 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
               {/* Title */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                  Заголовок истории *
+                  {t("stories.titleField")} *
                 </label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Например: 30-я юбилейная конференция Модель ООН"
+                  placeholder={language === "en" ? "e.g. 30th Anniversary Model UN Conference" : "Например: 30-я юбилейная конференция Модель ООН"}
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
                 />
               </div>
@@ -341,14 +343,14 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
               {/* Description */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                  Краткое описание / Текст *
+                  {t("stories.descField")} *
                 </label>
                 <textarea
                   required
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Короткий анонс или важная информация, которая отображается на карточке сторис..."
+                  placeholder={language === "en" ? "Brief announcement or important highlight displayed on the story card..." : "Короткий анонс или важная информация, которая отображается на карточке сторис..."}
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-normal leading-relaxed"
                 />
               </div>
@@ -356,18 +358,18 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
               {/* Image URL & Presets */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                  Изображение (URL или готовый пресет)
+                  {t("stories.imageUrl")}
                 </label>
                 <input
                   type="url"
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://... или выберите пресет ниже"
+                  placeholder={language === "en" ? "https://... or choose a preset below" : "https://... или выберите пресет ниже"}
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono"
                 />
 
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  <span className="text-[10px] text-slate-400 py-1 mr-1">Быстрые пресеты:</span>
+                  <span className="text-[10px] text-slate-400 py-1 mr-1">{language === "en" ? "Quick presets:" : "Быстрые пресеты:"}</span>
                   {PRESET_IMAGES.map((p) => (
                     <button
                       key={p.label}
@@ -389,7 +391,7 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                    Интерактивная ссылка (URL)
+                    {t("stories.linkUrl")}
                   </label>
                   <input
                     type="url"
@@ -402,13 +404,13 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                    Текст на кнопке ссылки
+                    {t("stories.linkText")}
                   </label>
                   <input
                     type="text"
                     value={linkText}
                     onChange={(e) => setLinkText(e.target.value)}
-                    placeholder="Подробнее / Подать заявку"
+                    placeholder={language === "en" ? "Learn More / Apply Now" : "Подробнее / Подать заявку"}
                     className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
                   />
                 </div>
@@ -417,18 +419,18 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
               {/* Expiry Days */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                  Срок действия истории
+                  {language === "en" ? "Story Expiration Period" : "Срок действия истории"}
                 </label>
                 <select
                   value={expiresInDays}
                   onChange={(e) => setExpiresInDays(Number(e.target.value))}
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium cursor-pointer"
                 >
-                  <option value={1}>1 день (срочный анонс)</option>
-                  <option value={3}>3 дня</option>
-                  <option value={7}>7 дней (стандартная неделя)</option>
-                  <option value={14}>14 дней (две недели)</option>
-                  <option value={30}>30 дней (месяц)</option>
+                  <option value={1}>{language === "en" ? "1 day (urgent update)" : "1 день (срочный анонс)"}</option>
+                  <option value={3}>{language === "en" ? "3 days" : "3 дня"}</option>
+                  <option value={7}>{language === "en" ? "7 days (standard week)" : "7 дней (стандартная неделя)"}</option>
+                  <option value={14}>{language === "en" ? "14 days (two weeks)" : "14 дней (две недели)"}</option>
+                  <option value={30}>{language === "en" ? "30 days (month)" : "30 дней (месяц)"}</option>
                 </select>
               </div>
 
@@ -439,7 +441,7 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
                   onClick={closeModal}
                   className="px-5 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
                 >
-                  Отмена
+                  {language === "en" ? "Cancel" : "Отмена"}
                 </button>
                 <button
                   type="submit"
@@ -447,10 +449,10 @@ export const StoriesView: React.FC<StoriesViewProps> = ({
                   className="px-6 py-2.5 bg-primary hover:bg-primary-container text-white font-bold text-xs rounded-xl shadow-md shadow-primary/25 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting
-                    ? "Сохранение..."
+                    ? (language === "en" ? "Saving..." : "Сохранение...")
                     : editingStory
-                    ? "Сохранить изменения"
-                    : "Опубликовать историю"}
+                    ? (language === "en" ? "Save Changes" : "Сохранить изменения")
+                    : t("stories.save")}
                 </button>
               </div>
             </form>

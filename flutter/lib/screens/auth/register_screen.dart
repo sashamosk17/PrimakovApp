@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../config/app_colors.dart';
+import '../../config/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -26,26 +28,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
-  Future<void> _handleRegister() async {
+  Future<void> _handleRegister(AppLocalizations loc) async {
     if (_emailController.text.isEmpty || 
         _passwordController.text.isEmpty ||
         _confirmPasswordController.text.isEmpty) {
       setState(() {
-        _error = 'Пожалуйста, заполните все поля';
+        _error = loc.translate('fillAllFields');
       });
       return;
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
       setState(() {
-        _error = 'Пароли не совпадают';
+        _error = loc.translate('passwordsDoNotMatch');
       });
       return;
     }
 
     if (_passwordController.text.length < 6) {
       setState(() {
-        _error = 'Пароль должен быть не менее 6 символов';
+        _error = loc.translate('passwordMinLength');
       });
       return;
     }
@@ -74,6 +76,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final isLoading = ref.watch(authLoadingProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -81,7 +84,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.backgroundPrimary,
       appBar: AppBar(
         title: Text(
-          'Регистрация',
+          loc.translate('registration'),
           style: TextStyle(
             color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
           ),
@@ -89,7 +92,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryRed,
         leading: IconButton(
           icon: Icon(
-            Icons.arrow_back,
+            LucideIcons.arrowLeft,
             color: isDark ? AppColors.darkTextPrimary : Colors.white,
           ),
           onPressed: _handleBack,
@@ -106,7 +109,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               children: [
                 // Subtitle
                 Text(
-                  'Создайте аккаунт',
+                  loc.registerButton,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -135,7 +138,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                     ),
                     decoration: InputDecoration(
-                      labelText: 'Email',
+                      labelText: loc.email,
                       labelStyle: TextStyle(
                         color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                       ),
@@ -143,7 +146,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         color: isDark ? AppColors.darkTextSecondary : const Color(0xFF999999),
                       ),
                       prefixIcon: Icon(
-                        Icons.email_outlined,
+                        LucideIcons.mail,
+                        size: 20,
                         color: isDark ? AppColors.darkPrimary : AppColors.primaryRed,
                       ),
                       border: OutlineInputBorder(
@@ -178,7 +182,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                     ),
                     decoration: InputDecoration(
-                      labelText: 'Пароль',
+                      labelText: loc.password,
                       labelStyle: TextStyle(
                         color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                       ),
@@ -186,7 +190,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         color: isDark ? AppColors.darkTextSecondary : const Color(0xFF999999),
                       ),
                       prefixIcon: Icon(
-                        Icons.lock_outlined,
+                        LucideIcons.lock,
+                        size: 20,
                         color: isDark ? AppColors.darkPrimary : AppColors.primaryRed,
                       ),
                       border: OutlineInputBorder(
@@ -221,7 +226,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                     ),
                     decoration: InputDecoration(
-                      labelText: 'Подтвердите пароль',
+                      labelText: loc.translate('confirmPassword'),
                       labelStyle: TextStyle(
                         color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                       ),
@@ -229,7 +234,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         color: isDark ? AppColors.darkTextSecondary : const Color(0xFF999999),
                       ),
                       prefixIcon: Icon(
-                        Icons.lock_outlined,
+                        LucideIcons.lock,
+                        size: 20,
                         color: isDark ? AppColors.darkPrimary : AppColors.primaryRed,
                       ),
                       border: OutlineInputBorder(
@@ -258,7 +264,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     child: Row(
                       children: [
                         Icon(
-                          Icons.error_outline,
+                          LucideIcons.alertCircle,
                           color: isDark ? AppColors.darkError : const Color(0xFFD32F2F),
                           size: 20,
                         ),
@@ -280,7 +286,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: isLoading ? null : _handleRegister,
+                    onPressed: isLoading ? null : () => _handleRegister(loc),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isDark ? AppColors.darkPrimary : AppColors.primaryRed,
                       disabledBackgroundColor: isDark ? AppColors.darkSurfaceContainerHigh : const Color(0xFFCCCCCC),
@@ -299,9 +305,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text(
-                            'Зарегистрироваться',
-                            style: TextStyle(
+                        : Text(
+                            loc.registerButton,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),

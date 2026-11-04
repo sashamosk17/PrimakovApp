@@ -11,6 +11,8 @@ import '../../providers/deadline_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/api_models.dart';
 import '../../widgets/notification_bell_icon.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'add_deadline_screen.dart';
 
 class DeadlineScreen extends ConsumerStatefulWidget {
@@ -101,9 +103,9 @@ class _DeadlineScreenState extends ConsumerState<DeadlineScreen> with SingleTick
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Icon(
-                        Icons.school,
+                        LucideIcons.graduationCap,
                         color: primaryColor,
-                        size: 24,
+                        size: 22,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -217,9 +219,9 @@ class _DeadlineScreenState extends ConsumerState<DeadlineScreen> with SingleTick
               showAddDeadlineModal(context);
             },
             child: const Icon(
-              Icons.add,
+              LucideIcons.plus,
               color: AppColors.backgroundSecondary,
-              size: 32,
+              size: 28,
             ),
           ),
         ),
@@ -572,8 +574,8 @@ class _DeadlineCard extends StatelessWidget {
                 ),
                 child: isCompleted
                     ? Icon(
-                        Icons.check,
-                        size: 16,
+                        LucideIcons.check,
+                        size: 14,
                         color: isDark ? AppColors.darkOnPrimary : AppColors.backgroundSecondary,
                       )
                     : null,
@@ -669,8 +671,8 @@ class _DeadlineCard extends StatelessWidget {
                       const SizedBox(width: 8),
                     ],
                     Icon(
-                      Icons.schedule,
-                      size: 14,
+                      LucideIcons.clock,
+                      size: 13,
                       color: timeColor,
                     ),
                     const SizedBox(width: 4),
@@ -738,9 +740,9 @@ class _TipCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      Icons.lightbulb_outline,
+                      LucideIcons.lightbulb,
                       color: Colors.red.shade200,
-                      size: 20,
+                      size: 18,
                     ),
                   ),
                   const SizedBox(width: 12),

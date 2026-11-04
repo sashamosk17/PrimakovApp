@@ -18,6 +18,9 @@ void main() {
       expect(locRu.language, 'Язык');
       expect(locRu.deadlines, 'Дедлайны');
       expect(locRu.canteen, 'Столовая');
+      expect(locRu.boarding, 'Пансион Раздоры');
+      expect(locRu.houseCup, 'Лига Домов (House Cup)');
+      expect(locRu.loginButton, 'Войти в систему');
     });
 
     test('English dictionary provides correct translations', () {
@@ -33,6 +36,9 @@ void main() {
       expect(locEn.language, 'Language');
       expect(locEn.deadlines, 'Deadlines');
       expect(locEn.canteen, 'Canteen');
+      expect(locEn.boarding, 'Boarding Razdory');
+      expect(locEn.houseCup, 'House Cup Tournament');
+      expect(locEn.loginButton, 'Sign In');
     });
 
     test('Fallback to Russian when key is missing or locale is default', () {

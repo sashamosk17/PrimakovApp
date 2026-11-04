@@ -5,8 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/announcement_provider.dart';
 import '../config/app_colors.dart';
+import '../widgets/primakov_card.dart';
 
 class AnnouncementsScreen extends ConsumerStatefulWidget {
   const AnnouncementsScreen({Key? key}) : super(key: key);
@@ -91,7 +94,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.campaign_rounded,
+                              LucideIcons.megaphone,
                               size: 14,
                               color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
                             ),
@@ -120,7 +123,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            Icons.close_rounded,
+                            LucideIcons.x,
                             size: 18,
                             color: textSecondary,
                           ),
@@ -151,7 +154,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
                         Row(
                           children: [
                             Icon(
-                              Icons.schedule_rounded,
+                              LucideIcons.clock,
                               size: 13,
                               color: textSecondary,
                             ),
@@ -210,7 +213,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
                               ),
                             );
                           },
-                          icon: const Icon(Icons.copy_rounded, size: 16),
+                          icon: const Icon(LucideIcons.copy, size: 16),
                           label: const Text('Скопировать'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: textPrimary,
@@ -285,7 +288,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
           ),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -303,7 +306,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.error_outline,
+                          LucideIcons.alertCircle,
                           size: 64,
                           color: textSecondary,
                         ),
@@ -327,7 +330,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
                           onPressed: () {
                             ref.read(announcementProvider.notifier).fetchAnnouncements();
                           },
-                          icon: const Icon(Icons.refresh),
+                          icon: const Icon(LucideIcons.refreshCw, size: 16),
                           label: const Text('Повторить'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
@@ -344,7 +347,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.announcement_outlined,
+                            LucideIcons.megaphone,
                             size: 64,
                             color: textSecondary,
                           ),
@@ -376,12 +379,11 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
                           final announcement = announcements[index];
                           return _AnnouncementCard(
                             announcement: announcement,
-                            surfaceColor: surfaceColor,
                             textPrimary: textPrimary,
                             textSecondary: textSecondary,
                             isDark: isDark,
                             onTap: () => _showAnnouncementDetails(context, announcement, isDark),
-                          );
+                          ).animate().fadeIn(duration: 250.ms, delay: (index * 40).ms).slideY(begin: 0.04, end: 0);
                         },
                       ),
                     ),
@@ -391,7 +393,6 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
 
 class _AnnouncementCard extends StatelessWidget {
   final dynamic announcement;
-  final Color surfaceColor;
   final Color textPrimary;
   final Color textSecondary;
   final bool isDark;
@@ -399,7 +400,6 @@ class _AnnouncementCard extends StatelessWidget {
 
   const _AnnouncementCard({
     required this.announcement,
-    required this.surfaceColor,
     required this.textPrimary,
     required this.textSecondary,
     required this.isDark,
@@ -411,113 +411,90 @@ class _AnnouncementCard extends StatelessWidget {
     final createdAt = DateTime.tryParse(announcement.createdAt) ?? DateTime.now();
     final formattedDate = DateFormat('d MMMM yyyy, HH:mm', 'ru').format(createdAt);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: surfaceColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorderPrimary : const Color(0xFFF0F0F0),
-        ),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(18),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: onTap,
-          splashColor: (isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed).withOpacity(0.08),
-          highlightColor: (isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed).withOpacity(0.04),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: PrimakovCard(
+        onTap: onTap,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: (isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.announcement_rounded,
-                        color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
-                        size: 18,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        announcement.title,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                    ),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: textSecondary.withOpacity(0.6),
-                      size: 20,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  announcement.content,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    color: textPrimary.withOpacity(0.85),
-                    height: 1.45,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: (isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    LucideIcons.megaphone,
+                    color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
+                    size: 18,
                   ),
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.access_time_rounded,
-                      size: 13,
-                      color: textSecondary,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    announcement.title,
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                      letterSpacing: -0.2,
                     ),
-                    const SizedBox(width: 5),
-                    Text(
-                      formattedDate,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      'Подробнее',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
-                      ),
-                    ),
-                  ],
+                  ),
+                ),
+                Icon(
+                  LucideIcons.chevronRight,
+                  color: textSecondary.withOpacity(0.6),
+                  size: 18,
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 10),
+            Text(
+              announcement.content,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13.5,
+                color: textPrimary.withOpacity(0.85),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(
+                  LucideIcons.clock,
+                  size: 13,
+                  color: textSecondary,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  formattedDate,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  'Подробнее',
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

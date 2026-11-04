@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 interface ImportCsvModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
   onClose,
   onImport,
 }) => {
+  const { t, language } = useLanguage();
   const [csvText, setCsvText] = useState(
     `email,password,firstName,lastName,role\nandrey.orlov@primakov.school,Password123!,Андрей,Орлов,STUDENT\nalena.vasileva@primakov.school,Password123!,Алена,Васильева,STUDENT`
   );
@@ -27,7 +29,7 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
     try {
       const lines = csvText.trim().split("\n");
       if (lines.length < 2) {
-        throw new Error("CSV должен содержать заголовок и хотя бы одну строку");
+        throw new Error(language === "en" ? "CSV must contain a header and at least one user record" : "CSV должен содержать заголовок и хотя бы одну строку");
       }
 
       const users = [];
@@ -49,7 +51,7 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
       await onImport(users);
       onClose();
     } catch (err: any) {
-      setError(err?.message || "Ошибка парсинга CSV");
+      setError(err?.message || (language === "en" ? "CSV Parsing Error" : "Ошибка парсинга CSV"));
     } finally {
       setLoading(false);
     }
@@ -60,15 +62,15 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
       <div className="bg-white rounded-3xl p-7 max-w-lg w-full shadow-2xl border border-slate-100 animate-in fade-in duration-200">
         <div className="flex justify-between items-center mb-4">
           <h4 className="text-lg font-bold font-headline text-on-surface">
-            Массовый импорт пользователей (CSV)
+            {t("modals.importCsv")}
           </h4>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
             ✕
           </button>
         </div>
 
         <p className="text-xs text-secondary mb-4 leading-relaxed">
-          Вставьте строки в формате: <code className="bg-slate-100 px-1 py-0.5 rounded text-primary">email,password,firstName,lastName,role</code>
+          {language === "en" ? "Paste rows in CSV format:" : "Вставьте строки в формате:"} <code className="bg-slate-100 px-1 py-0.5 rounded text-primary">email,password,firstName,lastName,role</code>
         </p>
 
         {error && (
@@ -90,16 +92,16 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+              className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
             >
-              Отмена
+              {t("modals.cancel")}
             </button>
             <button
               type="submit"
               disabled={loading}
               className="px-5 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-container disabled:opacity-50 transition-all cursor-pointer"
             >
-              {loading ? "Импортирование..." : "Загрузить пользователей"}
+              {loading ? (language === "en" ? "Importing..." : "Импорт...") : (language === "en" ? "Start Import" : "Запустить импорт")}
             </button>
           </div>
         </form>

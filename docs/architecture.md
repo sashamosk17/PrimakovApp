@@ -14,7 +14,7 @@
    - Внешние слои (Infrastructure) реализуют эти интерфейсы через PostgreSQL (`PostgresUserRepository`, `PostgresScheduleRepository`).
    - Доменная логика и сущности не содержат ссылок на базу данных, SQL-запросы или Express.js.
 2. **Слабая связанность и высокая когезия (Low Coupling / High Cohesion)**:
-   - Система разделена на 10 автономных ограниченных контекстов (Bounded Contexts):
+   - Система разделена на 13 автономных ограниченных контекстов (Bounded Contexts):
      1. `Auth` — регистрация, аутентификация, валидация токенов.
      2. `Users` — управление учетными записями, профилями, ролями (RBAC).
      3. `Schedule` — персонализированное расписание учеников и учителей.
@@ -25,8 +25,11 @@
      8. `Rooms` — навигационный справочник аудиторий кампуса (этажи, корпуса, координаты).
      9. `Requests` — внутренняя тикет-система хозяйственных и IT-заявок.
      10. `Canteen` — меню школьной столовой, калорийность, КБЖУ, аллергены.
+     11. `Grades` — академическая успеваемость (МЭШ CSV), расчет средневзвешенного балла и калькулятор GPA Simulator.
+     12. `HouseCup` — Кубок Лиги Домов («Север», «Юг», «Восток», «Запад»), баланс очков и аудит начислений.
+     13. `Boarding` — жизнь гимназического пансиона: вечерняя перекличка с геолокацией, увольнительные на выходные и QR-пропуск.
 3. **Единая ответственность (Single Responsibility Principle, SRP)**:
-   - Каждый Use Case инкапсулирует ровно один бизнес-сценарий (например, [RateTeacherUseCase.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/application/rating/RateTeacherUseCase.ts), [CompleteDeadlineUseCase.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/application/deadline/CompleteDeadlineUseCase.ts)).
+   - Каждый Use Case инкапсулирует ровно один бизнес-сценарий (например, [RateTeacherUseCase.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/application/rating/RateTeacherUseCase.ts), [AdminImportMeshGradesUseCase.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/application/grades/AdminImportMeshGradesUseCase.ts), [BoardingCheckInUseCase.ts](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/application/boarding/BoardingCheckInUseCase.ts)).
 
 ---
 
@@ -45,9 +48,9 @@ graph TD
     end
 
     subgraph Domain ["Domain Layer (Ядро бизнеса)"]
-        Entities[Domain Entities: User, Schedule, Lesson, Deadline, Rating]
+        Entities[Domain Entities: User, Schedule, Lesson, Deadline, Rating, Grade, HousePointTransaction, BoardingCheckIn, WeekendLeaveRequest]
         ValueObjects[Value Objects: Email, Password, RoomNumber, TimeSlot]
-        RepoInterfaces[Repository Interfaces: IUserRepository, etc.]
+        RepoInterfaces[Repository Interfaces: IUserRepository, IGradeRepository, IHouseRepository, IBoardingRepository, etc.]
         DomainServices[Domain Services: AuthService, ScheduleService, RatingService]
         ZodSchemas[Validation Schemas: Auth, Deadlines]
     end
@@ -261,6 +264,10 @@ erDiagram
     users ||--o{ story_views : "views"
     users ||--o{ requests : "creates"
     users ||--o{ requests : "assigned_to"
+    users ||--o{ grades : "has"
+    users ||--o{ house_point_transactions : "awarded_to"
+    users ||--o{ boarding_checkins : "checks_in"
+    users ||--o{ weekend_leave_requests : "requests"
 
     rooms ||--o{ lessons : "hosts"
     rooms ||--o{ requests : "located_in"
@@ -277,6 +284,7 @@ erDiagram
         varchar last_name
         user_role role "STUDENT | TEACHER | ADMIN | SUPERADMIN"
         varchar group_name "Nullable, eg: 10A"
+        varchar house "Nullable: NORTH | SOUTH | EAST | WEST"
         boolean is_active
         varchar vk_id
         timestamptz created_at
@@ -424,6 +432,57 @@ erDiagram
         boolean is_vegan
         decimal price
         integer display_order
+    }
+
+    grades {
+        uuid id PK
+        uuid student_id FK
+        varchar subject_name
+        integer value "2 to 5"
+        decimal weight "1.0, 1.5, 2.0"
+        date date
+        varchar period "1 триместр"
+        varchar topic
+        timestamptz created_at
+    }
+
+    house_point_transactions {
+        uuid id PK
+        varchar house "NORTH | SOUTH | EAST | WEST"
+        integer points "Positive or negative"
+        varchar reason
+        varchar category "ACADEMIC | SPORT | CREATIVE | COMMUNITY"
+        uuid awarded_by FK "Teacher / Admin ID"
+        uuid student_id FK "Optional student recipient"
+        timestamptz created_at
+    }
+
+    boarding_checkins {
+        uuid id PK
+        uuid student_id FK
+        date checkin_date
+        time checkin_time
+        varchar status "PRESENT | LATE | ABSENT"
+        decimal latitude "Campus GPS verification"
+        decimal longitude "Campus GPS verification"
+        varchar room_number
+        text notes
+        timestamptz created_at
+    }
+
+    weekend_leave_requests {
+        uuid id PK
+        uuid student_id FK
+        date departure_date
+        time departure_time
+        date return_date
+        time return_time
+        varchar destination
+        varchar status "PENDING | APPROVED | REJECTED"
+        uuid approved_by FK "Housemaster / Admin ID"
+        text rejection_reason
+        timestamptz created_at
+        timestamptz updated_at
     }
 ```
 

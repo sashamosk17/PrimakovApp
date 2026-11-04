@@ -43,30 +43,41 @@
 | **Справочник людей и сквозной поиск (Campus Directory)** | Mobile | `people_directory_screen.dart`, `user_profile_detail_screen.dart`, `services_screen.dart` | Единый сквозной поиск гимназистов и учителей в шапке «Сервисы», карточка человека с ДР, возрастом, расписанием и быстрой связью | ✅ Готово (v0.5.5) |
 | **Расширенный профиль пользователя** | Mobile | `profile_screen.dart`, `edit_profile_screen.dart` | Просмотр и редактирование личных данных (ДР, телефон, telegram, email, класс), синхронизация с бэкендом | ✅ Готово (v0.5.5) |
 | **Управление расписанием и заменами** | Web | `ScheduleView.tsx` | Справочник учебных дисциплин, привязка преподавателей к предметам, добавление уроков в расписание классов и оперативная замена учителей | ✅ Готово (v0.4.0) |
-| **Билингвальность Admin Web (RU / EN)** | Web | `LanguageContext.tsx` | Мгновенное переключение языка интерфейса панели администратора (Русский / English) | ✅ Готово (v0.5.5) |
+| **Билингвальность Admin Web & Mobile (RU / EN)** | Mobile / Web | `LanguageContext.tsx` / `app_localizations.dart`, `locale_provider.dart` | Полная поддержка английского языка во всех аспектах: веб-панель (дашборд, расписание, пансион, столовая, кубок домов, сторис, модальные окна), мобильное приложение (Day Glance, Bento-карточки, дедлайны, меню, профиль, вход) | ✅ Готово (v0.6.5) |
+| **Фирменная дизайн-система Primakov Design System** | Mobile | `app_colors.dart`, `app_typography.dart`, `primakov_card.dart`, `primakov_badge.dart` | Редизайн без дефолтного Material: благородная бордовая палитра (#8C251C, #701C14), микроанимации flutter_animate, иконки lucide_icons, шрифты Manrope/Inter, адаптивные светлая и темная темы | ✅ Готово (v0.6.5) |
+| **Успеваемость и GPA Simulator** | Mobile | `grades_screen.dart`, `grades_provider.dart` | Бенто-сводка среднего балла, список предметов с весами оценок (1/1.5/2), интерактивный симулятор прогноза GPA, оффлайн-кэш Hive | ✅ Готово (v0.6.0) |
+| **Импорт ведомостей МЭШ (CSV)** | Web / Backend | `ImportMeshGradesModal.tsx` / `AdminImportMeshGradesUseCase.ts` | Drag-and-drop CSV парсер ведомостей МЭШ/ЭЖД, сопоставление учеников и предметов, расчет средневзвешенного балла, пакетное сохранение | ✅ Готово (v0.6.0) |
+| **Лига Домов (House Cup)** | Mobile / Web | `house_standings_screen.dart` / `HousesView.tsx` | Турнирная таблица 4 Домов (Север, Юг, Восток, Запад), начисление баллов по 5 категориям, аудит транзакций в реальном времени, оффлайн-кэш Hive | ✅ Готово (v0.6.0) |
+| **Жизнь в пансионе (Boarding Life)** | Mobile / Web | `boarding_pass_screen.dart` / `BoardingView.tsx` | Вечерний чекин с геолокацией, подача заявлений на выезд на выходные с QR-пропуском, ведомость переклички и модерация выездов администрацией | ✅ Готово (v0.6.0) |
+| **Полный контроль Историй (Stories CRUD)** | Web / Backend | `StoriesView.tsx` / `CreateStoryUseCase.ts`, `UpdateStoryUseCase.ts`, `DeleteStoryUseCase.ts` | Публикация историй с медиа, коротким текстом, интерактивной ссылкой и текстом кнопки, готовые пресеты, редактирование, удаление | ✅ Готово (v0.6.0) |
+| **Интерактивные Объявления (Detail Sheet)** | Mobile / Web | `announcements_screen.dart` / `AnnouncementsView.tsx` | Apple-style всплывающее контекстное окно с полным текстом и копированием по тапу на карточку, модальное редактирование в Web Admin | ✅ Готово (v0.6.0) |
+| **Современный плеер Stories** | Mobile | `story_viewer_screen.dart` | Полноэкранный плеер в стиле Telegram/Instagram: Frosted Glass плашка снизу, кнопка перехода по ссылке (url_launcher), tap-and-hold пауза, смахивание вниз | ✅ Готово (v0.6.0) |
 
 ---
 
 ### 2.2. Серверная архитектура и база данных (Clean Architecture)
 
 - **Ядро и сценарии (Use Cases)**:
-  - 14 изолированных контекстов в `backend/src/application/`.
+  - 17 изолированных контекстов в `backend/src/application/`.
+  - Модуль успеваемости: `AdminImportMeshGradesUseCase`, `GetStudentGradesUseCase`.
+  - Модуль Лиги Домов: `GetHouseCupStandingsUseCase`, `AwardHousePointsUseCase`.
+  - Модуль пансиона: `BoardingCheckInUseCase`, `GetStudentBoardingStatusUseCase`, `CreateWeekendLeaveRequestUseCase`, `GetBoardingRosterUseCase`, `UpdateLeaveRequestStatusUseCase`.
+  - Модуль историй: `GetStoriesUseCase`, `MarkStoryAsViewedUseCase`, `CreateStoryUseCase`, `UpdateStoryUseCase`, `DeleteStoryUseCase`.
+  - Модуль объявлений: `GetAnnouncementsUseCase`, `GetAnnouncementByCategoryUseCase`, `CreateAnnouncementUseCase`, `UpdateAnnouncementUseCase`, `DeleteAnnouncementUseCase`.
   - Модуль профилей и справочника: `GetUserProfileUseCase`, `SearchUsersDirectoryUseCase`, `UpdateProfileUseCase`.
   - Модуль расписания и замен: `GetAllSchedulesAdminUseCase`, `SubstituteTeacherUseCase`, `AddLessonToScheduleUseCase`.
   - Модуль предметов и кафедр: `CreateSubjectUseCase`, `GetSubjectsUseCase`, `DeleteSubjectUseCase`, `AssignTeacherSubjectUseCase`, `RemoveTeacherSubjectUseCase`, `GetTeacherSubjectsUseCase`.
   - Модуль пуш-нотификаций: `ProcessDeadlineNotificationsUseCase`, `DeadlineNotificationWorker`.
   - Модуль администрирования: `AdminGetDashboardStatsUseCase`, `AdminGetUsersUseCase`, `AdminCreateUserUseCase`, `AdminUpdateUserUseCase`, `AdminUpdateUserStatusUseCase`, `AdminDeleteUserUseCase`, `AdminBatchImportUsersUseCase`.
 - **База данных PostgreSQL**:
-  - 25 версионированных SQL-миграций (`001` – `025`).
-  - Миграция `020`: справочник дисциплин (`subjects`, `teacher_subjects`).
-  - Миграция `022`: дедупликация push-уведомлений о дедлайнах (`deadline_notifications`).
-  - Миграция `023`: масштабирование мок-данных 110+ учащихся и 27 учителей по 24 классам (`10-А`, `11-А`).
-  - Миграция `024`: 25 стандартных учебных предметов по 5 кафедрам.
-  - Миграция `025`: профили пользователей (`birth_date`, `phone`, `telegram` в `users`).
+  - 27 версионированных SQL-миграций (`001` – `027`).
+  - Миграция `026`: модуль успеваемости (`grades` с полями student_id, subject_id, value, weight, period, topic, date).
+  - Миграция `027`: Лига Домов и Пансион (`house_point_transactions`, `boarding_checkins`, `weekend_leave_requests`, колонки в `users`: `house`, `is_boarding`, `room_number`).
+  - Миграция `016`/`025`: расширение историй (`link_url`, `link_text`, `deleted_at`).
   - Мягкое удаление (`deleted_at`), аудит изменений (`audit_logs`), системные параметры (`system_settings`).
 - **Контроль качества**:
-  - **300 автоматизированных тестов Jest на бэкенде** (100% прохождение, 32 тестовых сьюта).
-  - **32 автоматизированных теста во Flutter** (Unit, Widgets & Integration-тесты кэша, профилей и пушей).
+  - **341 автоматизированный тест Jest на бэкенде** (100% прохождение, 39 тестовых сьютов).
+  - **54 автоматизированных теста во Flutter** (14 сьютов: Unit, Widgets, Hive Offline Cache, Localization, Navigation, Primakov Design System).
   - Строгий TDD (Test-Driven Development) подход.
 
 ---

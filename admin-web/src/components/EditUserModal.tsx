@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import type { User, Role } from "../types";
 import { ALL_GYMNASIUM_CLASSES } from "../pages/ScheduleView";
+import { useLanguage } from "../context/LanguageContext";
 
 interface EditUserModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const { t, language } = useLanguage();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -49,7 +51,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firstName || !lastName || !email) {
-      setError("Имя, фамилия и email обязательны для заполнения");
+      setError(language === "en" ? "First name, last name and email are required" : "Имя, фамилия и email обязательны для заполнения");
       return;
     }
     setIsSubmitting(true);
@@ -72,7 +74,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       await onSubmit(user.id, payload);
       onClose();
     } catch (err: any) {
-      setError(err?.response?.data?.error?.message || err.message || "Не удалось сохранить изменения");
+      setError(err?.response?.data?.error?.message || err.message || (language === "en" ? "Failed to save profile changes" : "Не удалось сохранить изменения"));
     } finally {
       setIsSubmitting(false);
     }
@@ -93,7 +95,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         <div className="flex justify-between items-center pb-3 border-b border-slate-100">
           <div>
             <h3 className="text-xl font-bold font-headline text-on-surface">
-              Редактирование профиля
+              {t("modals.editUser")}
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
               ID: {user.id}
@@ -101,7 +103,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+            className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
           >
             <span className="material-symbols-outlined text-lg">close</span>
           </button>
@@ -117,7 +119,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">
-                Имя
+                {t("modals.firstName")}
               </label>
               <input
                 type="text"
@@ -129,7 +131,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             </div>
             <div>
               <label className="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">
-                Фамилия
+                {t("modals.lastName")}
               </label>
               <input
                 type="text"
@@ -143,7 +145,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
           <div>
             <label className="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">
-              Корпоративный Email
+              {t("modals.email")}
             </label>
             <input
               type="email"
@@ -157,31 +159,31 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">
-                Роль в гимназии
+                {t("modals.role")}
               </label>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as Role)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary font-medium"
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary font-medium cursor-pointer"
               >
-                <option value="STUDENT">Ученик (Student)</option>
-                <option value="TEACHER">Преподаватель (Teacher)</option>
-                <option value="ADMIN">Администратор (Admin)</option>
-                <option value="SUPERADMIN">Директорат (Superadmin)</option>
+                <option value="STUDENT">{language === "en" ? "Student" : "Ученик (Student)"}</option>
+                <option value="TEACHER">{language === "en" ? "Teacher / Faculty" : "Преподаватель (Teacher)"}</option>
+                <option value="ADMIN">{language === "en" ? "Administrator" : "Администратор (Admin)"}</option>
+                <option value="SUPERADMIN">{language === "en" ? "Directorate / Superadmin" : "Директорат (Superadmin)"}</option>
               </select>
             </div>
 
             <div>
               <label className="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">
-                Закрепленный класс
+                {t("modals.group")}
               </label>
               <select
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
                 disabled={role !== "STUDENT"}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary font-medium disabled:opacity-50"
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary font-medium disabled:opacity-50 cursor-pointer"
               >
-                <option value="">Без класса</option>
+                <option value="">{language === "en" ? "No Class" : "Без класса"}</option>
                 {ALL_GYMNASIUM_CLASSES.map((c) => (
                   <option key={c.id} value={c.name}>
                     {c.name} {c.specialization ? `(${c.specialization})` : ""}
@@ -194,7 +196,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">
-                Дата рождения
+                {language === "en" ? "Birth Date" : "Дата рождения"}
               </label>
               <input
                 type="date"
@@ -206,7 +208,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
             <div>
               <label className="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">
-                Телефон
+                {language === "en" ? "Phone" : "Телефон"}
               </label>
               <input
                 type="tel"
@@ -235,21 +237,21 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
           <div className="pt-2 border-t border-slate-100">
             <div className="flex justify-between items-center mb-1.5">
               <label className="block font-bold text-slate-500 uppercase tracking-wider text-[10px]">
-                Сброс пароля (оставьте пустым, если не меняется)
+                {language === "en" ? "Password Reset (leave empty to keep unchanged)" : "Сброс пароля (оставьте пустым, если не меняется)"}
               </label>
               <button
                 type="button"
                 onClick={generateRandomPassword}
                 className="text-[10px] font-bold text-primary hover:underline cursor-pointer"
               >
-                Сгенерировать надежный
+                {language === "en" ? "Generate secure" : "Сгенерировать надежный"}
               </button>
             </div>
             <input
               type="text"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Новый временный пароль (мин. 6 символов)"
+              placeholder={language === "en" ? "New temporary password (min. 6 chars)" : "Новый временный пароль (мин. 6 символов)"}
               className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary font-mono text-xs"
             />
           </div>
@@ -262,23 +264,25 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                 onChange={(e) => setIsActive(e.target.checked)}
                 className="rounded text-primary focus:ring-0"
               />
-              <span className="text-xs font-bold text-slate-700">Аккаунт активен</span>
+              <span className="text-xs font-bold text-slate-700">{language === "en" ? "Account Active" : "Аккаунт активен"}</span>
             </label>
 
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 font-bold hover:bg-slate-50"
+                className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
               >
-                Отмена
+                {t("modals.cancel")}
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-5 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary-container shadow-md shadow-primary/20 disabled:opacity-50"
+                className="px-5 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary-container shadow-md shadow-primary/20 disabled:opacity-50 cursor-pointer"
               >
-                {isSubmitting ? "Сохранение..." : "Сохранить"}
+                {isSubmitting
+                  ? (language === "en" ? "Saving..." : "Сохранение...")
+                  : t("modals.save")}
               </button>
             </div>
           </div>

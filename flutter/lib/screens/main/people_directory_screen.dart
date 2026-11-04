@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../config/app_colors.dart';
 import '../../models/api_models.dart';
 import '../../providers/user_provider.dart';
@@ -88,13 +89,13 @@ class _PeopleDirectoryScreenState extends ConsumerState<PeopleDirectoryScreen> {
                       color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                     ),
                     prefixIcon: Icon(
-                      Icons.search,
-                      size: 20,
+                      LucideIcons.search,
+                      size: 18,
                       color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
                     ),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
+                            icon: const Icon(LucideIcons.x, size: 16),
                             onPressed: () {
                               _searchController.clear();
                               setState(() {});
@@ -185,8 +186,8 @@ class _PeopleDirectoryScreenState extends ConsumerState<PeopleDirectoryScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.person_search,
-                          size: 48,
+                          LucideIcons.search,
+                          size: 44,
                           color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
                         ),
                         const SizedBox(height: 12),
@@ -387,7 +388,7 @@ class _PeopleDirectoryScreenState extends ConsumerState<PeopleDirectoryScreen> {
           ),
         ),
         trailing: Icon(
-          Icons.arrow_forward_ios,
+          LucideIcons.chevronRight,
           size: 14,
           color: isDark ? Colors.white30 : const Color(0xFF94A3B8),
         ),

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { Role } from "../types";
+import { useLanguage } from "../context/LanguageContext";
 
 interface AddUserModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const { t, language } = useLanguage();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -39,7 +41,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
       setLastName("");
       setEmail("");
     } catch (err: any) {
-      setError(err?.response?.data?.error?.message || err?.message || "Ошибка создания");
+      setError(err?.response?.data?.error?.message || err?.message || (language === "en" ? "Creation error" : "Ошибка создания"));
     } finally {
       setLoading(false);
     }
@@ -50,11 +52,11 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
       <div className="glass-modal dark:bg-slate-900/90 rounded-3xl p-7 max-w-md w-full shadow-2xl animate-modal-pop">
         <div className="flex justify-between items-center mb-5">
           <h4 className="text-lg font-bold font-headline text-on-surface">
-            Добавить нового пользователя
+            {t("modals.addUser")}
           </h4>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1"
+            className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
           >
             ✕
           </button>
@@ -70,27 +72,27 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                Имя
+                {t("modals.firstName")}
               </label>
               <input
                 type="text"
                 required
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Иван"
+                placeholder={language === "en" ? "John" : "Иван"}
                 className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
             <div>
               <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                Фамилия
+                {t("modals.lastName")}
               </label>
               <input
                 type="text"
                 required
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                placeholder="Петров"
+                placeholder={language === "en" ? "Doe" : "Петров"}
                 className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
@@ -98,36 +100,36 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
 
           <div>
             <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-              Email (Корпоративный)
+              {t("modals.email")}
             </label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="ivan.petrov@primakov.school"
+              placeholder="user@primakov.school"
               className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
 
           <div>
             <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-              Роль в системе
+              {t("modals.role")}
             </label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as Role)}
-              className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
             >
-              <option value="STUDENT">Ученик (STUDENT)</option>
-              <option value="TEACHER">Учитель (TEACHER)</option>
-              <option value="ADMIN">Администратор (ADMIN)</option>
+              <option value="STUDENT">{language === "en" ? "Student" : "Ученик (STUDENT)"}</option>
+              <option value="TEACHER">{language === "en" ? "Teacher" : "Учитель (TEACHER)"}</option>
+              <option value="ADMIN">{language === "en" ? "Administrator" : "Администратор (ADMIN)"}</option>
             </select>
           </div>
 
           <div>
             <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-              Временный пароль
+              {language === "en" ? "Temporary Password" : "Временный пароль"}
             </label>
             <input
               type="password"
@@ -142,16 +144,18 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+              className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
             >
-              Отмена
+              {t("modals.cancel")}
             </button>
             <button
               type="submit"
               disabled={loading}
               className="px-5 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-container disabled:opacity-50 transition-all cursor-pointer"
             >
-              {loading ? "Создание..." : "Создать аккаунт"}
+              {loading
+                ? (language === "en" ? "Creating..." : "Создание...")
+                : (language === "en" ? "Create Account" : "Создать аккаунт")}
             </button>
           </div>
         </form>

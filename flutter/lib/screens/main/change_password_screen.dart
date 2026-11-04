@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../providers/user_provider.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
@@ -94,11 +95,11 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 decoration: InputDecoration(
                   labelText: 'Текущий пароль',
                   border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.lock),
+                  prefixIcon: const Icon(LucideIcons.lock, size: 20),
                   suffixIcon: IconButton(
                     icon: Icon(_obscureCurrentPassword 
-                        ? Icons.visibility_off 
-                        : Icons.visibility),
+                        ? LucideIcons.eyeOff 
+                        : LucideIcons.eye, size: 20),
                     onPressed: () {
                       setState(() {
                         _obscureCurrentPassword = !_obscureCurrentPassword;
@@ -122,11 +123,11 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 decoration: InputDecoration(
                   labelText: 'Новый пароль',
                   border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.lock_outline),
+                  prefixIcon: const Icon(LucideIcons.lock, size: 20),
                   suffixIcon: IconButton(
                     icon: Icon(_obscureNewPassword 
-                        ? Icons.visibility_off 
-                        : Icons.visibility),
+                        ? LucideIcons.eyeOff 
+                        : LucideIcons.eye, size: 20),
                     onPressed: () {
                       setState(() {
                         _obscureNewPassword = !_obscureNewPassword;
@@ -156,11 +157,11 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 decoration: InputDecoration(
                   labelText: 'Подтвердите новый пароль',
                   border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.lock_outline),
+                  prefixIcon: const Icon(LucideIcons.lock, size: 20),
                   suffixIcon: IconButton(
                     icon: Icon(_obscureConfirmPassword 
-                        ? Icons.visibility_off 
-                        : Icons.visibility),
+                        ? LucideIcons.eyeOff 
+                        : LucideIcons.eye, size: 20),
                     onPressed: () {
                       setState(() {
                         _obscureConfirmPassword = !_obscureConfirmPassword;
