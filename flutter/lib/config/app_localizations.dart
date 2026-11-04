@@ -13,7 +13,7 @@ class AppLocalizations {
   static const LocalizationsDelegate<AppLocalizations> delegate =
       _AppLocalizationsDelegate();
 
-  static final Map<String, Map<String, String>> _localizedValues = {
+  static const Map<String, Map<String, String>> _localizedValues = {
     'ru': {
       // General
       'appName': 'Гимназия Примакова',
@@ -178,6 +178,7 @@ class AppLocalizations {
       'phone': 'Телефон',
       'telegram': 'Telegram',
       'corporateEmail': 'Корпоративная почта',
+      'emailBoundMsg': 'Корпоративная почта привязана к аккаунту',
       'twoFactorAuth': 'Двухфакторная аутентификация',
       'activeSessions': 'Активные сессии',
       'publicProfile': 'Мой публичный профиль',
@@ -421,6 +422,7 @@ class AppLocalizations {
       'phone': 'Phone',
       'telegram': 'Telegram',
       'corporateEmail': 'Corporate Email',
+      'emailBoundMsg': 'Corporate email is linked to your account',
       'twoFactorAuth': 'Two-Factor Authentication',
       'activeSessions': 'Active Sessions',
       'publicProfile': 'My Public Profile',
@@ -503,7 +505,7 @@ class AppLocalizations {
   };
 
   String translate(String key) {
-    final langCode = locale.languageCode;
+    final langCode = locale.languageCode.toLowerCase();
     return _localizedValues[langCode]?[key] ??
         _localizedValues['ru']?[key] ??
         key;
@@ -612,5 +614,5 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool shouldReload(_AppLocalizationsDelegate old) => false;
+  bool shouldReload(_AppLocalizationsDelegate old) => true;
 }

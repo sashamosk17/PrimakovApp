@@ -21,6 +21,17 @@ void main() {
       expect(locRu.boarding, 'Пансион Раздоры');
       expect(locRu.houseCup, 'Лига Домов (House Cup)');
       expect(locRu.loginButton, 'Войти в систему');
+      expect(locRu.roleStudent, 'Ученик');
+      expect(locRu.appLanguage, 'Язык интерфейса');
+      expect(locRu.helpAndSupport, 'Помощь и поддержка');
+      expect(locRu.documentsAndRegulations, 'Документы и регламенты');
+      expect(locRu.badgeInProgress, 'ИДЕТ УРОК');
+      expect(locRu.mySchedule, 'Мое расписание');
+      expect(locRu.allLessons, 'Все уроки');
+      expect(locRu.translate('untilLessonEnd'), 'До конца урока');
+      expect(locRu.translate('minutesShort'), 'мин');
+      expect(locRu.translate('nextLesson'), 'Следующий урок');
+      expect(locRu.translate('emailBoundMsg'), 'Корпоративная почта привязана к аккаунту');
     });
 
     test('English dictionary provides correct translations', () {
@@ -39,6 +50,17 @@ void main() {
       expect(locEn.boarding, 'Boarding Razdory');
       expect(locEn.houseCup, 'House Cup Tournament');
       expect(locEn.loginButton, 'Sign In');
+      expect(locEn.roleStudent, 'Student');
+      expect(locEn.appLanguage, 'App Language');
+      expect(locEn.helpAndSupport, 'Help & Support');
+      expect(locEn.documentsAndRegulations, 'Documents & Policies');
+      expect(locEn.badgeInProgress, 'IN PROGRESS');
+      expect(locEn.mySchedule, 'My Schedule');
+      expect(locEn.allLessons, 'All Lessons');
+      expect(locEn.translate('untilLessonEnd'), 'Until lesson end');
+      expect(locEn.translate('minutesShort'), 'min');
+      expect(locEn.translate('nextLesson'), 'Next Lesson');
+      expect(locEn.translate('emailBoundMsg'), 'Corporate email is linked to your account');
     });
 
     test('Fallback to Russian when key is missing or locale is default', () {
