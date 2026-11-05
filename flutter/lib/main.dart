@@ -22,9 +22,11 @@ import 'config/app_theme.dart';
 import 'config/app_colors.dart';
 import 'config/app_spacing.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'widgets/error_boundary.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  GlobalErrorHandler.init();
   await Hive.initFlutter();
   await OfflineCacheService().init();
   await initializeDateFormatting('ru', null);
@@ -57,6 +59,11 @@ class PrimakovApp extends ConsumerWidget {
         Locale('en', 'US'),
       ],
       locale: currentLocale,
+      builder: (context, child) {
+        return ErrorBoundary(
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: isAuthenticated
           ? const MainNavigator()
           : const AuthNavigator(),

@@ -396,12 +396,14 @@ class Announcement {
   final String id;
   final String title;
   final String content;
+  final String? category;
   final String createdAt;
 
   Announcement({
     required this.id,
     required this.title,
     required this.content,
+    this.category,
     required this.createdAt,
   });
 
@@ -410,6 +412,7 @@ class Announcement {
       id: json['id'] as String,
       title: json['title'] as String,
       content: json['content'] as String,
+      category: json['category'] as String?,
       createdAt: json['createdAt'] as String,
     );
   }
@@ -418,6 +421,7 @@ class Announcement {
     'id': id,
     'title': title,
     'content': content,
+    if (category != null) 'category': category,
     'createdAt': createdAt,
   };
 }
@@ -427,6 +431,7 @@ class News {
   final String title;
   final String description;
   final String? imageUrl;
+  final String? category;
   final String createdAt;
 
   News({
@@ -434,6 +439,7 @@ class News {
     required this.title,
     required this.description,
     this.imageUrl,
+    this.category,
     required this.createdAt,
   });
 
@@ -443,6 +449,7 @@ class News {
       title: json['title'] as String,
       description: json['description'] as String,
       imageUrl: json['imageUrl'] as String?,
+      category: json['category'] as String?,
       createdAt: json['createdAt'] as String,
     );
   }
@@ -452,6 +459,7 @@ class News {
     'title': title,
     'description': description,
     'imageUrl': imageUrl,
+    if (category != null) 'category': category,
     'createdAt': createdAt,
   };
 }

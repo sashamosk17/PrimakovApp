@@ -89,11 +89,14 @@ curl http://127.0.0.1:3000/health
 ```
 
 ### 3. Проверка таблиц в PostgreSQL через Docker:
+> [!NOTE]
+> Системный пользователь базы данных в Docker Compose — **`primakov`** (не `postgres`). База данных: `primakovapp` (или `primakov_db` в зависимости от конфигурации `.env`).
 ```bash
-docker exec -it primakov-postgres psql -U primakov -d primakovapp -c "SELECT COUNT(*) FROM schedules;"
-docker exec -it primakov-postgres psql -U primakov -d primakovapp -c "SELECT COUNT(*) FROM lessons;"
-docker exec -it primakov-postgres psql -U primakov -d primakovapp -c "SELECT COUNT(*) FROM requests;"
-docker exec -it primakov-postgres psql -U primakov -d primakovapp -c "SELECT COUNT(*) FROM canteen_menu;"
+docker compose -f docker-compose.prod.yml exec postgres psql -U primakov -d primakovapp -c "SELECT COUNT(*) FROM schedules;"
+docker compose -f docker-compose.prod.yml exec postgres psql -U primakov -d primakovapp -c "SELECT COUNT(*) FROM lessons;"
+docker compose -f docker-compose.prod.yml exec postgres psql -U primakov -d primakovapp -c "SELECT COUNT(*) FROM requests;"
+docker compose -f docker-compose.prod.yml exec postgres psql -U primakov -d primakovapp -c "SELECT COUNT(*) FROM canteen_menu;"
+docker compose -f docker-compose.prod.yml exec postgres psql -U primakov -d primakovapp -c "SELECT COUNT(*) FROM stories;"
 ```
 
 ---
@@ -117,6 +120,52 @@ npm run dev
 
 ---
 
+## 🛠️ Типовые проблемы и их устранение (Troubleshooting)
+
+### 1. Ошибка запуска Nginx: `failed to bind host port 0.0.0.0:443/tcp: address already in use`
+**Причина**: Порт 443 (HTTPS) или 80 (HTTP) уже занят на самом сервере фоновым процессом (системный Apache/Nginx) или зависшим `docker-proxy`.
+
+**Решение**:
+```bash
+# 1. Посмотреть, какой процесс занимает порт 443:
+ss -tulpn | grep :443
+# или
+lsof -i :443
+
+# 2. Если порт занят нативным системным Nginx или Apache — останавливаем и отключаем:
+systemctl stop nginx 2>/dev/null || true
+systemctl disable nginx 2>/dev/null || true
+systemctl stop apache2 2>/dev/null || true
+systemctl disable apache2 2>/dev/null || true
+
+# 3. Если порт держит зависший docker-proxy:
+systemctl restart docker
+
+# 4. Перезапустить контейнеры:
+cd /root/Primakov_App/backend
+docker compose -f docker-compose.prod.yml up -d
+```
+
+### 2. Ошибка при подключении к БД: `FATAL: role "postgres" does not exist`
+**Причина**: В контейнере `primakov-postgres` суперпользователь создан с именем `primakov` (параметр `POSTGRES_USER` в `docker-compose.prod.yml`).
+
+**Решение**:
+Всегда передавайте `-U primakov` вместо `-U postgres`:
+```bash
+docker compose -f docker-compose.prod.yml exec postgres psql -U primakov -d primakovapp
+```
+
+### 3. Ошибки миграций схемы (`string_to_uuid`, `not-null constraint` и др.)
+Благодаря самовосстанавливающейся секции 0 в миграции `029_SeedComprehensiveSyntheticData.sql` и парсеру `migrationRunner.ts`:
+- Зависимые представления (`active_requests`, `active_announcements`, `active_stories`) каскадно сбрасываются перед модификацией типов и восстанавливаются после.
+- Колонки `room_id`, `category`, `content` безопасно приводятся к нужным типам без блокировок.
+- Если миграция падает, раннер выводит в лог точный номер оператора и сниппет SQL:
+```bash
+docker compose -f docker-compose.prod.yml logs --tail=50 backend
+```
+
+---
+
 ## 🚨 Ручное применение миграций (если потребуется отдельно)
 
 Если контейнер уже запущен, а вы хотите применить миграции вручную без перезапуска:
@@ -129,7 +178,7 @@ docker compose -f docker-compose.prod.yml exec backend node -e "
 "
 
 # Либо напрямую через psql в контейнере базы данных:
-cat /root/Primakov_App/backend/src/infrastructure/database/migrations/028_CreateServiceRequestsTable.sql | docker exec -i primakov-postgres psql -U primakov -d primakovapp
-cat /root/Primakov_App/backend/src/infrastructure/database/migrations/029_SeedComprehensiveSyntheticData.sql | docker exec -i primakov-postgres psql -U primakov -d primakovapp
+cat /root/Primakov_App/backend/src/infrastructure/database/migrations/028_CreateServiceRequestsTable.sql | docker compose -f docker-compose.prod.yml exec -T postgres psql -U primakov -d primakovapp
+cat /root/Primakov_App/backend/src/infrastructure/database/migrations/029_SeedComprehensiveSyntheticData.sql | docker compose -f docker-compose.prod.yml exec -T postgres psql -U primakov -d primakovapp
 ```
 

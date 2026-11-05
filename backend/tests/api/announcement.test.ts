@@ -45,5 +45,27 @@ describe("GET /api/announcements", () => {
     expect(res.body.status).toBe("success");
     expect(res.body.data).toEqual([]);
   });
+
+  it("возвращает полный текст объявления без обрезания до 150 символов", async () => {
+    const { app, repo } = createApp();
+    const longText = "Уважаемые родители! В пятницу, 27 ноября, в 18:30 состоятся общегимназическое и классные родительские собрания, посвящённые завершению первого учебного периода и результатам успеваемости учащихся старших классов гимназии.";
+    await repo.save({
+      id: "announcement-long-1",
+      title: "Подведение итогов 1-го триместра и собрание",
+      description: "Родительские собрания",
+      content: longText,
+      date: new Date(),
+      category: "IMPORTANT",
+      createdAt: new Date(),
+      authorId: "admin-1",
+    });
+
+    const res = await request(app).get("/api/announcements");
+    expect(res.status).toBe(200);
+    const found = res.body.data.find((a: any) => a.id === "announcement-long-1");
+    expect(found).toBeDefined();
+    expect(found.content).toBe(longText);
+    expect(found.content.endsWith("...")).toBe(false);
+  });
 });
 

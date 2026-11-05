@@ -131,12 +131,15 @@
 | `id` | `UUID` | Нет | `PRIMARY KEY` | Идентификатор сторис |
 | `title` | `VARCHAR(255)`| Нет | — | Заголовок новости |
 | `description` | `TEXT` | Да | — | Описание новости |
+| `content` | `TEXT` | Да | `NULL` | Полный контент истории (совместимость) |
 | `image_url` | `TEXT` | Да | — | Ссылка на CDN с изображением |
 | `video_url` | `TEXT` | Да | — | Ссылка на видеофайл |
 | `link_url` | `VARCHAR(500)`| Да | — | Внешняя гиперссылка кнопки действия |
 | `link_text` | `VARCHAR(100)`| Да | `DEFAULT 'Подробнее'` | Текст на кнопке действия |
-| `author_id` | `UUID` | Да | `REFERENCES users(id)` | Создатель (администратор/пресс-служба) |
+| `author` | `VARCHAR(255)`| Да | — | Текстовая подпись автора/кафедры |
+| `author_id` | `UUID` | Да | `REFERENCES users(id) ON DELETE SET NULL` | Создатель (администратор/пресс-служба) |
 | `created_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Дата публикации |
+| `updated_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Дата обновления истории |
 | `expires_at` | `TIMESTAMPTZ` | Да | — | Дата автоскрытия истории |
 | `deleted_at` | `TIMESTAMPTZ` | Да | `NULL` | Мягкое удаление |
 
@@ -163,9 +166,10 @@
 | `content` | `TEXT` | Нет | — | Полный текст объявления |
 | `image_url` | `TEXT` | Да | — | Иллюстрация |
 | `date` | `DATE` | Нет | `DEFAULT CURRENT_DATE` | Дата события |
-| `category` | `VARCHAR(50)` | Нет | `CHECK in ('ACADEMIC', 'EVENT', 'GENERAL', 'URGENT')` | Категория важности |
+| `category` | `VARCHAR(100)`| Нет | — | Категория события (События, Кампус, Лига Домов и др.) |
 | `author_id` | `UUID` | Да | `REFERENCES users(id)` | Автор объявления |
 | `created_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Время публикации |
+| `updated_at` | `TIMESTAMPTZ` | Нет | `DEFAULT CURRENT_TIMESTAMP` | Время обновления объявления |
 | `deleted_at` | `TIMESTAMPTZ` | Да | `NULL` | Мягкое удаление |
 
 ---
@@ -392,6 +396,33 @@
 
 ---
 
+### 2.19. Таблица `requests` (Заявки Service Desk / Helpdesk кампуса)
+Миграции: `028_CreateServiceRequestsTable.sql`, `029_SeedComprehensiveSyntheticData.sql`.
+
+Централизованный трекер сервисных заявок кампуса (IT-поддержка, хозяйственный ремонт, клининг) с автоматическим расчетом SLA-дедлайнов и эскалацией.
+
+| Столбец | Тип данных | Nullable | Ограничения / Default | Описание |
+| :--- | :--- | :---: | :--- | :--- |
+| `id` | `UUID` | Нет | `PRIMARY KEY DEFAULT gen_random_uuid()` | Уникальный идентификатор заявки |
+| `type` | `VARCHAR(30)` | Нет | `CHECK in ('IT', 'MAINTENANCE', 'CLEANING')` | Тип службы-исполнителя |
+| `title` | `VARCHAR(255)` | Нет | — | Краткая формулировка проблемы |
+| `description` | `TEXT` | Нет | — | Подробное описание неисправности |
+| `status` | `VARCHAR(30)` | Нет | `DEFAULT 'PENDING'` | Статус (`PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`) |
+| `priority` | `VARCHAR(20)` | Нет | `DEFAULT 'MEDIUM'` | Приоритет (`LOW`, `MEDIUM`, `HIGH`, `URGENT`) |
+| `creator_id` | `UUID` | Нет | `REFERENCES users(id) ON DELETE CASCADE` | Инициатор заявки (учитель, ученик, персонал) |
+| `assignee_id` | `UUID` | Да | `REFERENCES users(id) ON DELETE SET NULL` | Назначенный специалист-исполнитель |
+| `room_id` | `VARCHAR(100)` | Да | — | Локация/аудитория проблемы (`305-A`, `201-A`, `Атриум`) |
+| `created_at` | `TIMESTAMPTZ` | Нет | `DEFAULT NOW()` | Время регистрации заявки |
+| `updated_at` | `TIMESTAMPTZ` | Нет | `DEFAULT NOW()` | Время последнего изменения статуса |
+| `completed_at` | `TIMESTAMPTZ` | Да | `NULL` | Время фактического решения |
+| `sla_deadline_at` | `TIMESTAMPTZ` | Да | `NULL` | Расчетный предельный дедлайн регламента SLA |
+| `sla_breached` | `BOOLEAN` | Нет | `DEFAULT false` | Маркер нарушения SLA сторожевым таймером |
+| `notes` | `TEXT` | Да | `NULL` | Внутренние служебные примечания исполнителя |
+
+*Индексы*: `idx_requests_status`, `idx_requests_priority`, `idx_requests_creator`, `idx_requests_assignee`, `idx_requests_created_at`, `idx_requests_room`.
+
+---
+
 ## 3. Реестр миграций базы данных
 
 Расположение: [backend/src/infrastructure/database/migrations/](file:///c:/Users/sasha/ВШЭ/3%20курс/Digital_PM/Primakov_App/backend/src/infrastructure/database/migrations)
@@ -429,5 +460,5 @@
 | `025` | `025_AddUserProfileFields.sql` | Добавление полей профиля `birth_date`, `phone`, `telegram` в таблицу `users`, сидирование ДР и контактов тестовых пользователей. |
 | `026` | `026_CreateGradesTable.sql` | Создание таблицы успеваемости `grades` с поддержкой весов оценок, периодов и тем работ. |
 | `027` | `027_CreateHouseAndBoardingTables.sql` | Создание таблиц `house_point_transactions`, `boarding_checkins`, `weekend_leave_requests` и добавление колонок `house`, `is_boarding`, `room_number` в `users`. |
-| `028` | `028_CreateServiceRequestsTable.sql` | Создание таблицы `requests` для заявок Service Desk (IT, АХО, клининг) со статусами, приоритетами, исполнителями и SLA-контролем. |
-| `029` | `029_SeedComprehensiveSyntheticData.sql` | Комплексное сидирование реалистичных данных: двухнедельное расписание уроков с ДЗ и кабинетами, триместровые оценки, транзакции факультетов, меню столовой с КБЖУ, заявки Service Desk, рейтинги и отзывы учителей, статусы пансиона. |
+| `028` | `028_CreateServiceRequestsTable.sql` | Создание таблицы `requests` для заявок Service Desk со статусами, приоритетами, исполнителями и SLA-контролем. Каскадный сброс старых VIEW, перевод `room_id` в `VARCHAR(100)` и пересоздание `active_requests` и `service_requests`. |
+| `029` | `029_SeedComprehensiveSyntheticData.sql` | Комплексный сидинг реалистичных данных: 14 дней расписаний с ДЗ и аудиториями, триместровые оценки, транзакции Домов, меню столовой с КБЖУ, заявки Helpdesk, отзывы учителей, пансион. Включает самовосстанавливающийся DDL (`DROP VIEW CASCADE`, `DROP NOT NULL`, динамические FK и идемпотентные вставки). |

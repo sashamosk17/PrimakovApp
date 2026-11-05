@@ -9,7 +9,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/announcement_provider.dart';
 import '../config/app_colors.dart';
+import '../models/api_models.dart';
 import '../widgets/primakov_card.dart';
+import '../widgets/error_boundary.dart';
 
 class AnnouncementsScreen extends ConsumerStatefulWidget {
   const AnnouncementsScreen({Key? key}) : super(key: key);
@@ -26,7 +28,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
     Future.microtask(() => ref.read(announcementProvider.notifier).fetchAnnouncements());
   }
 
-  void _showAnnouncementDetails(BuildContext context, dynamic announcement, bool isDark) {
+  void _showAnnouncementDetails(BuildContext context, Announcement announcement, bool isDark) {
     HapticFeedback.lightImpact();
 
     final createdAt = DateTime.tryParse(announcement.createdAt) ?? DateTime.now();
@@ -41,10 +43,11 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withOpacity(0.55),
       builder: (ctx) {
-        return Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(ctx).size.height * 0.88,
-          ),
+        return ErrorBoundary(
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.88,
+            ),
           decoration: BoxDecoration(
             color: cardBg,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -100,7 +103,9 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              announcement.category ?? 'ОБЪЯВЛЕНИЕ',
+                              (announcement.category != null && announcement.category!.trim().isNotEmpty)
+                                  ? announcement.category!
+                                  : 'ОБЪЯВЛЕНИЕ',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
@@ -255,9 +260,10 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
               ],
             ),
           ),
-        );
-      },
-    );
+        ),
+      );
+    },
+  );
   }
 
   @override
@@ -267,7 +273,6 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
     final scaffoldBg = isDark ? AppColors.darkBackgroundPrimary : AppColors.backgroundPrimary;
     final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
     final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
-    final surfaceColor = isDark ? AppColors.darkBackgroundSecondary : AppColors.backgroundSecondary;
 
     final announcementState = ref.watch(announcementProvider);
     final isLoading = announcementState.isLoading;
@@ -392,7 +397,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
 }
 
 class _AnnouncementCard extends StatelessWidget {
-  final dynamic announcement;
+  final Announcement announcement;
   final Color textPrimary;
   final Color textSecondary;
   final bool isDark;

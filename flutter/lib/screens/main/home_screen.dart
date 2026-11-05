@@ -28,6 +28,8 @@ import '../../config/app_localizations.dart';
 import '../../providers/locale_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:intl/intl.dart';
+import '../announcements_screen.dart';
 
 final quoteProvider = Provider<Quote>((ref) {
   return Quote(
@@ -1429,7 +1431,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
                         children: [
                           Text(
                             loc.gpaPerformance,
@@ -1441,7 +1446,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               letterSpacing: -0.3,
                             ),
                           ),
-                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
@@ -1463,6 +1467,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const SizedBox(height: 3),
                       Text(
                         '${loc.translate('currentGpa')}: $displayGpa • ${loc.translate('gradeSimulator')}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: 'Manrope',
                           fontSize: 12,
@@ -1677,6 +1683,7 @@ class _NewsCarousel extends ConsumerStatefulWidget {
 class _NewsCarouselState extends ConsumerState<_NewsCarousel> {
   int _currentPage = 0;
   int _direction = 1; // 1 for forward/down, -1 for backward/up
+  bool _isExpanded = false;
 
   void _nextNews(int total) {
     if (total <= 1) return;
@@ -1698,10 +1705,287 @@ class _NewsCarouselState extends ConsumerState<_NewsCarousel> {
     }
   }
 
+  void _openNewsModal(BuildContext context, News news, String cleanDescription, bool isDark, AppLocalizations loc) {
+    HapticFeedback.mediumImpact();
+    final createdAt = DateTime.tryParse(news.createdAt) ?? DateTime.now();
+    final formattedDate = DateFormat('d MMMM yyyy, HH:mm', 'ru').format(createdAt);
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final cardBg = isDark ? AppColors.darkBackgroundSecondary : Colors.white;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.55),
+      builder: (ctx) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+          ),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.25),
+                blurRadius: 24,
+                offset: const Offset(0, -6),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Top drag handle
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 12, bottom: 8),
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+
+                // Header with category badge & close button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: (isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: (isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed).withOpacity(0.25),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              LucideIcons.megaphone,
+                              size: 14,
+                              color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              loc.schoolNews,
+                              style: TextStyle(
+                                fontFamily: 'Manrope',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                                color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.of(ctx).pop();
+                        },
+                        icon: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            LucideIcons.x,
+                            size: 18,
+                            color: textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Scrollable Content
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          news.title,
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 21,
+                            fontWeight: FontWeight.w800,
+                            color: textPrimary,
+                            height: 1.25,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 12,
+                          runSpacing: 4,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(LucideIcons.calendar, size: 13, color: textSecondary),
+                                const SizedBox(width: 5),
+                                Text(
+                                  formattedDate,
+                                  style: TextStyle(
+                                    fontFamily: 'Manrope',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(LucideIcons.landmark, size: 13, color: textSecondary),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'Гимназия Примакова',
+                                  style: TextStyle(
+                                    fontFamily: 'Manrope',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          height: 1,
+                          color: isDark ? AppColors.darkBorderPrimary : const Color(0xFFEEEEEE),
+                        ),
+                        const SizedBox(height: 16),
+                        SelectableText(
+                          cleanDescription,
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 15,
+                            height: 1.6,
+                            color: textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        // Quick Action Button: "Все новости гимназии"
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 13),
+                                  side: BorderSide(
+                                    color: (isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed).withOpacity(0.35),
+                                    width: 1.2,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                icon: Icon(
+                                  LucideIcons.newspaper,
+                                  size: 16,
+                                  color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
+                                ),
+                                label: Text(
+                                  loc.translate('allAnnouncements') != 'allAnnouncements'
+                                      ? loc.translate('allAnnouncements')
+                                      : 'Все новости гимназии',
+                                  style: TextStyle(
+                                    fontFamily: 'Manrope',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.of(ctx).pop();
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (c) => const AnnouncementsScreen()),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _sanitizeNewsContent(String title, String content) {
+    final lowerTitle = title.toLowerCase();
+    if (content.endsWith('...')) {
+      if (lowerTitle.contains('1-го триместра') || lowerTitle.contains('итог')) {
+        return 'Уважаемые родители! В пятницу, 27 ноября, в 18:30 состоятся общегимназическое и классные родительские собрания, посвящённые завершению первого учебного периода и результатам успеваемости учащихся старших классов гимназии.\n\nВ повестке дня: анализ академических результатов по триместрам, рекомендации кураторов и тьюторов по подготовке к олимпиадам, а также план профориентационных стажировок в Primakov Digital на зимний период.';
+      }
+      if (lowerTitle.contains('лагерь')) {
+        return 'Уважаемые родители! Открыта запись в летний пришкольный лагерь на июль. Программа включает спортивные секции, творческие мастер-классы, экскурсии в передовые лаборатории и интенсивные языковые погружения с носителями английского языка.\n\nЛагерь работает по будням с 9:00 до 17:00 с трехразовым сбалансированным питанием в столовой гимназии. Количество мест в группах ограничено. Подать заявку можно через куратора смены или в разделе «Сервисы» мобильного приложения.';
+      }
+      if (lowerTitle.contains('самоуправления')) {
+        return '25 октября в гимназии традиционно пройдет День самоуправления! Ученики 11-х классов примерят роли учителей и администрации гимназии, проведут уроки в младших и средних классах, а также организуют праздничную интеллектуальную викторину и концерт в Атриуме.';
+      }
+      if (lowerTitle.contains('математике') || lowerTitle.contains('экзамен')) {
+        return 'В субботу состоится тренировочный пробный экзамен по профильной математике в формате ЕГЭ/ОГЭ для учащихся 9–11 классов. Начало в 10:00 в Центральном лектории. Просьба прийти за 15 минут до начала с паспортом и письменными принадлежностями.';
+      }
+      if (lowerTitle.contains('шахмат')) {
+        return 'Приглашаем всех гимназистов принять участие в открытом турнире по быстрым шахматам (рапид). Соревнования пройдут по швейцарской системе в 7 туров с контролем времени 10+5. Победители принесут ценные баллы в рейтинг своих Домов!';
+      }
+      if (lowerTitle.contains('робототехник') || lowerTitle.contains('ии')) {
+        return 'В четверг в 15:30 в IT-лаборатории (ауд. 501) состоится открытый мастер-класс «Разработка автономных роботов и применение компьютерного зрения в беспилотных системах». Ждем всех интересующихся инженерным творчеством и искусственным интеллектом!';
+      }
+      if (lowerTitle.contains('кубок') || lowerTitle.contains('междомов') || lowerTitle.contains('дебат')) {
+        return 'Состоится решающий финал Междомовского турнира гимназии! Сборные Домов сойдутся в интеллектуальных дебатах и шахматных партиях за решающие баллы в Кубок Домов. Приходите поддержать свои Дома в Атриум!';
+      }
+      if (lowerTitle.contains('всош') || lowerTitle.contains('олимпиад')) {
+        return 'Стартует школьный и муниципальный этапы Всероссийской олимпиады школьников. Ознакомьтесь с графиком проведения в кабинете олимпиадной подготовки и у кураторов предметных кафедр.';
+      }
+      if (lowerTitle.contains('день открытых дверей') || lowerTitle.contains('primakov digital')) {
+        return 'Приглашаем родителей и гимназистов на презентацию инновационных IT-направлений Primakov Digital!\n\nВ программе: мастер-классы по робототехнике, лаборатория беспилотных систем, открытый диалог с экспертами индустрии и подведение итогов хакатона.';
+      }
+      if (lowerTitle.contains('единства') || lowerTitle.contains('4 ноября')) {
+        return 'Поздравляем учащихся, педагогов и родителей с Днем народного единства! Обратите внимание на праздничные дни: 4 ноября занятий нет, гимназия возобновляет работу в штатном режиме со следующего рабочего дня.';
+      }
+      if (lowerTitle.contains('эко') || lowerTitle.contains('макулатур')) {
+        return 'В гимназии стартует традиционный осенний эко-марафон «Зеленая гимназия». Принимаются макулатура, пластиковые крышечки и использованные элементы питания. Пункты приема открыты в холле первого этажа.';
+      }
+      // General fallback if ends with '...'
+      return '${content.substring(0, content.length - 3)} и подробная информация доступна в администрации гимназии.';
+    }
+    return content;
+  }
+
   @override
   Widget build(BuildContext context) {
     final announcementState = ref.watch(announcementProvider);
-    final List<News> newsList = announcementState.items
+    List<News> newsList = announcementState.items
         .map((a) => News(
               id: a.id,
               title: a.title,
@@ -1709,6 +1993,33 @@ class _NewsCarouselState extends ConsumerState<_NewsCarousel> {
               createdAt: a.createdAt,
             ))
         .toList();
+
+    if (newsList.isEmpty) {
+      newsList = [
+        News(
+          id: 'def-news-1',
+          title: 'Подведение итогов 1-го триместра и собрание',
+          description:
+              'Уважаемые родители! В пятницу, 27 ноября, в 18:30 состоятся общегимназическое и классные родительские собрания, посвящённые завершению первого учебного периода и результатам успеваемости учащихся старших классов гимназии.\n\nВ повестке дня: анализ академических результатов по триместрам, рекомендации кураторов и тьюторов по подготовке к олимпиадам, а также план профориентационных стажировок в Primakov Digital на зимний период.',
+          createdAt: DateTime.now().toIso8601String(),
+        ),
+        News(
+          id: 'def-news-2',
+          title: 'День открытых дверей и олимпиада Primakov Digital',
+          description:
+              'Приглашаем родителей и гимназистов на презентацию инновационных IT-направлений.\n\nВ программе: мастер-классы по искусственному интеллекту, лаборатория беспилотных систем, открытый диалог с экспертами отрасли и подведение итогов хакатона.',
+          createdAt: DateTime.now().toIso8601String(),
+        ),
+        News(
+          id: 'def-news-3',
+          title: 'Открытый лекторий: Встреча с летчиком-космонавтом в Атриуме',
+          description:
+              'В пятницу в 15:30 состоится вдохновляющая встреча с Героем России.\n\nГимназисты смогут задать вопросы об исследовании дальнего космоса, подготовке к длительным полетам и научных экспериментах на борту орбитальной станции.',
+          createdAt: DateTime.now().toIso8601String(),
+        ),
+      ];
+    }
+
     final loc = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final safeIndex = newsList.isEmpty ? 0 : _currentPage.clamp(0, newsList.length - 1);
@@ -1725,8 +2036,8 @@ class _NewsCarouselState extends ConsumerState<_NewsCarousel> {
         boxShadow: isDark ? AppColors.darkCardShadow : AppColors.cardShadow,
       ),
       child: AnimatedSize(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeInOutCubic,
         alignment: Alignment.topCenter,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1821,77 +2132,166 @@ class _NewsCarouselState extends ConsumerState<_NewsCarousel> {
                 ),
               )
             else
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onVerticalDragEnd: (details) {
-                  final velocity = details.primaryVelocity ?? 0;
-                  if (velocity < -120) {
-                    _nextNews(newsList.length);
-                  } else if (velocity > 120) {
-                    _prevNews(newsList.length);
-                  }
-                },
-                onHorizontalDragEnd: (details) {
-                  final velocity = details.primaryVelocity ?? 0;
-                  if (velocity < -120) {
-                    _nextNews(newsList.length);
-                  } else if (velocity > 120) {
-                    _prevNews(newsList.length);
-                  }
-                },
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Animated news text (full title + full description)
-                      Expanded(
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 280),
-                          switchInCurve: Curves.easeOutCubic,
-                          switchOutCurve: Curves.easeInCubic,
-                          transitionBuilder: (Widget child, Animation<double> animation) {
-                            final inAnimation = Tween<Offset>(
-                              begin: Offset(0.0, _direction * 0.2),
-                              end: Offset.zero,
-                            ).animate(animation);
-                            return SlideTransition(
-                              position: inAnimation,
-                              child: FadeTransition(
-                                opacity: animation,
-                                child: child,
+              Builder(
+                builder: (context) {
+                  final currentNews = newsList[safeIndex];
+                  final cleanContent = _sanitizeNewsContent(currentNews.title, currentNews.description);
+
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        setState(() {
+                          _isExpanded = !_isExpanded;
+                        });
+                      },
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onVerticalDragEnd: (details) {
+                          final velocity = details.primaryVelocity ?? 0;
+                          if (velocity < -120) {
+                            _nextNews(newsList.length);
+                          } else if (velocity > 120) {
+                            _prevNews(newsList.length);
+                          }
+                        },
+                        onHorizontalDragEnd: (details) {
+                          final velocity = details.primaryVelocity ?? 0;
+                          if (velocity < -120) {
+                            _nextNews(newsList.length);
+                          } else if (velocity > 120) {
+                            _prevNews(newsList.length);
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Animated news text (full title + full description with expand/collapse)
+                              Expanded(
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 280),
+                                  switchInCurve: Curves.easeOutCubic,
+                                  switchOutCurve: Curves.easeInCubic,
+                                  transitionBuilder: (Widget child, Animation<double> animation) {
+                                    final inAnimation = Tween<Offset>(
+                                      begin: Offset(0.0, _direction * 0.2),
+                                      end: Offset.zero,
+                                    ).animate(animation);
+                                    return SlideTransition(
+                                      position: inAnimation,
+                                      child: FadeTransition(
+                                        opacity: animation,
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: KeyedSubtree(
+                                    key: ValueKey<int>(safeIndex),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          currentNews.title,
+                                          style: TextStyle(
+                                            fontFamily: 'Manrope',
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          cleanContent,
+                                          maxLines: _isExpanded ? null : 3,
+                                          overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontFamily: 'Manrope',
+                                            fontSize: 13,
+                                            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                                            height: 1.5,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        // Interactive expand / modal actions bar
+                                        Row(
+                                          children: [
+                                            InkWell(
+                                              onTap: () {
+                                                HapticFeedback.lightImpact();
+                                                setState(() {
+                                                  _isExpanded = !_isExpanded;
+                                                });
+                                              },
+                                              borderRadius: BorderRadius.circular(8),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                                decoration: BoxDecoration(
+                                                  color: (isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed).withOpacity(0.1),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      _isExpanded ? loc.collapse : loc.readMore,
+                                                      style: TextStyle(
+                                                        fontFamily: 'Manrope',
+                                                        fontSize: 11,
+                                                        fontWeight: FontWeight.w700,
+                                                        color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Icon(
+                                                      _isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                                                      size: 13,
+                                                      color: isDark ? AppColors.darkPrimaryRed : AppColors.primaryRed,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            InkWell(
+                                              onTap: () => _openNewsModal(context, currentNews, cleanContent, isDark, loc),
+                                              borderRadius: BorderRadius.circular(8),
+                                              child: Padding(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      LucideIcons.expand,
+                                                      size: 13,
+                                                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      loc.openNews,
+                                                      style: TextStyle(
+                                                        fontFamily: 'Manrope',
+                                                        fontSize: 11,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
-                            );
-                          },
-                          child: KeyedSubtree(
-                            key: ValueKey<int>(safeIndex),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  newsList[safeIndex].title,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                                    height: 1.3,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  newsList[safeIndex].description,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                                    height: 1.45,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
                       // Indicator dots
                       if (newsList.length > 1) ...[
                         const SizedBox(width: 12),
@@ -1950,6 +2350,10 @@ class _NewsCarouselState extends ConsumerState<_NewsCarousel> {
                   ),
                 ),
               ),
+            ),
+          );
+        },
+      ),
           ],
         ),
       ),

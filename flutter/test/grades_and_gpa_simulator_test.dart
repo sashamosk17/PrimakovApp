@@ -175,6 +175,36 @@ void main() {
       expect(notifier.state.value?[0].subjectName, 'Алгебра');
       expect(notifier.isServedFromCache, isTrue);
     });
+
+    test('Populates synthetic data when server returns empty list or has no data', () async {
+      final mockEmptyService = MockSuccessGradesService([]);
+      final notifier = GradesNotifier(mockEmptyService, cacheService);
+
+      await notifier.loadGrades(period: '1 триместр');
+
+      expect(notifier.state.hasValue, isTrue);
+      final summaries = notifier.state.value!;
+      expect(summaries.length, greaterThanOrEqualTo(10));
+      expect(notifier.overallGpa, greaterThan(4.5));
+      expect(summaries.any((s) => s.subjectName == 'Алгебра'), isTrue);
+      expect(summaries.any((s) => s.subjectName == 'Геометрия'), isTrue);
+      expect(summaries.any((s) => s.subjectName == 'Русский язык'), isTrue);
+      expect(summaries.any((s) => s.subjectName == 'Физика'), isTrue);
+      expect(summaries.any((s) => s.subjectName == 'Информатика'), isTrue);
+    });
+
+    test('Populates synthetic data for other periods as well (2 триместр, 3 триместр, Итог)', () async {
+      final mockEmptyService = MockSuccessGradesService([]);
+      final notifier = GradesNotifier(mockEmptyService, cacheService);
+
+      for (final period in ['2 триместр', '3 триместр', 'Итог']) {
+        await notifier.loadGrades(period: period);
+        expect(notifier.state.hasValue, isTrue);
+        final summaries = notifier.state.value!;
+        expect(summaries.isNotEmpty, isTrue);
+        expect(notifier.overallGpa, greaterThan(4.0));
+      }
+    });
   });
 }
 

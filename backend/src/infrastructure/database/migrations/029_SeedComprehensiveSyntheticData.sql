@@ -254,38 +254,98 @@ BEGIN
   END LOOP;
 END $$;
 
--- 3. Academic Grades for 10-А, 10-Б, 11-А
-DELETE FROM grades WHERE period = '1-й триместр 2026';
+-- 3. Comprehensive Academic Grades for Students (1, 2, 3 триместры и Итог)
+DELETE FROM grades WHERE period IN ('1 триместр', '2 триместр', '3 триместр', 'Итог', '1-й триместр 2026');
 
 DO $$
 DECLARE
   v_student RECORD;
 BEGIN
-  FOR v_student IN (SELECT id FROM users WHERE group_name IN ('10-А', '10-Б', '11-А') AND role = 'STUDENT') LOOP
-    -- Algebra
+  FOR v_student IN (SELECT id FROM users WHERE role = 'STUDENT') LOOP
+    -- === 1 ТРИМЕСТР ===
     INSERT INTO grades (student_id, subject_id, subject_name, value, weight, date, period, topic)
     VALUES
-      (v_student.id, 'subj-math', 'Алгебра', 5.0, 1.0, CURRENT_DATE - INTERVAL '12 days', '1-й триместр 2026', 'Квадратные трехчлены'),
-      (v_student.id, 'subj-math', 'Алгебра', 4.5, 1.5, CURRENT_DATE - INTERVAL '7 days', '1-й триместр 2026', 'Контрольная работа №2'),
-      (v_student.id, 'subj-math', 'Алгебра', 5.0, 2.0, CURRENT_DATE - INTERVAL '2 days', '1-й триместр 2026', 'Триместровый срез знаний');
+      -- Алгебра
+      (v_student.id, 'subj-math', 'Алгебра', 5.0, 1.0, CURRENT_DATE - INTERVAL '25 days', '1 триместр', 'Квадратные трехчлены'),
+      (v_student.id, 'subj-math', 'Алгебра', 4.0, 1.5, CURRENT_DATE - INTERVAL '14 days', '1 триместр', 'Контрольная работа №2'),
+      (v_student.id, 'subj-math', 'Алгебра', 5.0, 2.0, CURRENT_DATE - INTERVAL '4 days', '1 триместр', 'Триместровый срез знаний'),
+      -- Геометрия
+      (v_student.id, 'subj-geom', 'Геометрия', 5.0, 1.0, CURRENT_DATE - INTERVAL '22 days', '1 триместр', 'Теорема косинусов'),
+      (v_student.id, 'subj-geom', 'Геометрия', 5.0, 1.5, CURRENT_DATE - INTERVAL '10 days', '1 триместр', 'Векторы в пространстве'),
+      -- Русский язык
+      (v_student.id, 'subj-rus', 'Русский язык', 5.0, 1.0, CURRENT_DATE - INTERVAL '20 days', '1 триместр', 'Сложноподчиненные предложения'),
+      (v_student.id, 'subj-rus', 'Русский язык', 4.0, 1.0, CURRENT_DATE - INTERVAL '11 days', '1 триместр', 'Диктант с грамматическим заданием'),
+      (v_student.id, 'subj-rus', 'Русский язык', 5.0, 1.5, CURRENT_DATE - INTERVAL '3 days', '1 триместр', 'Контрольное изложение'),
+      -- Литература
+      (v_student.id, 'subj-lit', 'Литература', 5.0, 1.0, CURRENT_DATE - INTERVAL '18 days', '1 триместр', 'Анализ поэзии Серебряного века'),
+      (v_student.id, 'subj-lit', 'Литература', 5.0, 1.5, CURRENT_DATE - INTERVAL '6 days', '1 триместр', 'Сочинение по творчеству Бунина'),
+      -- Английский язык
+      (v_student.id, 'subj-english', 'Английский язык', 5.0, 1.0, CURRENT_DATE - INTERVAL '21 days', '1 триместр', 'Essay: Modern Digital Trends'),
+      (v_student.id, 'subj-english', 'Английский язык', 4.0, 1.5, CURRENT_DATE - INTERVAL '8 days', '1 триместр', 'Speaking Exam'),
+      (v_student.id, 'subj-english', 'Английский язык', 5.0, 1.5, CURRENT_DATE - INTERVAL '2 days', '1 триместр', 'Grammar Proficiency Test'),
+      -- Физика
+      (v_student.id, 'subj-physics', 'Физика', 5.0, 1.0, CURRENT_DATE - INTERVAL '19 days', '1 триместр', 'Закон Кулона'),
+      (v_student.id, 'subj-physics', 'Физика', 4.0, 1.5, CURRENT_DATE - INTERVAL '9 days', '1 триместр', 'Лабораторная работа: Определение КПД'),
+      (v_student.id, 'subj-physics', 'Физика', 5.0, 2.0, CURRENT_DATE - INTERVAL '1 day', '1 триместр', 'Контрольная работа: Электродинамика'),
+      -- Химия
+      (v_student.id, 'subj-chem', 'Химия', 5.0, 1.0, CURRENT_DATE - INTERVAL '16 days', '1 триместр', 'Периодический закон'),
+      (v_student.id, 'subj-chem', 'Химия', 4.0, 1.5, CURRENT_DATE - INTERVAL '7 days', '1 триместр', 'Практическая работа с реактивами'),
+      -- Биология
+      (v_student.id, 'subj-bio', 'Биология', 5.0, 1.0, CURRENT_DATE - INTERVAL '15 days', '1 триместр', 'Молекулярная генетика'),
+      (v_student.id, 'subj-bio', 'Биология', 5.0, 1.5, CURRENT_DATE - INTERVAL '5 days', '1 триместр', 'Семинар: Биотехнологии будущего'),
+      -- История
+      (v_student.id, 'subj-history', 'История', 5.0, 1.0, CURRENT_DATE - INTERVAL '17 days', '1 триместр', 'Реформы Петра I'),
+      (v_student.id, 'subj-history', 'История', 4.0, 1.0, CURRENT_DATE - INTERVAL '10 days', '1 триместр', 'Историческое эссе'),
+      (v_student.id, 'subj-history', 'История', 5.0, 1.5, CURRENT_DATE - INTERVAL '3 days', '1 триместр', 'Тестирование: Эпоха Просвещения'),
+      -- Обществознание
+      (v_student.id, 'subj-soc', 'Обществознание', 5.0, 1.0, CURRENT_DATE - INTERVAL '13 days', '1 триместр', 'Экономические системы'),
+      (v_student.id, 'subj-soc', 'Обществознание', 5.0, 1.5, CURRENT_DATE - INTERVAL '4 days', '1 триместр', 'Защита бизнес-кейса'),
+      -- Информатика
+      (v_student.id, 'subj-cs', 'Информатика', 5.0, 1.0, CURRENT_DATE - INTERVAL '23 days', '1 триместр', 'Алгоритмы поиска и сортировки'),
+      (v_student.id, 'subj-cs', 'Информатика', 5.0, 1.5, CURRENT_DATE - INTERVAL '12 days', '1 триместр', 'Проект на Python & SQL'),
+      (v_student.id, 'subj-cs', 'Информатика', 5.0, 2.0, CURRENT_DATE - INTERVAL '2 days', '1 триместр', 'Олимпиадное программирование'),
+      -- Физкультура
+      (v_student.id, 'subj-pe', 'Физическая культура', 5.0, 1.0, CURRENT_DATE - INTERVAL '20 days', '1 триместр', 'Нормативы ГТО'),
+      (v_student.id, 'subj-pe', 'Физическая культура', 5.0, 1.0, CURRENT_DATE - INTERVAL '5 days', '1 триместр', 'Волейбольный турнир');
 
-    -- Physics
+    -- === 2 ТРИМЕСТР ===
     INSERT INTO grades (student_id, subject_id, subject_name, value, weight, date, period, topic)
     VALUES
-      (v_student.id, 'subj-physics', 'Физика', 4.8, 1.0, CURRENT_DATE - INTERVAL '10 days', '1-й триместр 2026', 'Закон Кулона'),
-      (v_student.id, 'subj-physics', 'Физика', 5.0, 1.5, CURRENT_DATE - INTERVAL '4 days', '1-й триместр 2026', 'Лабораторная работа');
+      (v_student.id, 'subj-math', 'Алгебра', 5.0, 1.0, CURRENT_DATE - INTERVAL '60 days', '2 триместр', 'Тригонометрические уравнения'),
+      (v_student.id, 'subj-math', 'Алгебра', 5.0, 1.5, CURRENT_DATE - INTERVAL '45 days', '2 триместр', 'Контрольная работа: Тригонометрия'),
+      (v_student.id, 'subj-geom', 'Геометрия', 4.0, 1.0, CURRENT_DATE - INTERVAL '55 days', '2 триместр', 'Пирамиды и призмы'),
+      (v_student.id, 'subj-geom', 'Геометрия', 5.0, 1.5, CURRENT_DATE - INTERVAL '40 days', '2 триместр', 'Срез по стереометрии'),
+      (v_student.id, 'subj-rus', 'Русский язык', 5.0, 1.0, CURRENT_DATE - INTERVAL '58 days', '2 триместр', 'Орфографический практикум'),
+      (v_student.id, 'subj-lit', 'Литература', 5.0, 1.5, CURRENT_DATE - INTERVAL '50 days', '2 триместр', 'Сочинение по М.А. Булгакову'),
+      (v_student.id, 'subj-english', 'Английский язык', 5.0, 1.0, CURRENT_DATE - INTERVAL '52 days', '2 триместр', 'Debate Tournament'),
+      (v_student.id, 'subj-physics', 'Физика', 4.0, 1.5, CURRENT_DATE - INTERVAL '48 days', '2 триместр', 'Оптика и квантовая физика'),
+      (v_student.id, 'subj-cs', 'Информатика', 5.0, 2.0, CURRENT_DATE - INTERVAL '42 days', '2 триместр', 'Веб-разработка и базы данных');
 
-    -- English
+    -- === 3 ТРИМЕСТР ===
     INSERT INTO grades (student_id, subject_id, subject_name, value, weight, date, period, topic)
     VALUES
-      (v_student.id, 'subj-english', 'Английский язык', 5.0, 1.0, CURRENT_DATE - INTERVAL '8 days', '1-й триместр 2026', 'Essay Writing'),
-      (v_student.id, 'subj-english', 'Английский язык', 4.5, 1.5, CURRENT_DATE - INTERVAL '3 days', '1-й триместр 2026', 'Speaking Exam');
+      (v_student.id, 'subj-math', 'Алгебра', 5.0, 1.0, CURRENT_DATE - INTERVAL '95 days', '3 триместр', 'Производная функции'),
+      (v_student.id, 'subj-math', 'Алгебра', 5.0, 2.0, CURRENT_DATE - INTERVAL '80 days', '3 триместр', 'Итоговая контрольная работа'),
+      (v_student.id, 'subj-rus', 'Русский язык', 5.0, 1.5, CURRENT_DATE - INTERVAL '85 days', '3 триместр', 'Итоговый диктант'),
+      (v_student.id, 'subj-english', 'Английский язык', 5.0, 1.5, CURRENT_DATE - INTERVAL '82 days', '3 триместр', 'IELTS Practice Exam'),
+      (v_student.id, 'subj-physics', 'Физика', 5.0, 1.5, CURRENT_DATE - INTERVAL '78 days', '3 триместр', 'Годовая контрольная работа'),
+      (v_student.id, 'subj-cs', 'Информатика', 5.0, 2.0, CURRENT_DATE - INTERVAL '75 days', '3 триместр', 'Защита годового проекта');
 
-    -- Literature
+    -- === ИТОГ ===
     INSERT INTO grades (student_id, subject_id, subject_name, value, weight, date, period, topic)
     VALUES
-      (v_student.id, 'subj-lit', 'Литература', 4.5, 1.0, CURRENT_DATE - INTERVAL '9 days', '1-й триместр 2026', 'Анализ поэзии Серебряного века'),
-      (v_student.id, 'subj-lit', 'Литература', 5.0, 1.5, CURRENT_DATE - INTERVAL '5 days', '1-й триместр 2026', 'Сочинение по творчеству Бунина');
+      (v_student.id, 'subj-math', 'Алгебра', 5.0, 2.0, CURRENT_DATE - INTERVAL '1 day', 'Итог', 'Годовая оценка'),
+      (v_student.id, 'subj-geom', 'Геометрия', 5.0, 2.0, CURRENT_DATE - INTERVAL '1 day', 'Итог', 'Годовая оценка'),
+      (v_student.id, 'subj-rus', 'Русский язык', 5.0, 2.0, CURRENT_DATE - INTERVAL '1 day', 'Итог', 'Годовая оценка'),
+      (v_student.id, 'subj-lit', 'Литература', 5.0, 2.0, CURRENT_DATE - INTERVAL '1 day', 'Итог', 'Годовая оценка'),
+      (v_student.id, 'subj-english', 'Английский язык', 5.0, 2.0, CURRENT_DATE - INTERVAL '1 day', 'Итог', 'Годовая оценка'),
+      (v_student.id, 'subj-physics', 'Физика', 5.0, 2.0, CURRENT_DATE - INTERVAL '1 day', 'Итог', 'Годовая оценка'),
+      (v_student.id, 'subj-chem', 'Химия', 5.0, 2.0, CURRENT_DATE - INTERVAL '1 day', 'Итог', 'Годовая оценка'),
+      (v_student.id, 'subj-bio', 'Биология', 5.0, 2.0, CURRENT_DATE - INTERVAL '1 day', 'Итог', 'Годовая оценка'),
+      (v_student.id, 'subj-history', 'История', 5.0, 2.0, CURRENT_DATE - INTERVAL '1 day', 'Итог', 'Годовая оценка'),
+      (v_student.id, 'subj-soc', 'Обществознание', 5.0, 2.0, CURRENT_DATE - INTERVAL '1 day', 'Итог', 'Годовая оценка'),
+      (v_student.id, 'subj-cs', 'Информатика', 5.0, 2.0, CURRENT_DATE - INTERVAL '1 day', 'Итог', 'Годовая оценка'),
+      (v_student.id, 'subj-pe', 'Физическая культура', 5.0, 2.0, CURRENT_DATE - INTERVAL '1 day', 'Итог', 'Годовая оценка');
   END LOOP;
 END $$;
 

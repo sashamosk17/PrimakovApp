@@ -15,7 +15,7 @@ export class PostgresGradeRepository implements IGradeRepository {
     const params: any[] = [studentId];
 
     if (period) {
-      query += ` AND period = $2`;
+      query += ` AND (period = $2 OR period ILIKE $2 || '%' OR period ILIKE '%' || $2 || '%' OR ($2 LIKE '%1%' AND period LIKE '%1%') OR ($2 LIKE '%2%' AND period LIKE '%2%') OR ($2 LIKE '%3%' AND period LIKE '%3%') OR ($2 ILIKE '%Итог%' AND (period ILIKE '%Итог%' OR period ILIKE '%Год%')))`;
       params.push(period);
     }
     query += ` ORDER BY date DESC`;

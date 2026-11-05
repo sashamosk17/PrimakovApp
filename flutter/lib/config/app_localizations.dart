@@ -61,6 +61,9 @@ class AppLocalizations {
       'viewAllSchedule': 'Все расписание →',
       'upcomingDeadlines': 'Ближайшие дедлайны',
       'schoolNews': 'Новости гимназии',
+      'readMore': 'Читать полностью',
+      'collapse': 'Свернуть',
+      'openNews': 'Открыть',
       'stories': 'Истории гимназии',
       'badgeNow': 'СЕЙЧАС',
       'badgeWeekend': 'ВЫХОДНОЙ',
@@ -305,6 +308,9 @@ class AppLocalizations {
       'viewAllSchedule': 'View Schedule →',
       'upcomingDeadlines': 'Upcoming Deadlines',
       'schoolNews': 'Gymnasium News',
+      'readMore': 'Read more',
+      'collapse': 'Collapse',
+      'openNews': 'Open',
       'stories': 'Campus Stories',
       'badgeNow': 'NOW',
       'badgeWeekend': 'WEEKEND',
@@ -576,6 +582,9 @@ class AppLocalizations {
   String get documentsAndRegulations => translate('documentsAndRegulations');
   String get aboutApp => translate('aboutApp');
   String get schoolNews => translate('schoolNews');
+  String get readMore => translate('readMore');
+  String get collapse => translate('collapse');
+  String get openNews => translate('openNews');
   String get badgeNow => translate('badgeNow');
   String get badgeWeekend => translate('badgeWeekend');
   String get badgeDay => translate('badgeDay');

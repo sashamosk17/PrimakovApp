@@ -19,13 +19,14 @@ export class AnnouncementController {
         return res.status(400).json({ status: "error", error: { message: result.error } });
       }
 
-      // Map to Flutter-compatible format (truncate content for list view)
+      // Map to Flutter-compatible format (keep full content so client can display and expand without truncation)
       const announcements = result.value?.map(a => {
         const fullContent = a.content || a.description || '';
         return {
           id: a.id,
           title: a.title,
-          content: fullContent.length > 150 ? fullContent.slice(0, 150) + '...' : fullContent,
+          content: fullContent,
+          description: a.description || fullContent,
           createdAt: a.createdAt.toISOString(),
         };
       }) || [];
@@ -51,13 +52,14 @@ export class AnnouncementController {
         return res.status(400).json({ status: "error", error: { message: result.error } });
       }
 
-      // Map to Flutter-compatible format (truncate content for list view)
+      // Map to Flutter-compatible format (keep full content so client can display and expand without truncation)
       const announcements = result.value?.map(a => {
         const fullContent = a.content || a.description || '';
         return {
           id: a.id,
           title: a.title,
-          content: fullContent.length > 150 ? fullContent.slice(0, 150) + '...' : fullContent,
+          content: fullContent,
+          description: a.description || fullContent,
           createdAt: a.createdAt.toISOString(),
         };
       }) || [];
